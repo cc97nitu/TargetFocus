@@ -1,5 +1,10 @@
-&run_setup lattice=lattice.lte use_beamline=beamline p_central_mev=0.25
-	sigma=%s.sig centroid=%s.cen
+&run_setup
+    lattice=lattice.lte
+    use_beamline=beamline
+    p_central_mev=0.25
+	sigma=%s.sig
+	centroid=%s.cen
+	output = %s.out
 &end
 
 &run_control &end

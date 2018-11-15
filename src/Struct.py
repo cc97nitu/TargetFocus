@@ -15,6 +15,9 @@ class State(object):
     def __repr__(self):
         return "State (strengthA={}, strengthB={}, focus={})".format(self.strengthA, self.strengthB, self.focus)
 
+    def __bool__(self):
+        return self.terminalState
+
 
 class Action(object):
     __slots__ = ['state', 'changeA', 'changeB', 'eligibility']

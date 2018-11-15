@@ -2,7 +2,6 @@ import os
 import subprocess as sp
 import torch
 
-
 from time import time
 from shutil import copy, rmtree
 from sdds import SDDS
@@ -30,12 +29,23 @@ class Environment(object):
         # copy elegant config file to working directory
         copy("../res/run.ele", self.dir)
 
+        # define focus goal
+        self.focusGoal = torch.tensor((2e-2, 2e-2), dtype=torch.float)
+
+        self.acceptance = 5e-3  # max distance between focus goal and beam focus of a state for the state to be considered terminal
+        targetDiameter = 3e-2  # diameter of target
+        self.targetRadius = targetDiameter / 2
+
         # initial strengths of magnets
         self.strengthA, self.strengthB = strengthA, strengthB
 
         # get initial focus / initial state from them
-        focus = self.react(Action(State(0, 0, 0), 0, 0))  # action is a dummy action
-        self.initialState = State(self.strengthA, self.strengthB, focus)
+        initialState = self.react(Action(State(0, 0, 0), 0, 0))[0]  # action is a dummy action
+
+        if initialState.terminalState:
+            raise ValueError("starting in terminal state")
+        else:
+            self.initialState = initialState
 
         return
 
@@ -46,7 +56,7 @@ class Environment(object):
         self.strengthB += action.changeB
 
         # create lattice
-        self.createLattice(self.strengthA, self.strengthB)
+        self.__createLattice(self.strengthA, self.strengthB)
 
         # run elegant simulation
         with open(os.devnull, "w") as f:
@@ -55,26 +65,29 @@ class Environment(object):
         # read elegant output
         os.chdir(self.dir)
         dataSet = SDDS(0)
-        dataSet.load(self.dir + "/W2.SDDS")
+        dataSet.load(self.dir + "/run.out")
 
         # calculate focus
         focus = torch.tensor((torch.tensor(dataSet.columnData[0]).mean(), torch.tensor(dataSet.columnData[2]).mean()))
 
-        # to implement: calculate reward
+        # return state and reward
+        distanceToGoal = torch.sqrt(torch.sum((focus - self.focusGoal) ** 2)).item()
 
-        return State(self.strengthA, self.strengthB, focus)  # and reward
+        if distanceToGoal < self.acceptance:
+            return State(self.strengthA, self.strengthB, focus, terminalState=True), 1
+        elif torch.sqrt(torch.sum(focus ** 2)).item() >= self.targetRadius:
+            return State(self.strengthA, self.strengthB, focus, terminalState=True), -10
+        else:
+            return State(self.strengthA, self.strengthB, focus), -1
 
-    def createLattice(self, strengthA, strengthB):
+    def __createLattice(self, strengthA, strengthB):
         """creates the lattice.lte file"""
         os.chdir(self.dir)
         with open("lattice.lte", 'w') as lattice:
             content = ("D1: Drift, L=0.5",
-                       "SH1: HKICK, L=0.15, KICK={0}".format(strengthA),
+                       "Steer: QUAD, L=0.15, HKICK={0}, VKICK={1}".format(strengthA, strengthB),
                        "D2: Drift, L=0.15",
-                       "SV1: VKICK, L=0.15, KICK={0}".format(strengthB),
-                       "D3: Drift, L=0.5",
-                       "W2: Watch, Mode=Coordinate, Filename=w2.sdds",
-                       "beamline: line=(D1,SH1,D2,SV1,D3,W2)")
+                       "beamline: line=(D1,Steer,D2)")
 
             content = "\n".join(content)  # create one string from content with newline symbols in between
             lattice.write(content)
@@ -89,8 +102,8 @@ class Environment(object):
 
 
 if __name__ == '__main__':
+    torch.set_default_tensor_type(torch.FloatTensor)
+
     env = Environment(0, 0)
     state = env.initialState
-    action = Action(state, 0.1, 0.05)
-
-
+    action = Action(state, 0.01, 0.01)
