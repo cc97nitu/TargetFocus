@@ -37,10 +37,10 @@ class Environment(object):
         self.targetRadius = targetDiameter / 2
 
         # initial strengths of magnets
-        self.strengthA, self.strengthB = strengthA, strengthB
+        self.strengths = torch.tensor((strengthA, strengthB), dtype=torch.float)
 
         # get initial focus / initial state from them
-        initialState = self.react(Action(State(0, 0, 0), 0, 0))[0]  # action is a dummy action
+        initialState = self.react(Action(State(torch.tensor((strengthA, strengthB), dtype=torch.float), torch.zeros(2, dtype=torch.float)), torch.zeros(2, dtype=torch.float)))[0]  # action is a dummy action
 
         if initialState.terminalState:
             raise ValueError("starting in terminal state")
@@ -52,11 +52,10 @@ class Environment(object):
     def react(self, action):
         """simulate response to chosen action"""
         # update magnet strengths according to chosen action
-        self.strengthA += action.changeA
-        self.strengthB += action.changeB
+        self.strengths = self.strengths + action.changes
 
         # create lattice
-        self.__createLattice(self.strengthA, self.strengthB)
+        self.__createLattice(self.strengths)
 
         # run elegant simulation
         with open(os.devnull, "w") as f:
@@ -74,14 +73,16 @@ class Environment(object):
         distanceToGoal = torch.sqrt(torch.sum((focus - self.focusGoal) ** 2)).item()
 
         if distanceToGoal < self.acceptance:
-            return State(self.strengthA, self.strengthB, focus, terminalState=True), 1
+            return State(self.strengths, focus, terminalState=True), 1
         elif torch.sqrt(torch.sum(focus ** 2)).item() >= self.targetRadius:
-            return State(self.strengthA, self.strengthB, focus, terminalState=True), -10
+            return State(self.strengths, focus, terminalState=True), -10
         else:
-            return State(self.strengthA, self.strengthB, focus), -1
+            return State(self.strengths, focus), -1
 
-    def __createLattice(self, strengthA, strengthB):
+    def __createLattice(self, strengths):
         """creates the lattice.lte file"""
+        strengthA, strengthB = strengths[0].item(), strengths[1].item()
+
         os.chdir(self.dir)
         with open("lattice.lte", 'w') as lattice:
             content = ("D1: Drift, L=0.5",
@@ -106,4 +107,4 @@ if __name__ == '__main__':
 
     env = Environment(0, 0)
     state = env.initialState
-    action = Action(state, 0.01, 0.01)
+    action = Action(state, torch.tensor((0.01, 0.01)))
