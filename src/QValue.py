@@ -18,11 +18,6 @@ class QFunction(object, metaclass=abc.ABCMeta):
         """update value estimate for action"""
         pass
 
-    @abc.abstractmethod
-    def max(self, state):
-        """get the maximum action-value for a certain state"""
-        pass
-
 
 class QNeural(QFunction):
     """constitute the Q-Function with a neural network"""
@@ -41,7 +36,7 @@ class QNeural(QFunction):
 
     def evaluate(self, action):
         """get Q-value for action"""
-        netInput = torch.cat((action.state.strengths, action.state.focus, action.changes)).unsqueeze()
+        netInput = torch.cat((action.state.strengths, action.state.focus, action.changes)).unsqueeze(0)
 
         return self.network(netInput).item()
 
@@ -49,7 +44,4 @@ class QNeural(QFunction):
         return self.network(bunch)
 
     def update(self, action, update):
-        pass
-
-    def max(self):
         pass

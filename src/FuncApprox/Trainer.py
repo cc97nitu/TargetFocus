@@ -90,7 +90,7 @@ class Adagrad(Trainer):
 
 
 class Adam(Trainer):
-    def __init__(self, network, epochs=100, schedulerLRDecay=1):
+    def __init__(self, network, epochs=20, schedulerLRDecay=1):
         super().__init__(network)
 
         self.epochs = epochs

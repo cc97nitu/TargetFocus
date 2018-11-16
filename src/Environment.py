@@ -27,7 +27,8 @@ class Environment(object):
         self.dir = workDir + dir
 
         # copy elegant config file to working directory
-        copy("../res/run.ele", self.dir)
+        os.chdir(os.path.dirname(os.path.abspath(__file__)))
+        copy("/home/conrad/RL/TempDiff/TargetFocus/res/run.ele", self.dir)
 
         # define focus goal
         self.focusGoal = torch.tensor((2e-2, 2e-2), dtype=torch.float)
