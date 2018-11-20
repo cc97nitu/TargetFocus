@@ -2,6 +2,7 @@ from Environment import Environment
 from Agent import Agent
 from Struct import Transition
 from QValue import QNeural
+import torch
 
 
 def episode(agent, environment):
@@ -17,6 +18,8 @@ def episode(agent, environment):
 
         totalReward += reward
         steps += 1
+
+    distanceToGoal = torch.sqrt(torch.sum((state.focus - environment.focusGoal) ** 2)).item()
 
     return totalReward, steps
 
@@ -51,31 +54,19 @@ def benchmark(agent, environmentParameters, episodes):
     return rewards
 
 
-if __name__ == '__main__':
-    # initialize
-    agent = Agent(QNeural())
-    agent.epsilon = 0.9
-
-    evaluationEpisodes = int(2e2)
-
-    # rewards before training
-    print("evaluating agent performance before training")
-    rewardsBeforeTraining = benchmark(agent, (0, 0.01), evaluationEpisodes)
+def trainAgent(agent, environmentParameters, trainingEpisodes):
+    """train an agent and measure its performance"""
 
     # learn from episodes
-    print("begin training")
-
-    episodes = int(1e1)
-
-    for run in range(episodes):
-        totalReward, steps = learnFromEpisode(agent, Environment(0, 0.01))
+    for run in range(trainingEpisodes):
+        totalReward, steps = learnFromEpisode(agent, Environment(*environmentParameters))
         agent.wipeShortMemory()
 
-    # rewards after training
-    print("evaluating agent performance after training")
-    rewardsAfterTraining = benchmark(agent, (0, 0.01), evaluationEpisodes)
-
-    print("average reward: before={0:.2f}, after={1:.2f}".format(sum(rewardsBeforeTraining) / len(rewardsBeforeTraining), sum(rewardsAfterTraining) / len(rewardsAfterTraining)))
+    return agent
 
 
+if __name__ == '__main__':
+    # initialize
+    agent = Agent(QNeural(), epsilon=0.5)
+    agent.q.trainer.epochs = 10
 

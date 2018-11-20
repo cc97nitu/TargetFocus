@@ -40,6 +40,15 @@ class QNeural(QFunction):
 
         return self.network(netInput).item()
 
+    def evaluateMax(self, state, actionSet):
+        netInput = []
+        for action in actionSet:
+            netInput.append(torch.cat((state.strengths, state.focus, action)))
+
+        netInput = torch.stack(netInput)
+
+        return self.network(netInput).max().item()
+
     def evaluateBunch(self, bunch):
         return self.network(bunch)
 

@@ -8,13 +8,14 @@ from Struct import Action
 class Agent(object):
     """the agent"""
 
-    def __init__(self, q):
+    def __init__(self, q, epsilon=0.8, discount=0.9, learningRate=0.5, traceDecay=0.3):
         # action set
         possibleChangesPerMagnet = (1e-2, 1e-3, 0, -1e-2, -1e-3)
+        # possibleChangesPerMagnet = (0, -1e-2, -1e-3)
         self.actionSet = tuple(torch.tensor((x, y), dtype=torch.float) for x, y in product(possibleChangesPerMagnet, possibleChangesPerMagnet))
 
         # probability to act greedy
-        self.epsilon = 0
+        self.epsilon = epsilon
 
         # Q-function
         self.q = q
@@ -22,11 +23,11 @@ class Agent(object):
         # memory
         self.__shortMemory = []
         self.memorySize = 50
-        self.traceDecay = 0.3
+        self.traceDecay = traceDecay
 
         # learning
-        self.discount = 0.9
-        self.learningRate = 0.5
+        self.discount = discount
+        self.learningRate = learningRate
 
         return
 
@@ -77,7 +78,7 @@ class Agent(object):
         # get temporal difference error
         delta = self.__shortMemory[-1].reward + self.discount * self.q.evaluate(self.takeAction(self.__shortMemory[-1].nextState)) - self.q.evaluate(self.__shortMemory[-1].action)
 
-        # current Q-values
+        # states
         netInput = []
         for memory in self.__shortMemory:
             netInput.append(torch.cat((memory.action.state.strengths, memory.action.state.focus, memory.action.changes)))
@@ -88,6 +89,36 @@ class Agent(object):
         labels = []
         for memory in self.__shortMemory:
             labels.append(self.learningRate * delta * memory.action.eligibility)
+
+        labels = torch.tensor(labels)
+        labels = torch.unsqueeze(labels, 1)
+
+        return netInput, labels
+
+    def getDQN(self):
+        """generates DQN update targets from short memory"""
+        sampleSize = self.memorySize // 5
+
+        if len(self.__shortMemory) < sampleSize:
+            sample = self.__shortMemory
+        else:
+            sample = random.sample(self.__shortMemory, sampleSize)
+
+        # states
+        netInput = []
+        for memory in sample:
+            netInput.append(torch.cat((memory.action.state.strengths, memory.action.state.focus, memory.action.changes)))
+
+        netInput = torch.stack(netInput)
+
+        # updates for Q-values
+        labels = []
+        for memory in sample:
+            if memory.nextState:
+                labels.append(memory.reward)
+            else:
+                currentQ = self.q.evaluate(memory.action)
+                labels.append(currentQ + self.learningRate * (self.discount * self.q.evaluateMax(memory.nextState, self.actionSet) - currentQ))
 
         labels = torch.tensor(labels)
         labels = torch.unsqueeze(labels, 1)
