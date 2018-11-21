@@ -5,7 +5,7 @@ import seaborn as sns
 
 def boxPlotExperience(data):
     # create figure
-    fig, ax = plt.subplots(figsize=(12, 9))
+    fig, ax = plt.subplots(figsize=(28/3, 7))
 
     # seaborn boxplot
     ax = sns.boxplot(data=data)
@@ -22,9 +22,45 @@ def boxPlotExperience(data):
     return
 
 
+def boxPlotGPI(data):
+    """plot results from general policy iteration"""
+    # create figure
+    fig, ax = plt.subplots(figsize=(28/3, 7))
+
+    # seaborn boxplot
+    ax = sns.boxplot(x='policy', y='reward', hue='environmentParameters', data=data)
+
+    # add some annotation
+    fig.suptitle("general policy iteration with Sarsa($\lambda$)", size='xx-large')
+
+    # show the plot
+    plt.show()
+    plt.close()
+
+    return
+
+
+def boxPlotSpatial(data):
+    """plot results from spatial benchmark"""
+    # create figure
+    fig, ax = plt.subplots()
+
+    # seaborn boxplot
+    ax = sns.boxplot(x='environmentParameters', y='reward', data=data)
+
+    # add some annotation
+    fig.suptitle("agent's performance from different starting points", size='xx-large')
+
+    # show the plot
+    plt.show()
+    plt.close()
+
+    return
+
+
 if __name__ == '__main__':
     # fetch data
-    with open("/home/conrad/RL/TempDiff/TargetFocus/dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testRun", 'rb') as file:
+    with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testSpatial", 'rb') as file:
         data = pickle.load(file)
 
-    boxPlotExperience(data)
+    boxPlotSpatial(data)

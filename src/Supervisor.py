@@ -3,6 +3,7 @@ from Agent import Agent
 from Struct import Transition
 from QValue import QNeural
 import torch
+import pandas as pd
 
 
 def episode(agent, environment):
@@ -54,6 +55,18 @@ def benchmark(agent, environmentParameters, episodes):
     return rewards
 
 
+def spatialBenchmark(agent, environmentParameters, episodes):
+    """get average reward for different starting positions"""
+    frames = []
+
+    for parameters in environmentParameters:
+        result = {"{}".format(parameters): benchmark(agent, parameters, episodes)}
+        result = pd.melt(pd.DataFrame(result), var_name="environmentParameters", value_name="reward")
+        frames.append(result)
+
+    return pd.concat(frames)
+
+
 def trainAgent(agent, environmentParameters, trainingEpisodes):
     """train an agent and measure its performance"""
 
@@ -69,4 +82,5 @@ if __name__ == '__main__':
     # initialize
     agent = Agent(QNeural(), epsilon=0.5)
     agent.q.trainer.epochs = 10
+    environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03))
 
