@@ -2,7 +2,7 @@ import pandas as pd
 import pickle
 import os
 
-from Supervisor import benchmark, spatialBenchmark, trainAgent
+from Supervisor import benchmark, spatialBenchmark, trainAgent, trainAgentOffline
 from Agent import Agent
 from QValue import QNeural
 import FuncApprox.Network as Network
@@ -106,7 +106,7 @@ def policyIterationV3(agent, environmentParameters, epsilons, trainingEpisodes, 
 
         # train for each starting point
         for parameters in environmentParameters:
-            agent = trainAgent(agent, parameters, trainingEpisodes)
+            agent = trainAgentOffline(agent, parameters, trainingEpisodes)
 
         # measure performance from each starting point
         for parameters in environmentParameters:

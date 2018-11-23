@@ -31,7 +31,8 @@ def boxPlotGPI(data):
     ax = sns.boxplot(x='policy', y='reward', hue='environmentParameters', data=data)
 
     # add some annotation
-    fig.suptitle("general policy iteration with Sarsa($\lambda$)", size='xx-large')
+    fig.suptitle("general policy iteration with offline Sarsa($\lambda$)", size='xx-large')
+    ax.set_title("FulCon1, train=200,eval=200")
 
     # show the plot
     plt.show()
