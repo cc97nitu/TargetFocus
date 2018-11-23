@@ -60,7 +60,7 @@ def boxPlotSpatial(data):
 
 if __name__ == '__main__':
     # fetch data
-    with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testSpatial", 'rb') as file:
+    with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testRun", 'rb') as file:
         data = pickle.load(file)
 
-    boxPlotSpatial(data)
+    boxPlotGPI(data)

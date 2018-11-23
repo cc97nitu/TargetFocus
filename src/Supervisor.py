@@ -2,6 +2,8 @@ from Environment import Environment
 from Agent import Agent
 from Struct import Transition
 from QValue import QNeural
+from FuncApprox.Network import FulCon2
+
 import torch
 import pandas as pd
 
@@ -36,7 +38,7 @@ def learnFromEpisode(agent, environment):
         state, reward = environment.react(action)
         agent.remember(Transition(action, reward, state))
 
-        agent.learn(*agent.getSarsaLambda())
+        agent.learn(*agent.getSarsaLambda(agent.shortMemory))
 
         totalReward += reward
         steps += 1
@@ -80,7 +82,7 @@ def trainAgent(agent, environmentParameters, trainingEpisodes):
 
 if __name__ == '__main__':
     # initialize
-    agent = Agent(QNeural(), epsilon=0.5)
+    agent = Agent(QNeural(network=FulCon2()), epsilon=0.5)
     agent.q.trainer.epochs = 10
     environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03))
 

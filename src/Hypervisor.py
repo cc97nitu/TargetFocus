@@ -5,6 +5,7 @@ import os
 from Supervisor import benchmark, spatialBenchmark, trainAgent
 from Agent import Agent
 from QValue import QNeural
+import FuncApprox.Network as Network
 
 
 def experienceComparison(agent, environmentParameters, trainingStages, evaluationEpisodes):
@@ -122,7 +123,7 @@ if __name__ == '__main__':
     path = os.path.dirname(os.path.abspath(__file__))
 
     # build agent
-    agent = Agent(QNeural(), epsilon=0.3)
+    agent = Agent(QNeural(network=Network.FulCon1()), epsilon=0.3)
 
     # parameters
     # environmentParameters = (-0.01, -0.03)
@@ -135,8 +136,9 @@ if __name__ == '__main__':
 
     # general policy iteration
     epsilons = (0.3, 0.5, 0.7, 0.9)
-    trainingEpisodes = int(1e2)
-    environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0))
+    trainingEpisodes = int(2e2)
+    # environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0))
+    environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03),)
 
     perf = policyIterationV3(agent, environmentParameters, epsilons, trainingEpisodes, evaluationEpisodes)
 
@@ -146,12 +148,12 @@ if __name__ == '__main__':
     with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testRun", 'wb') as file:
         pickle.dump(perf, file)
 
-    # do a spatial benchmark
-    benchEnvironmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0), (0.02, 0.01), (-0.02, -0.02), (0.03, 0.01), (0.04, -0.04), (-0.04, 0.04))
-
-    spatialPerf = spatialBenchmark(agent, benchEnvironmentParameters, evaluationEpisodes)
-
-    os.chdir(path)
-
-    with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testSpatial", 'wb') as file:
-        pickle.dump(spatialPerf, file)
+    # # do a spatial benchmark
+    # benchEnvironmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0), (0.02, 0.01), (-0.02, -0.02), (0.03, 0.01), (0.04, -0.04), (-0.04, 0.04))
+    #
+    # spatialPerf = spatialBenchmark(agent, benchEnvironmentParameters, evaluationEpisodes)
+    #
+    # os.chdir(path)
+    #
+    # with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testSpatial", 'wb') as file:
+    #     pickle.dump(spatialPerf, file)
