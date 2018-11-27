@@ -12,7 +12,8 @@ class Agent(object):
         # action set
         possibleChangesPerMagnet = (1e-2, 1e-3, 0, -1e-2, -1e-3)
         # possibleChangesPerMagnet = (0, -1e-2, -1e-3)
-        self.actionSet = tuple(torch.tensor((x, y), dtype=torch.float) for x, y in product(possibleChangesPerMagnet, possibleChangesPerMagnet))
+        self.actionSet = tuple(torch.tensor((x, y), dtype=torch.float) for x, y in
+                               product(possibleChangesPerMagnet, possibleChangesPerMagnet))
 
         # probability to act greedy
         self.epsilon = epsilon
@@ -21,9 +22,12 @@ class Agent(object):
         self.q = q
 
         # memory
-        self.__shortMemory = []
+        self.shortMemory = []
         self.memorySize = 50
         self.traceDecay = traceDecay
+
+        self.replayMemory = []
+        self.replayMemorySize = 100
 
         # learning
         self.discount = discount
@@ -37,7 +41,8 @@ class Agent(object):
         if random.uniform(0, 1) < self.epsilon:
             # greedy selection
             # find best action
-            allActions = torch.stack(tuple(torch.cat((state.strengths, state.focus, changes)) for changes in self.actionSet))
+            allActions = torch.stack(
+                tuple(torch.cat((state.strengths, state.focus, changes)) for changes in self.actionSet))
             evaluation = self.q.evaluateBunch(allActions)
             action = Action(state, self.actionSet[evaluation.argmax()])
             return action
@@ -48,24 +53,24 @@ class Agent(object):
     def remember(self, transition):
         """place a transition in the memory"""
         # reduce eligibility for old memories
-        for memory in self.__shortMemory:
+        for memory in self.shortMemory:
             memory *= self.traceDecay * self.discount
 
         # add new memory
-        if len(self.__shortMemory) < self.memorySize:
-            self.__shortMemory.append(transition)
+        if len(self.shortMemory) < self.memorySize:
+            self.shortMemory.append(transition)
         else:
-            del self.__shortMemory[0]
-            self.__shortMemory.append(transition)
+            del self.shortMemory[0]
+            self.shortMemory.append(transition)
 
         return
 
     def getShortMemory(self):
-        return self.__shortMemory
+        return self.shortMemory
 
     def wipeShortMemory(self):
         """wipe all recent experience"""
-        self.__shortMemory = []
+        self.shortMemory = []
         return
 
     def learn(self, netInput, labels):
@@ -73,21 +78,23 @@ class Agent(object):
         self.q.trainer.applyUpdate(netInput, labels)
         return
 
-    def getSarsaLambda(self):
+    def getSarsaLambda(self, shortMemory):
         """generate TD lambda update targets from short memory"""
         # get temporal difference error
-        delta = self.__shortMemory[-1].reward + self.discount * self.q.evaluate(self.takeAction(self.__shortMemory[-1].nextState)) - self.q.evaluate(self.__shortMemory[-1].action)
+        delta = shortMemory[-1].reward + self.discount * self.q.evaluate(
+            self.takeAction(shortMemory[-1].nextState)) - self.q.evaluate(shortMemory[-1].action)
 
         # states
         netInput = []
-        for memory in self.__shortMemory:
-            netInput.append(torch.cat((memory.action.state.strengths, memory.action.state.focus, memory.action.changes)))
+        for memory in shortMemory:
+            netInput.append(
+                torch.cat((memory.action.state.strengths, memory.action.state.focus, memory.action.changes)))
 
         netInput = torch.stack(netInput)
 
         # updates for every state in memory with respect to its eligibility
         labels = []
-        for memory in self.__shortMemory:
+        for memory in shortMemory:
             labels.append(self.learningRate * delta * memory.action.eligibility)
 
         labels = torch.tensor(labels)
@@ -95,19 +102,20 @@ class Agent(object):
 
         return netInput, labels
 
-    def getDQN(self):
+    def getDQN(self, shortMemory):
         """generates DQN update targets from short memory"""
         sampleSize = self.memorySize // 5
 
-        if len(self.__shortMemory) < sampleSize:
-            sample = self.__shortMemory
+        if len(shortMemory) < sampleSize:
+            sample = shortMemory
         else:
-            sample = random.sample(self.__shortMemory, sampleSize)
+            sample = random.sample(shortMemory, sampleSize)
 
         # states
         netInput = []
         for memory in sample:
-            netInput.append(torch.cat((memory.action.state.strengths, memory.action.state.focus, memory.action.changes)))
+            netInput.append(
+                torch.cat((memory.action.state.strengths, memory.action.state.focus, memory.action.changes)))
 
         netInput = torch.stack(netInput)
 
@@ -118,14 +126,10 @@ class Agent(object):
                 labels.append(memory.reward)
             else:
                 currentQ = self.q.evaluate(memory.action)
-                labels.append(currentQ + self.learningRate * (self.discount * self.q.evaluateMax(memory.nextState, self.actionSet) - currentQ))
+                labels.append(currentQ + self.learningRate * (
+                            self.discount * self.q.evaluateMax(memory.nextState, self.actionSet) - currentQ))
 
         labels = torch.tensor(labels)
         labels = torch.unsqueeze(labels, 1)
 
         return netInput, labels
-
-
-
-
-

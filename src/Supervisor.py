@@ -2,8 +2,11 @@ from Environment import Environment
 from Agent import Agent
 from Struct import Transition
 from QValue import QNeural
+from FuncApprox.Network import FulCon2
+
 import torch
 import pandas as pd
+from copy import deepcopy
 
 
 def episode(agent, environment):
@@ -26,7 +29,7 @@ def episode(agent, environment):
 
 
 def learnFromEpisode(agent, environment):
-    """run an episode"""
+    """run an episode and learn after each step"""
     state = environment.initialState
 
     totalReward, steps = 0, 0
@@ -36,12 +39,30 @@ def learnFromEpisode(agent, environment):
         state, reward = environment.react(action)
         agent.remember(Transition(action, reward, state))
 
-        agent.learn(*agent.getSarsaLambda())
+        agent.learn(*agent.getDQN(agent.shortMemory))
 
         totalReward += reward
         steps += 1
 
     return totalReward, steps
+
+
+def experienceEpisode(agent, environment):
+    """run an episode and remember it without learning"""
+    state = environment.initialState
+
+    while not state:
+        action = agent.takeAction(state)
+        state, reward = environment.react(action)
+        agent.remember(Transition(action, reward, state))
+
+        if len(agent.replayMemory) < agent.replayMemorySize:
+            agent.replayMemory.append(deepcopy(agent.shortMemory))
+        else:
+            del agent.replayMemory[0]
+            agent.replayMemory.append(deepcopy(agent.shortMemory))
+
+    return
 
 
 def benchmark(agent, environmentParameters, episodes):
@@ -78,9 +99,33 @@ def trainAgent(agent, environmentParameters, trainingEpisodes):
     return agent
 
 
+def trainAgentOffline(agent, environmentParameters, trainingEpisodes):
+    """train an agent and measure its performance"""
+
+    # learn from episodes
+    for run in range(trainingEpisodes):
+        experienceEpisode(agent, Environment(*environmentParameters))
+        agent.wipeShortMemory()
+
+        if run // 10 == 0:
+            # train from replay memory
+            allInput, allLabels = [], []
+
+            for shortMemory in agent.replayMemory:
+                netInput, labels = agent.getSarsaLambda(shortMemory)
+                allInput.append(netInput)
+                allLabels.append(labels)
+
+            allInput = torch.cat(allInput)
+            allLabels = torch.cat(allLabels)
+
+            agent.learn(allInput, allLabels)
+
+    return agent
+
+
 if __name__ == '__main__':
     # initialize
-    agent = Agent(QNeural(), epsilon=0.5)
+    agent = Agent(QNeural(network=FulCon2()), epsilon=0.5)
     agent.q.trainer.epochs = 10
     environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03))
-
