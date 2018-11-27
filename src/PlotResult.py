@@ -2,6 +2,8 @@ import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from itertools import product
+
 
 def boxPlotExperience(data):
     # create figure
@@ -22,25 +24,33 @@ def boxPlotExperience(data):
     return
 
 
-def boxPlotGPI(data):
+def boxPlotGPI(data, network=None, trainEpisodes=None):
     """plot results from general policy iteration"""
     # create figure
-    fig, ax = plt.subplots(figsize=(28/3, 7))
+    fig, ax = plt.subplots()
 
     # seaborn boxplot
     ax = sns.boxplot(x='policy', y='reward', hue='environmentParameters', data=data)
 
     # add some annotation
     fig.suptitle("general policy iteration with Sarsa($\lambda$)", size='xx-large')
+    ax.set_title("network={0}, training episodes={1}".format(network, trainEpisodes), size='x-large')
+
+    for tick in ax.get_xticklabels():
+        tick.set_rotation(45)
+
+    ax.set_xlabel(ax.get_xlabel(), size='x-large')
+    ax.set_ylabel(ax.get_ylabel(), size='x-large')
 
     # show the plot
-    plt.show()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.savefig('../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/11.27.18/plot/trainResults/network={0},trainingEpisodes={1}.png'.format(network, trainEpisodes))
     plt.close()
 
     return
 
 
-def boxPlotSpatial(data):
+def boxPlotSpatial(data, network=None, trainEpisodes=None):
     """plot results from spatial benchmark"""
     # create figure
     fig, ax = plt.subplots()
@@ -50,9 +60,19 @@ def boxPlotSpatial(data):
 
     # add some annotation
     fig.suptitle("agent's performance from different starting points", size='xx-large')
+    ax.set_title("network={0}, training episodes={1}".format(network, trainEpisodes), size='x-large')
+
+    for tick in ax.get_xticklabels():
+        tick.set_rotation(45)
+
+    ax.set_xlabel(ax.get_xlabel(), size='x-large')
+    ax.set_ylabel(ax.get_ylabel(), size='x-large')
+
+    ax.axhline(y=-10, color='green', alpha=0.2)
 
     # show the plot
-    plt.show()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.savefig('../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/11.27.18/plot/spatialBenchmark/network={0},trainingEpisodes={1}.png'.format(network, trainEpisodes))
     plt.close()
 
     return
@@ -60,7 +80,15 @@ def boxPlotSpatial(data):
 
 if __name__ == '__main__':
     # fetch data
-    with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testSpatial", 'rb') as file:
+    with open("/home/conrad/RL/TempDiff/TargetFocus/dump/policyIteration/epsilonGreedy/Sarsa(lambda)/11.27.18/benchmarkBench", 'rb') as file:
         data = pickle.load(file)
 
-    boxPlotSpatial(data)
+    # loop over benchmark data frame
+    trainingEpisodes = ('200', '400')
+    networks = ('FulCon1', 'FulCon4', 'FulCon6', 'FulCon7', 'FulCon8', 'FulCon9')
+
+    for trainEpisodes, network in product(trainingEpisodes, networks):
+        dataRestricted = data.loc[(data['trainingEpisodes'] == trainEpisodes) & (data['network'] == network)]
+
+        boxPlotSpatial(dataRestricted, network=network, trainEpisodes=trainEpisodes)
+
