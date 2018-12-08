@@ -1,6 +1,9 @@
 import abc
 import torch
 
+# use CUDA
+#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 
 class Trainer(object, metaclass=abc.ABCMeta):
     """abstract base class for Trainer"""
@@ -104,6 +107,11 @@ class Adam(Trainer):
     def applyUpdate(self, sample, label):
         scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=self.schedulerLRDecay)
 
+        # move to gpu
+#        self.network = self.network.to(device)
+#        sample = sample.to(device)
+#        label = label.to(device)
+
         for epoch in range(self.epochs):
             self.optimizer.zero_grad()
             out = self.network(sample)
@@ -111,5 +119,8 @@ class Adam(Trainer):
             loss.backward()
             self.optimizer.step()
             scheduler.step()
+
+        # move back to cpu
+#        self.network = self.network.to("cpu")
 
         return

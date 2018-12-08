@@ -74,9 +74,9 @@ class Environment(object):
         distanceToGoal = torch.sqrt(torch.sum((focus - self.focusGoal) ** 2)).item()
 
         if distanceToGoal < self.acceptance:
-            return State(self.strengths, focus, terminalState=True), 1
+            return State(self.strengths, focus, terminalState=True), 10
         elif torch.sqrt(torch.sum(focus ** 2)).item() >= self.targetRadius:
-            return State(self.strengths, focus, terminalState=True), -10
+            return State(self.strengths, focus, terminalState=True), -100
         else:
             return State(self.strengths, focus), -1
 

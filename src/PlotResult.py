@@ -44,7 +44,8 @@ def boxPlotGPI(data, network=None, trainEpisodes=None):
 
     # show the plot
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.savefig('../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/11.27.18/plot/trainResults/network={0},trainingEpisodes={1}.png'.format(network, trainEpisodes))
+    plt.show()
+    # plt.savefig('../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/12.4.18/plot/trainResults/network={0},trainingEpisodes={1}.png'.format(network, trainEpisodes))
     plt.close()
 
     return
@@ -68,11 +69,12 @@ def boxPlotSpatial(data, network=None, trainEpisodes=None):
     ax.set_xlabel(ax.get_xlabel(), size='x-large')
     ax.set_ylabel(ax.get_ylabel(), size='x-large')
 
-    ax.axhline(y=-10, color='green', alpha=0.2)
+    ax.axhline(y=-100, color='green', alpha=0.2)
 
     # show the plot
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.savefig('../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/11.27.18/plot/spatialBenchmark/network={0},trainingEpisodes={1}.png'.format(network, trainEpisodes))
+    plt.show()
+    # plt.savefig('../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/12.4.18/plot/spatialResults/network={0},trainingEpisodes={1}.png'.format(network, trainEpisodes))
     plt.close()
 
     return
@@ -80,15 +82,17 @@ def boxPlotSpatial(data, network=None, trainEpisodes=None):
 
 if __name__ == '__main__':
     # fetch data
-    with open("/home/conrad/RL/TempDiff/TargetFocus/dump/policyIteration/epsilonGreedy/Sarsa(lambda)/11.27.18/benchmarkBench", 'rb') as file:
+    with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/benchmarkTrain", 'rb') as file:
+
         data = pickle.load(file)
 
     # loop over benchmark data frame
-    trainingEpisodes = ('200', '400')
-    networks = ('FulCon1', 'FulCon4', 'FulCon6', 'FulCon7', 'FulCon8', 'FulCon9')
+    trainingEpisodes = data['trainingEpisodes'].unique()
+    networks = data['network'].unique()
 
     for trainEpisodes, network in product(trainingEpisodes, networks):
         dataRestricted = data.loc[(data['trainingEpisodes'] == trainEpisodes) & (data['network'] == network)]
 
-        boxPlotSpatial(dataRestricted, network=network, trainEpisodes=trainEpisodes)
+        boxPlotGPI(dataRestricted, network=network, trainEpisodes=trainEpisodes)
 
+    # boxPlotGPI(data)

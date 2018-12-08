@@ -6,6 +6,7 @@ from FuncApprox.Network import FulCon2
 
 import torch
 import pandas as pd
+import random
 from copy import deepcopy
 
 
@@ -99,6 +100,20 @@ def trainAgent(agent, environmentParameters, trainingEpisodes):
     return agent
 
 
+def trainAgent_random(agent, environmentParameters, trainingEpisodes):
+    """train an agent and measure its performance"""
+
+    # select initial environment parameters
+    initialParameters = random.choice(environmentParameters)
+
+    # learn from episodes
+    for run in range(trainingEpisodes):
+        totalReward, steps = learnFromEpisode(agent, Environment(*initialParameters))
+        agent.wipeShortMemory()
+
+    return agent
+
+
 def trainAgentOffline(agent, environmentParameters, trainingEpisodes):
     """train an agent and measure its performance"""
 
@@ -107,7 +122,35 @@ def trainAgentOffline(agent, environmentParameters, trainingEpisodes):
         experienceEpisode(agent, Environment(*environmentParameters))
         agent.wipeShortMemory()
 
-        if run // 10 == 0:
+        if run % 10 == 0:
+            # train from replay memory
+            allInput, allLabels = [], []
+
+            for shortMemory in agent.replayMemory:
+                netInput, labels = agent.getSarsaLambda(shortMemory)
+                allInput.append(netInput)
+                allLabels.append(labels)
+
+            allInput = torch.cat(allInput)
+            allLabels = torch.cat(allLabels)
+
+            agent.learn(allInput, allLabels)
+
+    return agent
+
+
+def trainAgentOffline_random(agent, environmentParameters, trainingEpisodes):
+    """train an agent and measure its performance"""
+
+    # select initial environment parameters
+    initialParameters = random.choice(environmentParameters)
+
+    # learn from episodes
+    for run in range(trainingEpisodes):
+        experienceEpisode(agent, Environment(*initialParameters))
+        agent.wipeShortMemory()
+
+        if run % 10 == 0:
             # train from replay memory
             allInput, allLabels = [], []
 

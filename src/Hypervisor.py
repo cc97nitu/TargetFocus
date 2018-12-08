@@ -2,7 +2,7 @@ import pandas as pd
 import pickle
 import os
 
-from Supervisor import benchmark, spatialBenchmark, trainAgent, trainAgentOffline
+from Supervisor import benchmark, spatialBenchmark, trainAgent, trainAgent_random, trainAgentOffline, trainAgentOffline_random
 from Agent import Agent
 from QValue import QNeural
 import FuncApprox.Network as Network
@@ -25,7 +25,7 @@ def experienceComparison(agent, environmentParameters, trainingStages, evaluatio
         print("train to stage {:.0e}".format(trainingStages[i]))
 
         trainingEpisodes = trainingStages[i] - trainingStages[i - 1]
-        agent = trainAgent(agent, environmentParameters, trainingEpisodes)
+        agent = trainAgentOffline_random(agent, environmentParameters, trainingEpisodes)
         results["{:.0e}".format(trainingStages[i])] = benchmark(agent, environmentParameters, evaluationEpisodes)
 
     # build pandas data frame
@@ -118,29 +118,54 @@ def policyIterationV3(agent, environmentParameters, epsilons, trainingEpisodes, 
     return pd.concat(frames)
 
 
+def policyIterationV4(agent, environmentParameters, epsilons, trainingEpisodes, evaluationEpisodes):
+    """general policy iteration with different epsilon-greedy policies for different starting points"""
+    # returns data as pandas data frame in long-form
+
+    frames = []
+
+    # check performance before training
+    for parameters in environmentParameters:
+        result = {"before={:.1f}".format(agent.epsilon): benchmark(agent, parameters, evaluationEpisodes)}
+        result = pd.melt(pd.DataFrame(result), var_name='policy', value_name='reward')
+        result.loc[:, 'environmentParameters'] = pd.Series(["{}".format(parameters) for i in range(len(result))])
+        frames.append(result)
+
+    # train under policies
+    for epsilon in epsilons:
+        print("epsilon={:.1f}".format(epsilon))
+        agent.epsilon = epsilon
+
+        # train for each starting point
+        agent = trainAgentOffline_random(agent, environmentParameters, trainingEpisodes)
+
+        # measure performance from each starting point
+        for parameters in environmentParameters:
+            result = {"epsilon={:.1f}".format(agent.epsilon): benchmark(agent, parameters, evaluationEpisodes)}
+            result = pd.melt(pd.DataFrame(result), var_name='policy', value_name='reward')
+            result.loc[:, 'environmentParameters'] = pd.Series(["{}".format(parameters) for i in range(len(result))])
+            frames.append(result)
+
+    return pd.concat(frames)
+
+
 if __name__ == '__main__':
     # save current path to file
     path = os.path.dirname(os.path.abspath(__file__))
 
     # build agent
-    agent = Agent(QNeural(network=Network.FulCon1()), epsilon=0.3)
-
-    # parameters
-    # environmentParameters = (-0.01, -0.03)
-    # trainingStages = (int(5e2), int(1e3), int(5e3), int(1e4), int(5e4), int(1e5))
-    trainingStages = (int(2e2), int(5e2), int(8e2),)
-    evaluationEpisodes = int(2e2)
-
-    # # evaluate agent's performance
-    # perf = experienceComparison(agent, environmentParameters, trainingStages, evaluationEpisodes)
+    agent = Agent(QNeural(network=Network.FulCon8()), epsilon=0.3)
 
     # general policy iteration
     epsilons = (0.3, 0.5, 0.7, 0.9)
-    trainingEpisodes = int(2e2)
-    # environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0))
-    environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03),)
+    trainingEpisodes = int(2e1)
+    evaluationEpisodes = int(2e1)
 
-    perf = policyIterationV3(agent, environmentParameters, epsilons, trainingEpisodes, evaluationEpisodes)
+    environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0))
+    # environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03),)
+
+    # perf = policyIterationV3(agent, environmentParameters, epsilons, trainingEpisodes, evaluationEpisodes)
+    perf = policyIterationV4(agent, environmentParameters, epsilons, len(environmentParameters) * trainingEpisodes, evaluationEpisodes)
 
     # save to disk
     os.chdir(path)
@@ -157,3 +182,7 @@ if __name__ == '__main__':
     #
     # with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testSpatial", 'wb') as file:
     #     pickle.dump(spatialPerf, file)
+
+
+
+
