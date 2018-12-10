@@ -157,9 +157,10 @@ if __name__ == '__main__':
     agent = Agent(QNeural(network=Network.FulCon8()), epsilon=0.3)
 
     # general policy iteration
-    epsilons = (0.3, 0.5, 0.7, 0.9)
-    trainingEpisodes = int(2e1)
-    evaluationEpisodes = int(2e1)
+    epsilons = (0.3,)
+    # epsilons = (0.3, 0.5, 0.7, 0.9)
+    trainingEpisodes = int(5e1)
+    evaluationEpisodes = int(2e0)
 
     environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0))
     # environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03),)
@@ -167,11 +168,11 @@ if __name__ == '__main__':
     # perf = policyIterationV3(agent, environmentParameters, epsilons, trainingEpisodes, evaluationEpisodes)
     perf = policyIterationV4(agent, environmentParameters, epsilons, len(environmentParameters) * trainingEpisodes, evaluationEpisodes)
 
-    # save to disk
-    os.chdir(path)
-
-    with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testRun", 'wb') as file:
-        pickle.dump(perf, file)
+    # # save to disk
+    # os.chdir(path)
+    #
+    # with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testRun", 'wb') as file:
+    #     pickle.dump(perf, file)
 
     # # do a spatial benchmark
     # benchEnvironmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0), (0.02, 0.01), (-0.02, -0.02), (0.03, 0.01), (0.04, -0.04), (-0.04, 0.04))
@@ -183,6 +184,11 @@ if __name__ == '__main__':
     # with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testSpatial", 'wb') as file:
     #     pickle.dump(spatialPerf, file)
 
+    # dump agent
+    os.chdir(path)
+
+    with open("../dump/agent", 'wb') as file:
+        pickle.dump(agent, file)
 
 
 
