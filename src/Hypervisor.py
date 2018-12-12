@@ -1,11 +1,33 @@
 import pandas as pd
 import pickle
 import os
+import torch
 
-from Supervisor import benchmark, spatialBenchmark, trainAgent, trainAgent_random, trainAgentOffline, trainAgentOffline_random
+from itertools import product
+
+from Supervisor import benchmark, spatialBenchmark, trainAgent, trainAgent_random, trainAgentOffline, \
+    trainAgentOffline_random
 from Agent import Agent
+from Environment import Environment
 from QValue import QNeural
 import FuncApprox.Network as Network
+
+
+def createEnvironmentParameters():
+    # deflection range
+    defRange = torch.arange(-0.05, 0.05, 0.01)
+
+    # find eligible starting points
+    eligibleEnvironmentParameters = []
+
+    for x, y in product(defRange, defRange):
+        try:
+            env = Environment(x, y)
+            eligibleEnvironmentParameters.append((x, y))
+        except ValueError:
+            continue
+
+    return tuple(eligibleEnvironmentParameters)
 
 
 def experienceComparison(agent, environmentParameters, trainingStages, evaluationEpisodes):
@@ -75,7 +97,8 @@ def policyIterationV2(agent, environmentParameters, epsilons, trainingEpisodes, 
         agent = trainAgent(agent, environmentParameters, trainingEpisodes)
         result = {"epsilon={:.1f}".format(agent.epsilon): benchmark(agent, environmentParameters, evaluationEpisodes)}
         result = pd.melt(pd.DataFrame(result), var_name='policy', value_name='reward')
-        result.loc[:, 'environmentParameters'] = pd.Series(["{}".format(environmentParameters) for i in range(len(result))])
+        result.loc[:, 'environmentParameters'] = pd.Series(
+            ["{}".format(environmentParameters) for i in range(len(result))])
         frames.append(result)
 
     # build common pandas data frame
@@ -154,19 +177,21 @@ if __name__ == '__main__':
     path = os.path.dirname(os.path.abspath(__file__))
 
     # build agent
-    agent = Agent(QNeural(network=Network.FulCon8()), epsilon=0.3)
+    agent = Agent(QNeural(network=Network.FulCon10()), epsilon=0.3)
 
     # general policy iteration
     epsilons = (0.3,)
     # epsilons = (0.3, 0.5, 0.7, 0.9)
-    trainingEpisodes = int(5e1)
-    evaluationEpisodes = int(2e0)
+    trainingEpisodes = int(2e1)
+    evaluationEpisodes = int(2e1)
 
-    environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0))
+    environmentParameters = createEnvironmentParameters()
+    # environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0),)
     # environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03),)
 
     # perf = policyIterationV3(agent, environmentParameters, epsilons, trainingEpisodes, evaluationEpisodes)
-    perf = policyIterationV4(agent, environmentParameters, epsilons, len(environmentParameters) * trainingEpisodes, evaluationEpisodes)
+    perf = policyIterationV4(agent, environmentParameters, epsilons, len(environmentParameters) * trainingEpisodes,
+                             evaluationEpisodes)
 
     # # save to disk
     # os.chdir(path)
@@ -189,6 +214,5 @@ if __name__ == '__main__':
 
     with open("../dump/agent", 'wb') as file:
         pickle.dump(agent, file)
-
 
 

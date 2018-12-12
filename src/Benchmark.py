@@ -8,7 +8,7 @@ from Agent import Agent
 from QValue import QNeural
 import FuncApprox.Network as Network
 
-from Hypervisor import policyIterationV3, policyIterationV4
+from Hypervisor import createEnvironmentParameters, policyIterationV3, policyIterationV4
 from Supervisor import spatialBenchmark
 
 if __name__ == '__main__':
@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     # initialize
     epsilons = (0.3, 0.5, 0.7, 0.9)
-    environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0))
+    environmentParameters = createEnvironmentParameters()
     benchEnvironmentParameters = (
         (0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0), (0.02, 0.01), (-0.02, -0.02), (0.03, 0.01),
         (0.04, -0.04), (-0.04, 0.04))
