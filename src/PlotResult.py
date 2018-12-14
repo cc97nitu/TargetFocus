@@ -82,7 +82,7 @@ def boxPlotSpatial(data, network=None, trainEpisodes=None):
 
 if __name__ == '__main__':
     # fetch data
-    with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/benchmarkTrain", 'rb') as file:
+    with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/benchmarkBench", 'rb') as file:
 
         data = pickle.load(file)
 
@@ -93,6 +93,6 @@ if __name__ == '__main__':
     for trainEpisodes, network in product(trainingEpisodes, networks):
         dataRestricted = data.loc[(data['trainingEpisodes'] == trainEpisodes) & (data['network'] == network)]
 
-        boxPlotGPI(dataRestricted, network=network, trainEpisodes=trainEpisodes)
+        boxPlotSpatial(dataRestricted, network=network, trainEpisodes=trainEpisodes)
 
     # boxPlotGPI(data)

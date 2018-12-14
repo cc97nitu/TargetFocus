@@ -17,10 +17,10 @@ def plotTrainerComparison(results, optimizers):
     # ax.set_xlabel(ax.get_xlabel(), size='large')
     # ax.set_ylabel(ax.get_ylabel(), size='large')
 
-    plt.savefig("../../dump/supervisedLearning/12.11.18/plot/{}.png".format(optimizers))
+    # plt.savefig("../../dump/supervisedLearning/12.11.18/plot/{}.png".format(optimizers))
 
-    # plt.show()
-    # plt.close()
+    plt.show()
+    plt.close()
 
     return
 

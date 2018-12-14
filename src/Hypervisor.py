@@ -198,7 +198,7 @@ if __name__ == '__main__':
     #
     # with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/testRun", 'wb') as file:
     #     pickle.dump(perf, file)
-
+    #
     # # do a spatial benchmark
     # benchEnvironmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0), (0.02, 0.01), (-0.02, -0.02), (0.03, 0.01), (0.04, -0.04), (-0.04, 0.04))
     #

@@ -1,7 +1,5 @@
 import torch
 import pickle
-import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 from itertools import product
@@ -10,7 +8,7 @@ import Trainer
 import Network
 
 # fetch the data
-with open("../../dump/supervisedLearning/supervisedTrainingSet", 'rb') as file:
+with open("/home/conrad/RL/TempDiff/TargetFocus/dump/supervisedLearning/12.12.18/supervisedTrainingSet", 'rb') as file:
     data = pickle.load(file)
 
 trainInput = data[0]
@@ -79,7 +77,7 @@ for network, trainer in product(networks, trainers):
 loss = pd.concat(loss)
 
 # dump results
-with open("../../dump/supervisedLearning/trainResults", 'wb') as file:
+with open("/home/conrad/RL/TempDiff/TargetFocus/dump/supervisedLearning/12.12.18/trainResults", 'wb') as file:
     pickle.dump(loss, file)
 
 # # visualize
