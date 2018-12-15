@@ -7,6 +7,7 @@ from itertools import product
 from Agent import Agent
 from QValue import QNeural
 import FuncApprox.Network as Network
+import FuncApprox.Trainer as Trainer
 
 from Hypervisor import createEnvironmentParameters, policyIterationV3, policyIterationV4
 from Supervisor import spatialBenchmark
@@ -22,8 +23,8 @@ if __name__ == '__main__':
         (0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0), (0.02, 0.01), (-0.02, -0.02), (0.03, 0.01),
         (0.04, -0.04), (-0.04, 0.04))
 
-    trainingEpisodes = (int(1e1),)
-    evaluationEpisodes = int(2e0)
+    trainingEpisodes = (int(1e1), int(2e1), int(5e1), int(8e1))
+    evaluationEpisodes = int(3e1)
 
     networks = (Network.FulCon10,)
 
@@ -35,7 +36,7 @@ if __name__ == '__main__':
         print("network={}, trainEpisodes={}".format(network, trainEpisodes))
 
         # create the agent
-        agent = Agent(QNeural(network=network()))
+        agent = Agent(QNeural(network=network, trainer=Trainer.Rprop, epochs=5))
 
         # train him
         trainResult = policyIterationV4(agent, environmentParameters, epsilons, trainEpisodes, evaluationEpisodes)

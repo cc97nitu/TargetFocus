@@ -22,16 +22,18 @@ class QFunction(object, metaclass=abc.ABCMeta):
 class QNeural(QFunction):
     """constitute the Q-Function with a neural network"""
 
-    def __init__(self, network=None, trainer=None):
+    def __init__(self, network=None, trainer=None, epochs=20):
+        # initialize network
         if network is not None:
-            self.network = network
+            self.network = network()
         else:
             self.network = FulCon1()
 
+        # initialize trainer
         if trainer is not None:
-            self.trainer = trainer
+            self.trainer = trainer(self.network, epochs=epochs)
         else:
-            self.trainer = Trainer.Adam(self.network)
+            self.trainer = Trainer.Adam(self.network, epochs=epochs)
         return
 
     def evaluate(self, action):

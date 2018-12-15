@@ -8,7 +8,7 @@ import Trainer
 import Network
 
 # fetch the data
-with open("/home/conrad/RL/TempDiff/TargetFocus/dump/supervisedLearning/12.12.18/supervisedTrainingSet", 'rb') as file:
+with open("../../dump/supervisedLearning/12.14.18/supervisedTrainingSet", 'rb') as file:
     data = pickle.load(file)
 
 trainInput = data[0]
@@ -17,39 +17,20 @@ valInput = data[2]
 valLabels = data[3]
 
 # initialize
-attempts = 20
+attempts = 40
 epochs = 20
 criterion = torch.nn.MSELoss()
 
 # choose networks and trainers
 networks = (Network.FulCon10,)
-trainers = (Trainer.Adam, Trainer.Adamax, Trainer.Adagrad, Trainer.SGD, Trainer.ASGD, Trainer.RMSprop, Trainer.Rprop, Trainer.Adadelta)
-
-# # try to train
-# trainLoss = np.empty(epochs + 1)
-# valLoss = np.empty(epochs + 1)
-#
-# for network, trainer in product(networks, trainers):
-#     # initialize
-#     net = network()
-#     train = trainer(net, epochs=1)
-#
-#     # loss before
-#     trainLoss[0] = criterion(net(trainInput), trainLabels)
-#     valLoss[0] = criterion(net(valInput), valLabels)
-#
-#     for epoch in range(1, epochs + 1):
-#         # train
-#         train.applyUpdate(trainInput, trainLabels)
-#
-#         # loss after
-#         trainLoss[epoch] = criterion(net(trainInput), trainLabels)
-#         valLoss[epoch] = criterion(net(valInput), valLabels)
+trainers = (Trainer.Adam, Trainer.Adamax, Trainer.Adagrad, Trainer.SGD, Trainer.ASGD, Trainer.RMSprop, Trainer.Rprop, Trainer.Adadelta, Trainer.LBFGS)
 
 # try to train
 loss = []
 
 for network, trainer in product(networks, trainers):
+    print("network={}, trainer={}".format(network, trainer))
+
     for attempt in range(attempts):
         # initialize
         net = network()
@@ -77,14 +58,5 @@ for network, trainer in product(networks, trainers):
 loss = pd.concat(loss)
 
 # dump results
-with open("/home/conrad/RL/TempDiff/TargetFocus/dump/supervisedLearning/12.12.18/trainResults", 'wb') as file:
+with open("../../dump/supervisedLearning/12.14.18/trainResults", 'wb') as file:
     pickle.dump(loss, file)
-
-# # visualize
-# fig, ax = plt.subplots()
-# ax.plot(trainLoss, label='trainingData')
-# ax.plot(valLoss, label='validationData')
-#
-# plt.legend()
-# plt.show()
-# plt.close()

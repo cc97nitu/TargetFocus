@@ -130,3 +130,46 @@ class Adam(Trainer):
 
     def __repr__(self):
         return "Adam"
+
+
+class LBFGS(Trainer):
+    def __init__(self, network, epochs=20, schedulerLRDecay=1):
+        super().__init__(network, epochs, schedulerLRDecay)
+
+        self.optimizer = torch.optim.LBFGS(self.network.parameters(), lr=0.001)
+
+        self.sample = None
+        self.label = None
+
+        return
+
+    def closure(self):
+        self.optimizer.zero_grad()
+        output = self.network(self.sample)
+        loss = self.criterion(output, self.label)
+        loss.backward()
+        return loss
+
+    def applyUpdate(self, sample, label):
+        scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=1, gamma=self.schedulerLRDecay)
+
+        # move to gpu
+        self.network = self.network.to(device)
+        self.sample = sample.to(device)
+        self.label = label.to(device)
+
+        for epoch in range(self.epochs):
+            self.optimizer.zero_grad()
+            out = self.network(self.sample)
+            loss = self.criterion(out, self.label)
+            loss.backward()
+            self.optimizer.step(self.closure)
+            scheduler.step()
+
+        # move back to cpu
+        self.network = self.network.to("cpu")
+
+        return
+
+    def __repr__(self):
+        return "LBFGS"

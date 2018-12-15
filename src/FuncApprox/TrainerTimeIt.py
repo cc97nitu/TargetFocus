@@ -10,7 +10,7 @@ import Network
 
 
 # fetch the data
-with open("/home/conrad/RL/TempDiff/TargetFocus/dump/supervisedLearning/12.12.18/supervisedTrainingSet", 'rb') as file:
+with open("../../dump/supervisedLearning/12.12.18/supervisedTrainingSet", 'rb') as file:
     data = pickle.load(file)
 
 trainInput = data[0]
@@ -28,11 +28,12 @@ for epoch in range(1, epochs + 1):
     trainer.applyUpdate(trainInput, trainLabels)
 """
 
-trainers = ("SGD", "ASGD", "Adam", "Adamax", "Adagrad", "Adadelta", "Rprop", "RMSprop",)
+trainers = ("SGD", "ASGD", "Adam", "Adamax", "Adagrad", "Adadelta", "Rprop", "RMSprop", "LBFGS")
+# trainers = ("SGD",)
 times = []
 
 for trainer in trainers:
-    times.append(timeit.timeit(stmt=stmt, setup=setup.format(trainer), number=10))
+    times.append(timeit.timeit(stmt=stmt, setup=setup.format(trainer), number=1))
 
 print(times)
 # normalize times on SGD time
@@ -46,6 +47,8 @@ print(times)
 fig, ax = plt.subplots()
 
 ax.bar(range(len(trainers)), times)
+
+ax.set_ylim(bottom=60)
 
 # add annotation
 ax.set_title("Computation Time for various Optimizers", size='x-large')

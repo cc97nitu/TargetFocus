@@ -35,7 +35,7 @@ validationResults = data.loc[(data['set'] == "validation")]
 # restrict
 optimizerList = (("SGD", "Adam", "Adamax"),
                  ("SGD", "RMSprop", "Rprop"),
-                 ("SGD", "ASGD",),
+                 ("SGD", "ASGD", "LBFGS"),
                  ("SGD", "Adagrad", "Adadelta"),
                  ("SGD", "Adam", "Adamax", "Rprop", "Adagrad"))
 
