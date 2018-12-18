@@ -177,13 +177,13 @@ if __name__ == '__main__':
     path = os.path.dirname(os.path.abspath(__file__))
 
     # build agent
-    agent = Agent(QNeural(network=Network.FulCon10()), epsilon=0.3)
+    agent = Agent(QNeural(network=Network.FulCon10), epsilon=0.3)
 
     # general policy iteration
     epsilons = (0.3,)
     # epsilons = (0.3, 0.5, 0.7, 0.9)
-    trainingEpisodes = int(2e1)
-    evaluationEpisodes = int(2e1)
+    trainingEpisodes = int(2e0)
+    evaluationEpisodes = int(2e0)
 
     environmentParameters = createEnvironmentParameters()
     # environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0),)

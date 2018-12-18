@@ -50,6 +50,26 @@ class Agent(object):
             # random selection
             return Action(state, random.choice(self.actionSet))
 
+    def bestAction(self, state, isTensor=False):
+        """returns best action and it's rating"""
+        # get value for every possible action
+        if not isTensor:
+            allActions = torch.stack(
+                tuple(torch.cat((state.strengths, state.focus, changes)) for changes in self.actionSet))
+        else:
+            allActions = torch.stack(
+                tuple(torch.cat((state, changes)) for changes in self.actionSet))
+
+        allValues = self.q.evaluateBunch(allActions)
+
+        # determine index of highest value
+        bestIndex = allValues.argmax()
+
+        # get best action
+        bestAction = allActions[bestIndex, -2:]
+
+        return bestAction, allValues[bestIndex]
+
     def remember(self, transition):
         """place a transition in the memory"""
         # reduce eligibility for old memories

@@ -23,8 +23,8 @@ if __name__ == '__main__':
         (0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0), (0.02, 0.01), (-0.02, -0.02), (0.03, 0.01),
         (0.04, -0.04), (-0.04, 0.04))
 
-    trainingEpisodes = (int(1e1), int(2e1), int(5e1), int(8e1))
-    evaluationEpisodes = int(3e1)
+    trainingEpisodes = (int(1e1),)
+    evaluationEpisodes = int(2e1)
 
     networks = (Network.FulCon10,)
 
@@ -37,6 +37,7 @@ if __name__ == '__main__':
 
         # create the agent
         agent = Agent(QNeural(network=network, trainer=Trainer.Rprop, epochs=5))
+        # agent = Agent(QNeural(network=network))
 
         # train him
         trainResult = policyIterationV4(agent, environmentParameters, epsilons, trainEpisodes, evaluationEpisodes)
