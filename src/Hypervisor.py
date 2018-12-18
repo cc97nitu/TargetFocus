@@ -182,7 +182,7 @@ if __name__ == '__main__':
     # general policy iteration
     epsilons = (0.3,)
     # epsilons = (0.3, 0.5, 0.7, 0.9)
-    trainingEpisodes = int(2e0)
+    trainingEpisodes = int(2e1)
     evaluationEpisodes = int(2e0)
 
     environmentParameters = createEnvironmentParameters()

@@ -26,7 +26,7 @@ def plotTrainerComparison(results, optimizers):
 
 
 # fetch the data
-with open("../../dump/supervisedLearning/12.11.18/trainResults", 'rb') as file:
+with open("../../dump/supervisedLearning/trainResults", 'rb') as file:
     data = pickle.load(file)
 
 trainingResults = data.loc[(data['set'] == "training")]

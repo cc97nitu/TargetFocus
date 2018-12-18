@@ -47,25 +47,26 @@ for i in range(len(valIndices)):
     valInput[i] = allInput[valIndices[i]]
     valLabels[i] = allLabels[valIndices[i]]
 
-# get recommended actions from current predictions and updates
-trainRecommendedActions, valRecommendedActions = [], []
-
-for i in range(len(trainInput)):
-    recAction, value = agent.bestAction(trainInput[i, :4], isTensor=True)
-
-    if trainLabels[i].item() > value.item():
-        trainRecommendedActions.append(trainInput[i, -2:])
-    else:
-        trainRecommendedActions.append(recAction)
-
-for i in range(len(valInput)):
-    recAction, value = agent.bestAction(valInput[i, :4], isTensor=True)
-
-    if valLabels[i].item() > value.item():
-        valRecommendedActions.append(trainInput[i, -2:])
-    else:
-        valRecommendedActions.append(recAction)
+# # get recommended actions from current predictions and updates
+# trainRecommendedActions, valRecommendedActions = [], []
+#
+# for i in range(len(trainInput)):
+#     recAction, value = agent.bestAction(trainInput[i, :4], isTensor=True)
+#
+#     if trainLabels[i].item() > value.item():
+#         trainRecommendedActions.append(trainInput[i, -2:])
+#     else:
+#         trainRecommendedActions.append(recAction)
+#
+# for i in range(len(valInput)):
+#     recAction, value = agent.bestAction(valInput[i, :4], isTensor=True)
+#
+#     if valLabels[i].item() > value.item():
+#         valRecommendedActions.append(trainInput[i, -2:])
+#     else:
+#         valRecommendedActions.append(recAction)
 
 # save to disk
 with open("../dump/supervisedTrainingSet", 'wb') as file:
-    pickle.dump((trainInput, trainLabels, valInput, valLabels, trainRecommendedActions, valRecommendedActions,), file)
+    pickle.dump((trainInput, trainLabels, valInput, valLabels,), file)
+    # pickle.dump((trainInput, trainLabels, valInput, valLabels, trainRecommendedActions, valRecommendedActions,), file)
