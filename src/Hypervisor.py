@@ -172,6 +172,37 @@ def policyIterationV4(agent, environmentParameters, epsilons, trainingEpisodes, 
     return pd.concat(frames)
 
 
+def policyIterationV5(agent, environmentParameters, benchEnvironmentParameters, epsilons, trainingEpisodes, evaluationEpisodes):
+    """general policy iteration with different epsilon-greedy policies for different starting points and bench points"""
+    # returns data as pandas data frame in long-form
+
+    frames = []
+
+    # check performance before training
+    for parameters in benchEnvironmentParameters:
+        result = {"before={:.1f}".format(agent.epsilon): benchmark(agent, parameters, evaluationEpisodes)}
+        result = pd.melt(pd.DataFrame(result), var_name='policy', value_name='reward')
+        result.loc[:, 'environmentParameters'] = pd.Series(["{}".format(parameters) for i in range(len(result))])
+        frames.append(result)
+
+    # train under policies
+    for epsilon in epsilons:
+        print("epsilon={:.1f}".format(epsilon))
+        agent.epsilon = epsilon
+
+        # train for each starting point
+        agent = trainAgentOffline_random(agent, environmentParameters, trainingEpisodes)
+
+        # measure performance from each starting point
+        for parameters in benchEnvironmentParameters:
+            result = {"epsilon={:.1f}".format(agent.epsilon): benchmark(agent, parameters, evaluationEpisodes)}
+            result = pd.melt(pd.DataFrame(result), var_name='policy', value_name='reward')
+            result.loc[:, 'environmentParameters'] = pd.Series(["{}".format(parameters) for i in range(len(result))])
+            frames.append(result)
+
+    return pd.concat(frames)
+
+
 if __name__ == '__main__':
     # save current path to file
     path = os.path.dirname(os.path.abspath(__file__))
@@ -182,15 +213,16 @@ if __name__ == '__main__':
     # general policy iteration
     epsilons = (0.3,)
     # epsilons = (0.3, 0.5, 0.7, 0.9)
-    trainingEpisodes = int(2e1)
-    evaluationEpisodes = int(2e0)
+    trainingEpisodes = int(1e0)
+    evaluationEpisodes = int(1e0)
 
     environmentParameters = createEnvironmentParameters()
-    # environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0),)
-    # environmentParameters = ((0, 0.01), (0.01, 0), (-0.01, -0.03),)
+    benchEnvironmentParameters = (
+        (0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0), (0.02, 0.01), (-0.02, -0.02), (0.03, 0.01),
+        (0.04, -0.04), (-0.04, 0.04))
 
     # perf = policyIterationV3(agent, environmentParameters, epsilons, trainingEpisodes, evaluationEpisodes)
-    perf = policyIterationV4(agent, environmentParameters, epsilons, len(environmentParameters) * trainingEpisodes,
+    perf = policyIterationV5(agent, environmentParameters, benchEnvironmentParameters, epsilons, trainingEpisodes,
                              evaluationEpisodes)
 
     # # save to disk

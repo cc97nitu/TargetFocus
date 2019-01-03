@@ -9,7 +9,7 @@ from QValue import QNeural
 import FuncApprox.Network as Network
 import FuncApprox.Trainer as Trainer
 
-from Hypervisor import createEnvironmentParameters, policyIterationV3, policyIterationV4
+from Hypervisor import createEnvironmentParameters, policyIterationV5
 from Supervisor import spatialBenchmark
 
 if __name__ == '__main__':
@@ -23,8 +23,8 @@ if __name__ == '__main__':
         (0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0), (0.02, 0.01), (-0.02, -0.02), (0.03, 0.01),
         (0.04, -0.04), (-0.04, 0.04))
 
-    trainingEpisodes = (int(1e1),)
-    evaluationEpisodes = int(2e1)
+    trainingEpisodes = (int(1e0),)
+    evaluationEpisodes = int(1e0)
 
     networks = (Network.FulCon10,)
 
@@ -40,7 +40,7 @@ if __name__ == '__main__':
         # agent = Agent(QNeural(network=network))
 
         # train him
-        trainResult = policyIterationV4(agent, environmentParameters, epsilons, trainEpisodes, evaluationEpisodes)
+        trainResult = policyIterationV5(agent, environmentParameters, benchEnvironmentParameters, epsilons, trainEpisodes, evaluationEpisodes)
         trainResult.loc[:, 'network'] = pd.Series(["{}".format(network()) for i in range(len(trainResult))])
         trainResult.loc[:, 'trainingEpisodes'] = pd.Series([trainEpisodes for i in range(len(trainResult))])
         trainResults.append(trainResult)
