@@ -23,7 +23,7 @@ class Agent(object):
 
         # memory
         self.shortMemory = []
-        self.memorySize = 50
+        self.memorySize = 10
         self.traceDecay = traceDecay
 
         self.replayMemory = []
@@ -124,7 +124,8 @@ class Agent(object):
 
     def getDQN(self, shortMemory):
         """generates DQN update targets from short memory"""
-        sampleSize = self.memorySize // 5
+        # sampleSize = self.memorySize // 5  # use only with traces (= short memory larger than 5 entries)
+        sampleSize = 1
 
         if len(shortMemory) < sampleSize:
             sample = shortMemory
@@ -152,4 +153,4 @@ class Agent(object):
         labels = torch.tensor(labels)
         labels = torch.unsqueeze(labels, 1)
 
-        return netInput, labels
+        return netInput.float(), labels.float()  # casting added due to occasional occurrence of LongTensors <- why?

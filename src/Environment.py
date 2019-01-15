@@ -13,6 +13,10 @@ class Environment(object):
     """represents the environment"""
 
     def __init__(self, strengthA, strengthB):
+        # count how often the environment reacted
+        self.reactCountMax = 50
+        self.reactCount = 0
+
         # working directory
         workDir = "/dev/shm/"
 
@@ -69,6 +73,13 @@ class Environment(object):
 
         # calculate focus
         focus = torch.tensor((torch.tensor(dataSet.columnData[0]).mean(), torch.tensor(dataSet.columnData[2]).mean()))
+
+        # return terminal state if maximal amount of reactions exceeded
+        if not self.reactCount < self.reactCountMax:
+            print("forced abortion of episode, max steps exceeded")
+            return State(self.strengths, focus, terminalState=True), -100
+        else:
+            self.reactCount += 1
 
         # return state and reward
         distanceToGoal = torch.sqrt(torch.sum((focus - self.focusGoal) ** 2)).item()

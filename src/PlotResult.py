@@ -82,7 +82,7 @@ def boxPlotSpatial(data, network=None, trainEpisodes=None):
 
 if __name__ == '__main__':
     # fetch data
-    with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/benchmarkBench", 'rb') as file:
+    with open("../dump/policyIteration/epsilonGreedy/Sarsa(lambda)/benchmarkTrain", 'rb') as file:
 
         data = pickle.load(file)
 
