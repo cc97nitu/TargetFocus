@@ -23,7 +23,7 @@ if __name__ == '__main__':
         (0, 0.01), (0.01, 0), (-0.01, -0.03), (0, -0.04), (-0.04, 0), (0.02, 0.01), (-0.02, -0.02), (0.03, 0.01),
         (0.04, -0.04), (-0.04, 0.04))
 
-    trainingEpisodes = (int(1e1), int(2e1),)
+    trainingEpisodes = (int(1e1), int(5e1), int(1e2), int(1.5e2))
     evaluationEpisodes = int(2e1)
 
     networks = (Network.FulCon10,)
@@ -40,7 +40,7 @@ if __name__ == '__main__':
         # agent = Agent(QNeural(network=network))
 
         # train him
-        trainResult = policyIterationV5(agent, environmentParameters, benchEnvironmentParameters, epsilons, trainEpisodes, evaluationEpisodes)
+        trainResult = policyIterationV5(agent, environmentParameters, benchEnvironmentParameters, epsilons, trainEpisodes, evaluationEpisodes, online=False)
         trainResult.loc[:, 'network'] = pd.Series(["{}".format(network()) for i in range(len(trainResult))])
         trainResult.loc[:, 'trainingEpisodes'] = pd.Series([trainEpisodes for i in range(len(trainResult))])
         trainResults.append(trainResult)

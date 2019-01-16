@@ -23,7 +23,7 @@ class Agent(object):
 
         # memory
         self.shortMemory = []
-        self.memorySize = 10
+        self.memorySize = 1
         self.traceDecay = traceDecay
 
         self.replayMemory = []

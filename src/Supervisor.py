@@ -103,11 +103,11 @@ def trainAgent(agent, environmentParameters, trainingEpisodes):
 def trainAgent_random(agent, environmentParameters, trainingEpisodes):
     """train an agent and measure its performance"""
 
-    # select initial environment parameters
-    initialParameters = random.choice(environmentParameters)
-
     # learn from episodes
     for run in range(trainingEpisodes):
+        # select initial environment parameters
+        initialParameters = random.choice(environmentParameters)
+
         totalReward, steps = learnFromEpisode(agent, Environment(*initialParameters))
         agent.wipeShortMemory()
 
@@ -142,11 +142,11 @@ def trainAgentOffline(agent, environmentParameters, trainingEpisodes):
 def trainAgentOffline_random(agent, environmentParameters, trainingEpisodes):
     """train an agent and measure its performance"""
 
-    # select initial environment parameters
-    initialParameters = random.choice(environmentParameters)
-
     # learn from episodes
     for run in range(trainingEpisodes):
+        # select initial environment parameters
+        initialParameters = random.choice(environmentParameters)
+
         experienceEpisode(agent, Environment(*initialParameters))
         agent.wipeShortMemory()
 

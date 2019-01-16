@@ -172,7 +172,7 @@ def policyIterationV4(agent, environmentParameters, epsilons, trainingEpisodes, 
     return pd.concat(frames)
 
 
-def policyIterationV5(agent, environmentParameters, benchEnvironmentParameters, epsilons, trainingEpisodes, evaluationEpisodes):
+def policyIterationV5(agent, environmentParameters, benchEnvironmentParameters, epsilons, trainingEpisodes, evaluationEpisodes, online):
     """general policy iteration with different epsilon-greedy policies for different starting points and bench points"""
     # returns data as pandas data frame in long-form
 
@@ -191,7 +191,10 @@ def policyIterationV5(agent, environmentParameters, benchEnvironmentParameters, 
         agent.epsilon = epsilon
 
         # train for each starting point
-        agent = trainAgentOffline_random(agent, environmentParameters, trainingEpisodes)
+        if online:
+            agent = trainAgent_random(agent, environmentParameters, trainingEpisodes)
+        else:
+            agent = trainAgentOffline_random(agent, environmentParameters, trainingEpisodes)
 
         # measure performance from each starting point
         for parameters in benchEnvironmentParameters:
