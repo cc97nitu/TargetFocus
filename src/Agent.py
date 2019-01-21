@@ -8,7 +8,7 @@ from Struct import Action
 class Agent(object):
     """the agent"""
 
-    def __init__(self, q, epsilon=0.8, discount=0.9, learningRate=0.5, traceDecay=0.3):
+    def __init__(self, q, epsilon=0.8, discount=0.9, learningRate=1, traceDecay=0.3):
         # action set
         possibleChangesPerMagnet = (1e-2, 1e-3, 0, -1e-2, -1e-3)
         # possibleChangesPerMagnet = (0, -1e-2, -1e-3)
@@ -125,20 +125,21 @@ class Agent(object):
     def getDQN(self, shortMemory):
         """generates DQN update targets from short memory"""
         # sampleSize = self.memorySize // 5  # use only with traces (= short memory larger than 5 entries)
-        sampleSize = 1
-
-        if len(shortMemory) < sampleSize:
-            sample = shortMemory
-        else:
-            sample = random.sample(shortMemory, sampleSize)
-
-        # states
-        netInput = []
-        for memory in sample:
-            netInput.append(
-                torch.cat((memory.action.state.strengths, memory.action.state.focus, memory.action.changes)))
-
-        netInput = torch.stack(netInput)
+        # sampleSize = 1
+        #
+        # if len(shortMemory) < sampleSize:
+        #     sample = shortMemory
+        # else:
+        #     sample = random.sample(shortMemory, sampleSize)
+        #
+        # # states
+        # netInput = []
+        # for memory in sample:
+        #     netInput.append(
+        #         torch.cat((memory.action.state.strengths, memory.action.state.focus, memory.action.changes)))
+        #
+        # netInput = torch.stack(netInput)
+        sample = shortMemory  # try without sampling
 
         # updates for Q-values
         labels = []

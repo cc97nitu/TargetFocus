@@ -2,11 +2,12 @@
 
 
 class State(object):
-    __slots__ = ['strengths', 'focus', 'terminalState']
+    __slots__ = ['strengths', 'focus', 'image', 'terminalState']
 
-    def __init__(self, strengths, focus, terminalState=False):
+    def __init__(self, strengths, focus, image=None, terminalState=False):
         self.strengths = strengths
         self.focus = focus
+        self.image = image
         self.terminalState = terminalState
 
         return

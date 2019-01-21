@@ -40,7 +40,7 @@ def learnFromEpisode(agent, environment):
         state, reward = environment.react(action)
         agent.remember(Transition(action, reward, state))
 
-        agent.learn(*agent.getDQN(agent.shortMemory))
+        agent.learn(*agent.getSarsaLambda(agent.shortMemory))
 
         totalReward += reward
         steps += 1
