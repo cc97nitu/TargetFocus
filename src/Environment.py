@@ -12,7 +12,19 @@ from Struct import State, Action
 class Environment(object):
     """represents the environment"""
 
-    def __init__(self, strengthA, strengthB):
+    def __init__(self, strengthA, strengthB, resolutionTarget, resolutionOversize):
+        """
+        Constructs an environment
+        :param strengthA: initial horizontal deflection
+        :param strengthB: initial vertical deflection
+        :param resolutionTarget: pixels used for target
+        :param resolutionOversize: pixels used for space between target border and image border
+        """
+        self.dataSet = None
+        # target image resolution
+        self.resolutionTarget = resolutionTarget  # size of the image in pixel
+        self.resolutionOversize = resolutionOversize  # black pixels between the target border and the image border
+
         # count how often the environment reacted
         self.reactCountMax = 50
         self.reactCount = 0
@@ -45,7 +57,9 @@ class Environment(object):
         self.strengths = torch.tensor((strengthA, strengthB), dtype=torch.float)
 
         # get initial focus / initial state from them
-        initialState = self.react(Action(State(torch.tensor((strengthA, strengthB), dtype=torch.float), torch.zeros(2, dtype=torch.float)), torch.zeros(2, dtype=torch.float)))[0]  # action is a dummy action
+        initialState = self.react(
+            Action(State(torch.tensor((strengthA, strengthB), dtype=torch.float), torch.zeros(2, dtype=torch.float)),
+                   torch.zeros(2, dtype=torch.float)))[0]  # action is a dummy action
 
         if initialState.terminalState:
             raise ValueError("starting in terminal state")
@@ -71,13 +85,18 @@ class Environment(object):
         dataSet = SDDS(0)
         dataSet.load(self.dir + "/run.out")
 
+        self.dataSet = dataSet
+
         # calculate focus
         focus = torch.tensor((torch.tensor(dataSet.columnData[0]).mean(), torch.tensor(dataSet.columnData[2]).mean()))
+
+        # calculate image
+        image = self.__calcImage(dataSet)
 
         # return terminal state if maximal amount of reactions exceeded
         if not self.reactCount < self.reactCountMax:
             print("forced abortion of episode, max steps exceeded")
-            return State(self.strengths, focus, terminalState=True), -100
+            return State(self.strengths, focus, image=image, terminalState=True), -100
         else:
             self.reactCount += 1
 
@@ -85,11 +104,11 @@ class Environment(object):
         distanceToGoal = torch.sqrt(torch.sum((focus - self.focusGoal) ** 2)).item()
 
         if distanceToGoal < self.acceptance:
-            return State(self.strengths, focus, terminalState=True), 10
+            return State(self.strengths, focus, image=image, terminalState=True), 10
         elif torch.sqrt(torch.sum(focus ** 2)).item() >= self.targetRadius:
-            return State(self.strengths, focus, terminalState=True), -100
+            return State(self.strengths, focus, image=image, terminalState=True), -100
         else:
-            return State(self.strengths, focus), -1
+            return State(self.strengths, focus, image=image), -1
 
     def __createLattice(self, strengths):
         """creates the lattice.lte file"""
@@ -107,6 +126,39 @@ class Environment(object):
 
             return
 
+    def __calcImage(self, elegantOutput):
+        """calculates image on target from particle coordinates"""
+        xCoordinate, yCoordinate = torch.tensor(elegantOutput.columnData[0], dtype=torch.float).view(-1), torch.tensor(elegantOutput.columnData[2], dtype=torch.float).view(-1)
+
+        # rescale coordinates unit to [target diameter / number of pixels used to display target]
+        xCoordinate *= (self.resolutionTarget - self.resolutionOversize) / (2 * self.targetRadius)
+        yCoordinate *= (self.resolutionTarget - self.resolutionOversize) / (2 * self.targetRadius)
+
+        image = torch.zeros(self.resolutionTarget + self.resolutionOversize, self.resolutionTarget + self.resolutionOversize)
+
+        countSkipped = 0
+
+        # iterate over particles
+        for particle in range(len(xCoordinate)):
+            if torch.sqrt(xCoordinate[particle] ** 2 + yCoordinate[particle] ** 2) > (self.resolutionTarget - self.resolutionOversize) / 2:
+                # particle not on target
+                countSkipped += 1
+
+                continue
+
+            xPixel = int(xCoordinate[particle]) + self.resolutionTarget // 2
+            yPixel = int(yCoordinate[particle]) + self.resolutionTarget // 2
+
+            image[xPixel][yPixel] += 1
+
+        print("number of particles {}".format(len(xCoordinate)))
+        print("skipped {} particles".format(countSkipped))
+
+        # rescale image brightness
+        image *= 255 / image.max()
+
+        return image
+
     def __del__(self):
         """clean up before destruction"""
         rmtree(self.dir)
@@ -115,8 +167,27 @@ class Environment(object):
 
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    import numpy as np
+
     torch.set_default_tensor_type(torch.FloatTensor)
 
-    env = Environment(0, 0)
+    resolutionTarget, resolutionOversize = 80, 20
+
+    env = Environment(0, 0, resolutionTarget, resolutionOversize)
     state = env.initialState
-    action = Action(state, torch.tensor((0.01, 0.01)))
+    action = Action(state, torch.tensor((0.046, -0.046)))
+    state = env.react(action)
+
+    # plot the image
+    image = state[0].image
+    fig, axes = plt.subplots(figsize=(12, 8))
+
+    # make the axis denotation
+    scaling = (env.resolutionTarget + env.resolutionOversize) / env.resolutionTarget
+    notation = np.linspace(-env.targetRadius * scaling, env.targetRadius * scaling, env.resolutionTarget + env.resolutionOversize, endpoint=True)
+
+    im = axes.pcolormesh(notation, notation, image.transpose_(0, 1),
+                         cmap='gray')
+
+    plt.show()

@@ -1,58 +1,89 @@
-import abc
+from itertools import product
+
 import torch
 
-import FuncApprox.Trainer as Trainer
-from FuncApprox.Network import FulCon1
+from Environment import Environment
+from Struct import Action
+from FuncApprox.Network import FulConI1
 
 
-class QFunction(object, metaclass=abc.ABCMeta):
-    """abstract version of the action-value function"""
+class QValue(object):
+    """Implementation of the value function.
+    Acts as a wrapper for the neural network. All data conversion from Struct objects to input/output tensors is handled here."""
 
-    @abc.abstractmethod
-    def evaluate(self, action):
-        """evaluate an action"""
-        pass
-
-    @abc.abstractmethod
-    def update(self, action, update):
-        """update value estimate for action"""
-        pass
-
-
-class QNeural(QFunction):
-    """constitute the Q-Function with a neural network"""
-
-    def __init__(self, network=None, trainer=None, epochs=20):
+    def __init__(self, network, resolution, numberOfActions, trainer=None, epochs=None):
+        """
+        Constructor
+        :param network: network to use
+        :param resolution: resolution of the image representing the state
+        :param numberOfActions: number of actions to be evaluated, matches number of output neurons
+        :param trainer: trainer to use for training
+        :param epochs: number of epochs used for supervised learning on a single training call
+        """
         # initialize network
-        if network is not None:
-            self.network = network()
-        else:
-            self.network = FulCon1()
+        self.network = network(resolution, numberOfActions)
 
         # initialize trainer
         if trainer is not None:
+            if epochs is None:
+                raise ValueError("epochs cannot be empty for training")
+
             self.trainer = trainer(self.network, epochs=epochs)
         else:
-            self.trainer = Trainer.Adam(self.network, epochs=epochs)
+            self.trainer = None
+
         return
 
-    def evaluate(self, action):
-        """get Q-value for action"""
-        netInput = torch.cat((action.state.strengths, action.state.focus, action.changes)).unsqueeze(0)
+    def getActionValues(self, state):
+        """
+        Get Q(s, a) for all actions a when being in state s
+        :param state: current state
+        :return: tensor consisting of Q(s, a)
+        """
+        netInput = state.image.view(-1)
 
-        return self.network(netInput).item()
+        return self.network(netInput)
 
-    def evaluateMax(self, state, actionSet):
-        netInput = []
-        for action in actionSet:
-            netInput.append(torch.cat((state.strengths, state.focus, action)))
+    def getBestAction(self, state, changesSet):
+        """
+        Get the networks suggestion when being in state
+        :param state: current state
+        :param changesSet: set of possible changes (= actions)
+        :return: Action object
+        """
+        bestIndex = self.getActionValues(state).argmax()
 
-        netInput = torch.stack(netInput)
+        return Action(state, changesSet[bestIndex])
 
-        return self.network(netInput).max().item()
+    def train(self, samples, labels):
+        """
+        Train the neural network
+        :param samples: input
+        :param labels: designated output
+        :return: None
+        """
+        self.trainer.applyUpdate(samples, labels)
 
-    def evaluateBunch(self, bunch):
-        return self.network(bunch)
+        return
 
-    def update(self, action, update):
-        pass
+
+if __name__ == '__main__':
+    # target resolution
+    resolutionTarget, resolutionOversize = 80, 20
+    resolution = resolutionTarget + resolutionOversize
+
+    # action set
+    possibleChangesPerMagnet = (1e-2, 1e-3, 0, -1e-2, -1e-3)
+    actionSet = tuple(torch.tensor((x, y), dtype=torch.float) for x, y in
+                      product(possibleChangesPerMagnet, possibleChangesPerMagnet))
+
+    # environment and dummy state
+    env = Environment(0, 0, resolutionTarget, resolutionOversize)
+    state = env.initialState
+    action = Action(state, torch.tensor((0.01, -0.01)))
+    state, reward = env.react(action)
+
+    # initialize value function
+    valueFunction = QValue(FulConI1, resolution, len(actionSet))
+
+
