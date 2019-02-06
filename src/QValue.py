@@ -1,10 +1,6 @@
-from itertools import product
-
 import torch
 
-from Environment import Environment
 from Struct import Action
-from FuncApprox.Network import FulConI1
 
 
 class QValue(object):
@@ -95,15 +91,22 @@ class QValue(object):
                 if torch.equal(transition.action.changes, self.actionSet[i]):
                     # update current prediction according to Q-learning
 
-                    prediction[i] = prediction[i] + learningRate * (transition.reward + discount * maxQNext - prediction[i])
+                    prediction[i] = prediction[i] + learningRate * (
+                                transition.reward + discount * maxQNext - prediction[i])
                     break
 
             labels.append(prediction)
 
-        return torch.stack(samples).detach(), torch.stack(labels).detach()  # detach from their graphs so gradients can be calculated properly during training
+        return torch.stack(samples).detach(), torch.stack(
+            labels).detach()  # detach from their graphs so gradients can be calculated properly during training
 
 
 if __name__ == '__main__':
+    from itertools import product
+
+    from Environment import Environment
+    from FuncApprox.Network import FulConI1
+
     from Struct import Transition
     from FuncApprox.Trainer import SGD
 
@@ -130,7 +133,5 @@ if __name__ == '__main__':
     nextState, reward = env.react(action)
     transition = Transition(action, reward, nextState)
 
-    # generate learning targets
-    samples, labels = valueFunction.genQTargets([transition, transition, transition], 0.5, 0.9)
-
-
+    # try to learn from experience
+    valueFunction.train(*valueFunction.genQTargets([transition, transition, transition], 0.5, 0.9))

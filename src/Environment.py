@@ -1,9 +1,10 @@
 import os
 import subprocess as sp
-import torch
-
+from itertools import product
 from time import time
 from shutil import copy, rmtree
+
+import torch
 from sdds import SDDS
 
 from Struct import State, Action
@@ -128,19 +129,22 @@ class Environment(object):
 
     def __calcImage(self, elegantOutput):
         """calculates image on target from particle coordinates"""
-        xCoordinate, yCoordinate = torch.tensor(elegantOutput.columnData[0], dtype=torch.float).view(-1), torch.tensor(elegantOutput.columnData[2], dtype=torch.float).view(-1)
+        xCoordinate, yCoordinate = torch.tensor(elegantOutput.columnData[0], dtype=torch.float).view(-1), torch.tensor(
+            elegantOutput.columnData[2], dtype=torch.float).view(-1)
 
         # rescale coordinates unit to [target diameter / number of pixels used to display target]
         xCoordinate *= (self.resolutionTarget - self.resolutionOversize) / (2 * self.targetRadius)
         yCoordinate *= (self.resolutionTarget - self.resolutionOversize) / (2 * self.targetRadius)
 
-        image = torch.zeros(self.resolutionTarget + self.resolutionOversize, self.resolutionTarget + self.resolutionOversize)
+        image = torch.zeros(self.resolutionTarget + self.resolutionOversize,
+                            self.resolutionTarget + self.resolutionOversize)
 
         countSkipped = 0
 
         # iterate over particles
         for particle in range(len(xCoordinate)):
-            if torch.sqrt(xCoordinate[particle] ** 2 + yCoordinate[particle] ** 2) > (self.resolutionTarget - self.resolutionOversize) / 2:
+            if torch.sqrt(xCoordinate[particle] ** 2 + yCoordinate[particle] ** 2) > (
+                    self.resolutionTarget - self.resolutionOversize) / 2:
                 # particle not on target
                 countSkipped += 1
 
@@ -151,8 +155,8 @@ class Environment(object):
 
             image[xPixel][yPixel] += 1
 
-        print("number of particles {}".format(len(xCoordinate)))
-        print("skipped {} particles".format(countSkipped))
+        # print("number of particles {}".format(len(xCoordinate)))
+        # print("skipped {} particles".format(countSkipped))
 
         # rescale image brightness
         image *= 255 / image.max()
@@ -164,6 +168,27 @@ class Environment(object):
         rmtree(self.dir)
 
         return
+
+
+def createEnvironmentParameters():
+    """
+    Generate a list of valid initialization parameters for Environment instances
+    :return: list of valid environment parameter tuples
+    """
+    # deflection range to search within
+    defRange = torch.arange(-0.05, 0.05, 0.01)
+
+    # find eligible starting points
+    eligibleEnvironmentParameters = []
+
+    for x, y in product(defRange, defRange):
+        try:
+            env = Environment(x, y, 80, 20)  # pixel amounts are not of interest
+            eligibleEnvironmentParameters.append((x, y))
+        except ValueError:
+            continue
+
+    return tuple(eligibleEnvironmentParameters)
 
 
 if __name__ == '__main__':
@@ -185,7 +210,8 @@ if __name__ == '__main__':
 
     # make the axis denotation
     scaling = (env.resolutionTarget + env.resolutionOversize) / env.resolutionTarget
-    notation = np.linspace(-env.targetRadius * scaling, env.targetRadius * scaling, env.resolutionTarget + env.resolutionOversize, endpoint=True)
+    notation = np.linspace(-env.targetRadius * scaling, env.targetRadius * scaling,
+                           env.resolutionTarget + env.resolutionOversize, endpoint=True)
 
     im = axes.pcolormesh(notation, notation, image.transpose_(0, 1),
                          cmap='gray')
