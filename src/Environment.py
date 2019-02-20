@@ -41,6 +41,8 @@ class Environment(object):
         targetDiameter = 3e-2  # diameter of target
         self.targetRadius = targetDiameter / 2
 
+        self.distanceToGoal = 0  # distance to goal gets updated upon call of react()
+
         # initial strengths of magnets
         self.strengths = torch.tensor((strengthA, strengthB), dtype=torch.float)
 
@@ -56,6 +58,7 @@ class Environment(object):
 
     def react(self, action):
         """simulate response to chosen action"""
+
         # update magnet strengths according to chosen action
         self.strengths = self.strengths + action.changes
 
@@ -82,14 +85,16 @@ class Environment(object):
             self.reactCount += 1
 
         # return state and reward
-        distanceToGoal = torch.sqrt(torch.sum((focus - self.focusGoal) ** 2)).item()
+        newDistanceToGoal = torch.sqrt(torch.sum((focus - self.focusGoal) ** 2)).item()
+        distanceChange = newDistanceToGoal - self.distanceToGoal
+        self.distanceToGoal = newDistanceToGoal
 
-        if distanceToGoal < self.acceptance:
+        if newDistanceToGoal < self.acceptance:
             return State(self.strengths, focus, terminalState=True), 10
         elif torch.sqrt(torch.sum(focus ** 2)).item() >= self.targetRadius:
             return State(self.strengths, focus, terminalState=True), -100
         else:
-            return State(self.strengths, focus), -1
+            return State(self.strengths, focus), self.__reward(distanceChange, 10 ** 3)
 
     def __createLattice(self, strengths):
         """creates the lattice.lte file"""
@@ -106,6 +111,9 @@ class Environment(object):
             lattice.write(content)
 
             return
+
+    def __reward(self, distanceChange, scale):
+        return -scale * (10 ** 5 * distanceChange ** 3 + distanceChange)
 
     def __del__(self):
         """clean up before destruction"""

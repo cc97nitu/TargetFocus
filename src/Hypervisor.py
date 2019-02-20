@@ -225,8 +225,9 @@ if __name__ == '__main__':
         (0.04, -0.04), (-0.04, 0.04))
 
     # perf = policyIterationV3(agent, environmentParameters, epsilons, trainingEpisodes, evaluationEpisodes)
+    print("beginning to learn")
     perf = policyIterationV5(agent, environmentParameters, benchEnvironmentParameters, epsilons, trainingEpisodes,
-                             evaluationEpisodes)
+                             evaluationEpisodes, online=True)
 
     # # save to disk
     # os.chdir(path)
