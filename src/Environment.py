@@ -3,6 +3,7 @@ import subprocess as sp
 import torch
 
 from time import time
+from itertools import product
 from shutil import copy, rmtree
 from sdds import SDDS
 
@@ -47,7 +48,9 @@ class Environment(object):
         self.strengths = torch.tensor((strengthA, strengthB), dtype=torch.float)
 
         # get initial focus / initial state from them
-        initialState = self.react(Action(State(torch.tensor((strengthA, strengthB), dtype=torch.float), torch.zeros(2, dtype=torch.float)), torch.zeros(2, dtype=torch.float)))[0]  # action is a dummy action
+        initialState = self.react(
+            Action(State(torch.tensor((strengthA, strengthB), dtype=torch.float), torch.zeros(2, dtype=torch.float)),
+                   torch.zeros(2, dtype=torch.float)))[0]  # action is a dummy action
 
         if initialState.terminalState:
             raise ValueError("starting in terminal state")
@@ -122,9 +125,33 @@ class Environment(object):
         return
 
 
+class EligibleEnvironmentParameters(list):
+    def __init__(self, low, high, step):
+        list.__init__(self)
+        self.__createEnvironmentParameters(low, high, step)
+
+        return
+
+    def __createEnvironmentParameters(self, low, high, step):
+        # deflection range
+        defRange = torch.arange(low, high, step)
+
+        # find eligible starting points
+        for x, y in product(defRange, defRange):
+            try:
+                Environment(x, y)
+                self.append((x, y))
+            except ValueError:
+                continue
+
+        return
+
+
 if __name__ == '__main__':
     torch.set_default_tensor_type(torch.FloatTensor)
 
     env = Environment(0, 0)
     state = env.initialState
     action = Action(state, torch.tensor((0.01, 0.01)))
+
+    eliParam = EligibleEnvironmentParameters(-0.05, 0.05, 0.01)
