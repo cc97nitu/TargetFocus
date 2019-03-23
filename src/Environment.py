@@ -22,7 +22,7 @@ class Environment(object):
         :param strengthB:   initial vertical deflection
         """
         # reward on success / penalty on failure
-        self.bounty = 10
+        self.bounty = 100
         self.penalty = -100
 
         # count how often the environment reacted
@@ -119,7 +119,11 @@ class Environment(object):
             return State(self.strengths, relCoord), self.__reward(distanceChange, 10 ** 3)
 
     def __createLattice(self, strengths):
-        """creates the lattice.lte file"""
+        """
+        Creates the lattice.lte file.
+        :param strengths: deflection angles for the steering magnets
+        :return: None
+        """
         strengthA, strengthB = strengths[0].item(), strengths[1].item()
 
         os.chdir(self.dir)
@@ -135,6 +139,12 @@ class Environment(object):
             return
 
     def __reward(self, distanceChange, scale):
+        """
+        Gives reward according to the change in distance to goal in the latest step.
+        :param distanceChange: change in distance to goal
+        :param scale: scalar value to adjust reward size
+        :return: reward
+        """
         return -scale * (10 ** 5 * distanceChange ** 3 + distanceChange)
 
     def __del__(self):

@@ -6,8 +6,9 @@ from Struct import Action
 
 
 class Agent(object):
-    """the agent"""
-
+    """
+    Represents the agent.
+    """
     def __init__(self, q, epsilon, discount, learningRate, memorySize, traceDecay, targetGenerator):
         # action set
         possibleChangesPerMagnet = (1e-2, 1e-3, 0, -1e-3, -1e-2)
