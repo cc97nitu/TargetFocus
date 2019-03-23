@@ -11,9 +11,20 @@ from Struct import State, Action
 
 
 class Environment(object):
-    """represents the environment"""
+    """
+    Simulated Environment.
+    """
 
     def __init__(self, strengthA, strengthB):
+        """
+        Constructor.
+        :param strengthA: initial horizontal deflection
+        :param strengthB:   initial vertical deflection
+        """
+        # reward on success / penalty on failure
+        self.bounty = 10
+        self.penalty = -100
+
         # count how often the environment reacted
         self.reactCountMax = 50
         self.reactCount = 0
@@ -60,7 +71,11 @@ class Environment(object):
         return
 
     def react(self, action):
-        """simulate response to chosen action"""
+        """
+        Simulate response to an action performed by the agent.
+        :param action:  action to respond to
+        :return: reward and new state
+        """
 
         # update magnet strengths according to chosen action
         self.strengths = self.strengths + action.changes
@@ -77,8 +92,9 @@ class Environment(object):
         dataSet = SDDS(0)
         dataSet.load(self.dir + "/run.out")
 
-        # calculate focus
+        # calculate relative distance between beam focus and focus goal
         focus = torch.tensor((torch.tensor(dataSet.columnData[0]).mean(), torch.tensor(dataSet.columnData[2]).mean()))
+        relCoord = focus - self.focusGoal
 
         # return terminal state if maximal amount of reactions exceeded
         if not self.reactCount < self.reactCountMax:
@@ -88,16 +104,19 @@ class Environment(object):
             self.reactCount += 1
 
         # return state and reward
-        newDistanceToGoal = torch.sqrt(torch.sum((focus - self.focusGoal) ** 2)).item()
+        newDistanceToGoal = torch.sqrt(torch.sum(relCoord ** 2)).item()
         distanceChange = newDistanceToGoal - self.distanceToGoal
         self.distanceToGoal = newDistanceToGoal
 
         if newDistanceToGoal < self.acceptance:
-            return State(self.strengths, focus, terminalState=True), 10
+            # goal reached
+            return State(self.strengths, relCoord, terminalState=True), self.bounty
         elif torch.sqrt(torch.sum(focus ** 2)).item() >= self.targetRadius:
-            return State(self.strengths, focus, terminalState=True), -100
+            # beam spot left target
+            return State(self.strengths, relCoord, terminalState=True), self.penalty
         else:
-            return State(self.strengths, focus), self.__reward(distanceChange, 10 ** 3)
+            # reward according to distanceChange
+            return State(self.strengths, relCoord), self.__reward(distanceChange, 10 ** 3)
 
     def __createLattice(self, strengths):
         """creates the lattice.lte file"""
@@ -126,7 +145,17 @@ class Environment(object):
 
 
 class EligibleEnvironmentParameters(list):
+    """
+    List containing valid initial environment parameters.
+    """
+
     def __init__(self, low, high, step):
+        """
+        Constructor.
+        :param low: lower boundary for deflection
+        :param high: upper boundary for deflection
+        :param step: step size
+        """
         list.__init__(self)
         self.__createEnvironmentParameters(low, high, step)
 

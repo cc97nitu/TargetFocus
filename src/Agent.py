@@ -8,10 +8,9 @@ from Struct import Action
 class Agent(object):
     """the agent"""
 
-    def __init__(self, q, epsilon=0.8, discount=0.9, learningRate=0.5, traceDecay=0.3):
+    def __init__(self, q, epsilon, discount, learningRate, memorySize, traceDecay, targetGenerator):
         # action set
-        possibleChangesPerMagnet = (1e-2, 1e-3, 0, -1e-2, -1e-3)
-        # possibleChangesPerMagnet = (0, -1e-2, -1e-3)
+        possibleChangesPerMagnet = (1e-2, 1e-3, 0, -1e-3, -1e-2)
         self.actionSet = tuple(torch.tensor((x, y), dtype=torch.float) for x, y in
                                product(possibleChangesPerMagnet, possibleChangesPerMagnet))
 
@@ -23,7 +22,7 @@ class Agent(object):
 
         # memory
         self.shortMemory = []
-        self.memorySize = 1
+        self.memorySize = memorySize
         self.traceDecay = traceDecay
 
         self.replayMemory = []
@@ -32,6 +31,7 @@ class Agent(object):
         # learning
         self.discount = discount
         self.learningRate = learningRate
+        self.targetGenerator = targetGenerator
 
         return
 
@@ -42,7 +42,7 @@ class Agent(object):
             # greedy selection
             # find best action
             allActions = torch.stack(
-                tuple(torch.cat((state.strengths, state.focus, changes)) for changes in self.actionSet))
+                tuple(torch.cat((state.strengths, state.relCoord, changes)) for changes in self.actionSet))
             evaluation = self.q.evaluateBunch(allActions)
             action = Action(state, self.actionSet[evaluation.argmax()])
             return action
@@ -55,7 +55,7 @@ class Agent(object):
         # get value for every possible action
         if not isTensor:
             allActions = torch.stack(
-                tuple(torch.cat((state.strengths, state.focus, changes)) for changes in self.actionSet))
+                tuple(torch.cat((state.strengths, state.relCoord, changes)) for changes in self.actionSet))
         else:
             allActions = torch.stack(
                 tuple(torch.cat((state, changes)) for changes in self.actionSet))
@@ -93,64 +93,7 @@ class Agent(object):
         self.shortMemory = []
         return
 
-    def learn(self, netInput, labels):
+    def learn(self, memory):
         """train Q-function"""
-        self.q.trainer.applyUpdate(netInput, labels)
+        self.q.trainer.applyUpdate(*self.targetGenerator(self, memory))
         return
-
-    def getSarsaLambda(self, shortMemory):
-        """generate TD lambda update targets from short memory"""
-        # get temporal difference error
-        delta = shortMemory[-1].reward + self.discount * self.q.evaluate(
-            self.takeAction(shortMemory[-1].nextState)) - self.q.evaluate(shortMemory[-1].action)
-
-        # states
-        netInput = []
-        for memory in shortMemory:
-            netInput.append(
-                torch.cat((memory.action.state.strengths, memory.action.state.focus, memory.action.changes)))
-
-        netInput = torch.stack(netInput)
-
-        # updates for every state in memory with respect to its eligibility
-        labels = []
-        for memory in shortMemory:
-            labels.append(self.learningRate * delta * memory.action.eligibility)
-
-        labels = torch.tensor(labels)
-        labels = torch.unsqueeze(labels, 1)
-
-        return netInput, labels
-
-    def getDQN(self, shortMemory):
-        """generates DQN update targets from short memory"""
-        # sampleSize = self.memorySize // 5  # use only with traces (= short memory larger than 5 entries)
-        sampleSize = 1
-
-        if len(shortMemory) < sampleSize:
-            sample = shortMemory
-        else:
-            sample = random.sample(shortMemory, sampleSize)
-
-        # states
-        netInput = []
-        for memory in sample:
-            netInput.append(
-                torch.cat((memory.action.state.strengths, memory.action.state.focus, memory.action.changes)))
-
-        netInput = torch.stack(netInput)
-
-        # updates for Q-values
-        labels = []
-        for memory in sample:
-            if memory.nextState:
-                labels.append(memory.reward)
-            else:
-                currentQ = self.q.evaluate(memory.action)
-                labels.append(currentQ + self.learningRate * (
-                            self.discount * self.q.evaluateMax(memory.nextState, self.actionSet) - currentQ))
-
-        labels = torch.tensor(labels)
-        labels = torch.unsqueeze(labels, 1)
-
-        return netInput.float(), labels.float()  # casting added due to occasional occurrence of LongTensors <- why?

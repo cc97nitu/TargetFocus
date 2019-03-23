@@ -2,17 +2,17 @@
 
 
 class State(object):
-    __slots__ = ['strengths', 'focus', 'terminalState']
+    __slots__ = ['strengths', 'relCoord', 'terminalState']
 
-    def __init__(self, strengths, focus, terminalState=False):
+    def __init__(self, strengths, relCoord, terminalState=False):
         self.strengths = strengths
-        self.focus = focus
+        self.relCoord = relCoord
         self.terminalState = terminalState
 
         return
 
     def __repr__(self):
-        return "State(strengths={}, focus={})".format(self.strengths, self.focus)
+        return "State(strengths={}, focus={})".format(self.strengths, self.relCoord)
 
     def __bool__(self):
         return self.terminalState
