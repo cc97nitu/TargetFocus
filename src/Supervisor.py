@@ -37,7 +37,7 @@ class Supervisor(object):
                 self.agent.remember(Transition(action, reward, state))
 
             if learnOnline:
-                self.agent.learn(agent.shortMemory)
+                self.agent.learn(self.agent.shortMemory)
 
             steps += 1
             rewards.append(reward)
@@ -47,7 +47,7 @@ class Supervisor(object):
 
         return steps, rewards, success
 
-    def benchmark(self, environmentParameters, numEpisodes):
+    def benchmark(self, environmentParameters, numEpisodes, untrained=False):
         """
         Let the agent start from different initial positions and observe it's performance.
         :param environmentParameters: list of initial positions
@@ -58,14 +58,15 @@ class Supervisor(object):
         results = dict()
 
         # add columns containing the agent's attributes
-        results["epsilon"] = pd.Series(self.agent.epsilon, index=[i for i in range(0, numEpisodes)])
-        results["learningRate"] = pd.Series(self.agent.learningRate, index=[i for i in range(0, numEpisodes)])
-        results["discount"] = pd.Series(self.agent.discount, index=[i for i in range(0, numEpisodes)])
-        results["traceDecay"] = pd.Series(self.agent.traceDecay, index=[i for i in range(0, numEpisodes)])
-        results["memorySize"] = pd.Series(self.agent.memorySize, index=[i for i in range(0, numEpisodes)])
-        results["network"] = pd.Series(self.agent.q.network, index=[i for i in range(0, numEpisodes)])
+        results["untrained"] = pd.Series(untrained, index=[i for i in range(0, numEpisodes * len(environmentParameters))])
+        results["epsilon"] = pd.Series(self.agent.epsilon, index=[i for i in range(0, numEpisodes * len(environmentParameters))])
+        results["learningRate"] = pd.Series(self.agent.learningRate, index=[i for i in range(0, numEpisodes * len(environmentParameters))])
+        results["discount"] = pd.Series(self.agent.discount, index=[i for i in range(0, numEpisodes * len(environmentParameters))])
+        results["traceDecay"] = pd.Series(self.agent.traceDecay, index=[i for i in range(0, numEpisodes * len(environmentParameters))])
+        results["memorySize"] = pd.Series(self.agent.memorySize, index=[i for i in range(0, numEpisodes * len(environmentParameters))])
+        results["network"] = pd.Series(self.agent.q.network, index=[i for i in range(0, numEpisodes * len(environmentParameters))])
         results["targetGenerator"] = pd.Series(self.agent.targetGenerator.__name__,
-                                               index=[i for i in range(0, numEpisodes)])
+                                               index=[i for i in range(0, numEpisodes * len(environmentParameters))])
 
         # do the actual benchmark
         environmentParametersList, stepList, returnList, successList = [], [], [], []
@@ -81,7 +82,7 @@ class Supervisor(object):
 
         results["environmentParameters"] = pd.Series(environmentParametersList)
         results["steps"] = pd.Series(stepList)
-        results["returns"] = pd.Series(returnList)
+        results["return"] = pd.Series(returnList)
         results["success"] = pd.Series(successList)
 
         return pd.DataFrame(results)
