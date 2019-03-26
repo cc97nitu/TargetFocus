@@ -1,5 +1,6 @@
 import os
 import subprocess as sp
+import threading
 import torch
 
 from time import time
@@ -34,7 +35,7 @@ class Environment(object):
 
         # create temporary storage
         while True:
-            dir = str(int(1e7 * time()))
+            dir = str(threading.get_ident()) + "_" + str(int(1e7 * time()))
 
             if not os.path.exists(workDir + dir):
                 os.makedirs(workDir + dir)
