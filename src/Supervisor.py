@@ -95,7 +95,7 @@ class Supervisor(object):
 
         return steps, rewards, success
 
-    def benchmark(self, environmentParameters, numEpisodes, untrained=False):
+    def benchmark(self, environmentParameters, numEpisodes, trainEpisodes=False):
         """
         Let the agent start from different initial positions and observe it's performance.
         :param environmentParameters: list of initial positions
@@ -106,7 +106,7 @@ class Supervisor(object):
         results = dict()
 
         # add columns containing the agent's attributes
-        results["untrained"] = pd.Series(untrained,
+        results["trainEpisodes"] = pd.Series(trainEpisodes,
                                          index=[i for i in range(0, numEpisodes * len(environmentParameters))])
         results["epsilon"] = pd.Series(self.agent.epsilon,
                                        index=[i for i in range(0, numEpisodes * len(environmentParameters))])
@@ -142,7 +142,7 @@ class Supervisor(object):
 
         return pd.DataFrame(results)
 
-    def benchmarkMultiThreaded(self, environmentParameters, numEpisodes, untrained=False):
+    def benchmarkMultiThreaded(self, environmentParameters, numEpisodes, trainEpisodes):
         """
         Let the agent start from different initial positions and observe it's performance.
         :param environmentParameters: list of initial positions
@@ -153,8 +153,8 @@ class Supervisor(object):
         results = dict()
 
         # add columns containing the agent's attributes
-        results["untrained"] = pd.Series(untrained,
-                                         index=[i for i in range(0, numEpisodes * len(environmentParameters))])
+        results["trainEpisodes"] = pd.Series(trainEpisodes,
+                                             index=[i for i in range(0, numEpisodes * len(environmentParameters))])
         results["epsilon"] = pd.Series(self.agent.epsilon,
                                        index=[i for i in range(0, numEpisodes * len(environmentParameters))])
         results["learningRate"] = pd.Series(self.agent.learningRate,
