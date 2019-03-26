@@ -2,13 +2,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-def boxPlot(data, x, y, **kwargs):
+def boxPlot(data, x, y, hue=None, **kwargs):
     """plot results from spatial benchmark"""
     # create figure
     fig, ax = plt.subplots()
 
     # seaborn boxplot
-    ax = sns.boxplot(x=x, y=y, data=data)
+    ax = sns.boxplot(x=x, y=y, hue=hue, data=data)
 
     # add some annotation
     if "supTitle" in kwargs.keys():
