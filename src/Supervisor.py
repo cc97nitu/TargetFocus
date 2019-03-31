@@ -107,7 +107,7 @@ class Supervisor(object):
 
         # add columns containing the agent's attributes
         results["trainEpisodes"] = pd.Series(trainEpisodes,
-                                         index=[i for i in range(0, numEpisodes * len(environmentParameters))])
+                                             index=[i for i in range(0, numEpisodes * len(environmentParameters))])
         results["epsilon"] = pd.Series(self.agent.epsilon,
                                        index=[i for i in range(0, numEpisodes * len(environmentParameters))])
         results["learningRate"] = pd.Series(self.agent.learningRate,
@@ -118,7 +118,7 @@ class Supervisor(object):
                                           index=[i for i in range(0, numEpisodes * len(environmentParameters))])
         results["memorySize"] = pd.Series(self.agent.memorySize,
                                           index=[i for i in range(0, numEpisodes * len(environmentParameters))])
-        results["network"] = pd.Series(self.agent.q.network,
+        results["network"] = pd.Series(str(self.agent.q.network),
                                        index=[i for i in range(0, numEpisodes * len(environmentParameters))])
         results["targetGenerator"] = pd.Series(self.agent.targetGenerator.__name__,
                                                index=[i for i in range(0, numEpisodes * len(environmentParameters))])
@@ -236,4 +236,5 @@ if __name__ == '__main__':
     rover.learnOnline([(0, 0)], 100)
 
     # do a benchmark
-    print(rover.benchmark([(0, 0)], 10))
+    benchmarkResult = rover.benchmark([(0, 0)], 10)
+    print(benchmarkResult)
