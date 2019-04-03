@@ -9,6 +9,7 @@ class Agent(object):
     """
     Represents the agent.
     """
+
     def __init__(self, q, epsilon, discount, learningRate, memorySize, traceDecay, targetGenerator):
         # action set
         possibleChangesPerMagnet = (1e-2, 1e-3, 0, -1e-3, -1e-2)
@@ -98,3 +99,8 @@ class Agent(object):
         """train Q-function"""
         self.q.trainer.applyUpdate(*self.targetGenerator(self, memory))
         return
+
+    def __repr__(self):
+        return "Agent: learningRate={}, discount={}, epsilon={}, network={}, targetGenerator={}, memorySize={}, traceDecay={}".format(
+            self.learningRate, self.discount, self.epsilon, str(self.q.network), self.targetGenerator.__name__,
+            self.memorySize, self.traceDecay)
