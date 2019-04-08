@@ -95,11 +95,13 @@ class Supervisor(object):
 
         return steps, rewards, success
 
-    def benchmark(self, environmentParameters, numEpisodes, trainEpisodes=False):
+    def benchmark(self, environmentParameters, numEpisodes, trainEpisodes, onlineTraining=True):
         """
         Let the agent start from different initial positions and observe it's performance.
         :param environmentParameters: list of initial positions
         :param numEpisodes: how many times to start over from each initial position
+        :param trainEpisodes: previously experienced training episodes
+        :param onlineTraining: was previous training online or offline?
         :return: pandas data frame with len(environmentParameters) * numEpisodes rows
         """
         # dictionary to build data frame from
@@ -122,6 +124,8 @@ class Supervisor(object):
                                        index=[i for i in range(0, numEpisodes * len(environmentParameters))])
         results["targetGenerator"] = pd.Series(self.agent.targetGenerator.__name__,
                                                index=[i for i in range(0, numEpisodes * len(environmentParameters))])
+        results["onlineTraining"] = pd.Series(onlineTraining,
+                                              index=[i for i in range(0, numEpisodes * len(environmentParameters))])
 
         # do the actual benchmark
         environmentParametersList, stepList, returnList, successList = [], [], [], []
@@ -142,11 +146,13 @@ class Supervisor(object):
 
         return pd.DataFrame(results)
 
-    def benchmarkMultiThreaded(self, environmentParameters, numEpisodes, trainEpisodes):
+    def benchmarkMultiThreaded(self, environmentParameters, numEpisodes, trainEpisodes, onlineTraining=True):
         """
         Let the agent start from different initial positions and observe it's performance.
         :param environmentParameters: list of initial positions
         :param numEpisodes: how many times to start over from each initial position
+        :param trainEpisodes: previously experienced training episodes
+        :param onlineTraining: was previous training online or offline?
         :return: pandas data frame with len(environmentParameters) * numEpisodes rows
         """
         # dictionary to build data frame from
@@ -169,6 +175,8 @@ class Supervisor(object):
                                        index=[i for i in range(0, numEpisodes * len(environmentParameters))])
         results["targetGenerator"] = pd.Series(self.agent.targetGenerator.__name__,
                                                index=[i for i in range(0, numEpisodes * len(environmentParameters))])
+        results["onlineTraining"] = pd.Series(onlineTraining,
+                                              index=[i for i in range(0, numEpisodes * len(environmentParameters))])
 
         # define job queue and result storage
         resultList = {"environmentParameters": list(), "steps": list(), "return": list(), "success": list()}
@@ -212,6 +220,24 @@ class Supervisor(object):
 
         return
 
+    def learnOffline(self, environmentParameters, numEpisodes):
+        """
+        Learn after each episode from replay memory.
+        :param environmentParameters: list of initial positions
+        :param numEpisodes: number of episodes
+        :return: None
+        """
+        for episode in range(0, numEpisodes):
+            # randomly chose starting point
+            param = random.choice(environmentParameters)
+            self.walk(Environment(*param), remember=True, learnOnline=False)
+
+            # update replay memory and learn
+            self.agent.updateReplayMemory(self.agent.shortMemory)
+            self.agent.learn(self.agent.replayMemory)
+
+        return
+
 
 if __name__ == '__main__':
     from Agent import Agent
@@ -233,8 +259,8 @@ if __name__ == '__main__':
     steps, rewards, success = rover.walk(Environment(0, 0), learnOnline=False)
     print("steps: {0}, return: {1}, success: {2}".format(steps, sum(rewards), success))
 
-    rover.learnOnline([(0, 0)], 100)
+    rover.learnOnline([(0, 0)], 1000)
+    # rover.learnOffline([(0, 0)], 1000)
 
     # do a benchmark
     benchmarkResult = rover.benchmark([(0, 0)], 10)
-    print(benchmarkResult)

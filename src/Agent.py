@@ -1,6 +1,7 @@
 import torch
 import random
 from itertools import product
+from random import shuffle
 
 from Struct import Action
 
@@ -93,6 +94,21 @@ class Agent(object):
     def wipeShortMemory(self):
         """wipe all recent experience"""
         self.shortMemory = []
+        return
+
+    def updateReplayMemory(self, memories):
+        """
+        Store new memories in the agent's replay memory. The replay memory is then shuffled.
+        :param memories: list of Transition objects to append to the replay memory.
+        :return: None
+        """
+        # make space if there is no one for new memories
+        while len(self.replayMemory) + len(memories) > self.replayMemorySize:
+            del self.replayMemory[0]
+
+        self.replayMemory += memories
+        shuffle(self.replayMemory)
+
         return
 
     def learn(self, memory):
