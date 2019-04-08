@@ -389,3 +389,82 @@ class FulCon14(nn.Module):
 
     def __repr__(self):
         return "FulCon14"
+
+
+class FulCon15(nn.Module):
+    """simple network for testing"""
+
+    def __init__(self):
+        super(FulCon15, self).__init__()
+
+        self.inputLayer = nn.Linear(6, 4)
+        self.layer1 = nn.Linear(4, 1)
+        # self.outputLayer = nn.Linear(1, 1)
+
+        return
+
+    def forward(self, x):
+        x = self.inputLayer(x)
+
+        x = functional.elu(self.layer1(x))
+
+        # x = self.outputLayer(x)
+
+        return x
+
+    def __repr__(self):
+        return "{}".format(type(self).__name__)
+
+
+class FulCon16(nn.Module):
+    """simple network for testing"""
+
+    def __init__(self):
+        super(FulCon16, self).__init__()
+
+        self.inputLayer = nn.Linear(6, 6)
+        self.layer1 = nn.Linear(6, 1)
+        # self.outputLayer = nn.Linear(1, 1)
+
+        return
+
+    def forward(self, x):
+        x = self.inputLayer(x)
+
+        x = functional.elu(self.layer1(x))
+
+        # x = self.outputLayer(x)
+
+        return x
+
+    def __repr__(self):
+        return "{}".format(type(self).__name__)
+
+
+class FulCon17(nn.Module):
+    """simple network for testing"""
+
+    def __init__(self):
+        super(FulCon17, self).__init__()
+
+        self.inputLayer = nn.Linear(6, 6)
+        self.layer1 = nn.Linear(6, 6)
+        self.layer2 = nn.Linear(6, 4)
+        self.layer3 = nn.Linear(4, 1)
+        # self.outputLayer = nn.Linear(1, 1)
+
+        return
+
+    def forward(self, x):
+        x = self.inputLayer(x)
+
+        x = functional.elu(self.layer1(x))
+        x = functional.elu(self.layer2(x))
+        x = functional.elu(self.layer3(x))
+
+        # x = self.outputLayer(x)
+
+        return x
+
+    def __repr__(self):
+        return "{}".format(type(self).__name__)
