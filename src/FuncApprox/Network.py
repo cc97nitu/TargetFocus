@@ -28,6 +28,32 @@ class FulCon1(nn.Module):
         return "FulCon1"
 
 
+class FulCon1BatchNorm(nn.Module):
+    """simple network for testing"""
+
+    def __init__(self):
+        super(FulCon1BatchNorm, self).__init__()
+
+        self.inputLayer = nn.Linear(6, 40)
+        self.inputLayerNorm = nn.BatchNorm1d(40)
+        self.layer1 = nn.Linear(40, 1)
+        # self.outputLayer = nn.Linear(1, 1)
+
+        return
+
+    def forward(self, x):
+        x = self.inputLayerNorm(self.inputLayer(x))
+
+        x = functional.elu(self.layer1(x))
+
+        # x = self.outputLayer(x)
+
+        return x
+
+    def __repr__(self):
+        return type(self).__name__
+
+
 class FulCon2(nn.Module):
     """simple network for testing"""
 
@@ -51,6 +77,32 @@ class FulCon2(nn.Module):
 
     def __repr__(self):
         return "FulCon2"
+
+
+class FulCon2BatchNorm(nn.Module):
+    """simple network for testing"""
+
+    def __init__(self):
+        super(FulCon2BatchNorm, self).__init__()
+
+        self.inputLayer = nn.Linear(6, 60)
+        self.inputLayerNorm = nn.BatchNorm1d(60)
+        self.layer1 = nn.Linear(60, 1)
+        # self.outputLayer = nn.Linear(1, 1)
+
+        return
+
+    def forward(self, x):
+        x = self.inputLayerNorm(self.inputLayer(x))
+
+        x = functional.elu(self.layer1(x))
+
+        # x = self.outputLayer(x)
+
+        return x
+
+    def __repr__(self):
+        return type(self).__name__
 
 
 class FulCon3(nn.Module):
@@ -128,6 +180,32 @@ class FulCon5(nn.Module):
         return "FulCon5"
 
 
+class FulCon5BatchNorm(nn.Module):
+    """simple network for testing"""
+
+    def __init__(self):
+        super(FulCon5BatchNorm, self).__init__()
+
+        self.inputLayer = nn.Linear(6, 20)
+        self.inputLayerNorm = nn.BatchNorm1d(20)
+        self.layer1 = nn.Linear(20, 1)
+        # self.outputLayer = nn.Linear(1, 1)
+
+        return
+
+    def forward(self, x):
+        x = self.inputLayerNorm(self.inputLayer(x))
+
+        x = functional.elu(self.layer1(x))
+
+        # x = self.outputLayer(x)
+
+        return x
+
+    def __repr__(self):
+        return type(self).__name__
+
+
 class FulCon6(nn.Module):
     """simple network for testing"""
 
@@ -153,6 +231,35 @@ class FulCon6(nn.Module):
 
     def __repr__(self):
         return "FulCon6"
+
+
+class FulCon6BatchNorm(nn.Module):
+    """simple network for testing"""
+
+    def __init__(self):
+        super(FulCon6BatchNorm, self).__init__()
+
+        self.inputLayer = nn.Linear(6, 40)
+        self.inputLayerNorm = nn.BatchNorm1d(40)
+        self.layer1 = nn.Linear(40, 40)
+        self.bn1 = nn.BatchNorm1d(40)
+        self.layer2 = nn.Linear(40, 1)
+        # self.outputLayer = nn.Linear(1, 1)
+
+        return
+
+    def forward(self, x):
+        x = self.inputLayerNorm(self.inputLayer(x))
+
+        x = self.bn1(functional.elu(self.layer1(x)))
+        x = functional.elu(self.layer2(x))
+
+        # x = self.outputLayer(x)
+
+        return x
+
+    def __repr__(self):
+        return type(self).__name__
 
 
 class FulCon7(nn.Module):
