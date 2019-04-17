@@ -39,13 +39,6 @@ def dqn(parent, memory):
     :param memory: memory to create targets upon
     :return: targets and labels as torch tensor
     """
-    # # sampleSize = self.memorySize // 5  # use only with traces (= short memory larger than 5 entries)
-    # sampleSize = 1
-    #
-    # if len(memory) < sampleSize:
-    #     sample = memory
-    # else:
-    #     sample = random.sample(memory, sampleSize)
 
     sample = memory  # sample size 1 is impossible with batch norm
 
@@ -60,7 +53,7 @@ def dqn(parent, memory):
     # updates for Q-values
     labels = []
     for memory in sample:
-        if memory.nextState:
+        if memory.nextState:  # true if next state is final
             labels.append(memory.reward)
         else:
             currentQ = parent.q.evaluate(memory.action)
