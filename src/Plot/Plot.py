@@ -67,7 +67,8 @@ def successPlot(data):
                             selEpsilon & selGenerator & selLearningRate & selLearningRate & selNetwork & selTrainEpisodes & selEnvironmentParameters]
 
                         if len(selection) == 0:
-                            print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate, network, epsilon))
+                            print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate,
+                                                                                           network, epsilon))
                         else:
                             successRate[i][j] = sum(selection["success"]) / len(selection["success"])
 
@@ -128,10 +129,10 @@ def stepsAndSuccess(data):
                             selEpsilon & selGenerator & selLearningRate & selLearningRate & selNetwork & selTrainEpisodes & selEnvironmentParameters]
 
                         if len(selection) == 0:
-                            print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate, network, epsilon))
+                            print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate,
+                                                                                           network, epsilon))
                         else:
                             successRate[i][j] = sum(selection["success"]) / len(selection["success"])
-
 
                 # get steps
                 for i in range(0, len(trainEpisodes)):
@@ -144,7 +145,8 @@ def stepsAndSuccess(data):
                             selEpsilon & selGenerator & selLearningRate & selLearningRate & selNetwork & selTrainEpisodes & selEnvironmentParameters]
 
                         if len(selection) == 0:
-                            print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate, network, epsilon))
+                            print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate,
+                                                                                           network, epsilon))
                         else:
                             steps[i][j] = sum(selection["steps"]) / len(selection["steps"])
 
@@ -206,7 +208,8 @@ def stepPlot(data):
                             selEpsilon & selGenerator & selLearningRate & selLearningRate & selNetwork & selTrainEpisodes & selEnvironmentParameters]
 
                         if len(selection) == 0:
-                            print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate, network, epsilon))
+                            print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate,
+                                                                                           network, epsilon))
                         else:
                             steps[i][j] = sum(selection["steps"]) / len(selection["steps"])
 
@@ -228,3 +231,24 @@ def stepPlot(data):
                 plt.close()
 
                 continue
+
+
+def plotStateDistribution(memory):
+    # extract relative coordinates
+    relCoords = list()
+    for transition in memory:
+        relCoords.append(transition.action.state.relCoord)
+
+    # plot them
+    fig, ax = plt.subplots()
+
+    for coord in relCoords:
+        ax.scatter(coord[0], coord[1])
+
+    ax.axhline(0)
+    ax.axvline(0)
+
+    plt.show()
+    plt.close()
+
+    return
