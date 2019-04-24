@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colorbar import ColorbarBase
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
 
 
@@ -153,18 +155,36 @@ def stepsAndSuccess(data):
                 # plot it
                 fig, axes = plt.subplots(1, 2, sharey=True)
 
-                axes[0].pcolormesh(environmentParameters, trainEpisodes, successRate)
-                axes[1].pcolormesh(environmentParameters, trainEpisodes, steps)
+                # axes[0].pcolormesh(environmentParameters, trainEpisodes, successRate)
+                # axes[1].pcolormesh(environmentParameters, trainEpisodes, steps)
+                image0 = axes[0].imshow(successRate, cmap="winter")
+                image1 = axes[1].imshow(steps)
 
-                fig.suptitle(r"{}, $\alpha$={}, $\epsilon$={}".format(generator, learningRate, epsilon))
-                axes[0].set_title("{}".format(network))
+                fig.suptitle(r"{}, {}, $\alpha$={}, $\epsilon$={}".format(generator, network, learningRate, epsilon))
+                axes[0].set_title("success rate")
+                axes[1].set_title("steps")
 
                 for ax in axes:
+                    ax.set_xticks(np.arange(len(successRate[0])))
+                    ax.set_yticks(np.arange(len(successRate)))
+                    ax.set_yticklabels(trainEpisodes)
+                    ax.set_xticklabels(environmentParameters)
+
                     for tick in ax.get_xticklabels():
                         tick.set_rotation(45)
 
                     ax.set_xlabel(ax.get_xlabel(), size='x-large')
                     ax.set_ylabel(ax.get_ylabel(), size='x-large')
+
+                # add colorbars
+                divider = make_axes_locatable(axes[0])
+                cax = divider.append_axes('right', size='5%', pad=0.05)
+                fig.colorbar(mappable=image0, cax=cax, orientation="vertical")
+
+                divider = make_axes_locatable(axes[1])
+                cax = divider.append_axes('right', size='5%', pad=0.05)
+                fig.colorbar(mappable=image1, cax=cax, orientation="vertical")
+
 
                 plt.show()
                 plt.close()
