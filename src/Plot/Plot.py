@@ -106,6 +106,7 @@ def stepsAndSuccess(data):
     networks = data["network"].unique()
     generators = data["targetGenerator"].unique()
     learningRates = data["learningRate"].unique()
+    discounts = data["discount"].unique()
 
     epsilon = 0.9
     selEpsilon = data["epsilon"] == epsilon
@@ -117,79 +118,81 @@ def stepsAndSuccess(data):
         for learningRate in learningRates:
             selLearningRate = data["learningRate"] == learningRate
 
-            for network in networks:
-                selNetwork = data["network"] == network
+            for discount in discounts:
+                selDiscount = data["discount"] == discount
 
-                # calculate success rate
-                for i in range(0, len(trainEpisodes)):
-                    for j in range(0, len(environmentParameters)):
-                        selTrainEpisodes = data["trainEpisodes"] == trainEpisodes[i]
-                        selEnvironmentParameters = data["environmentParameters"] == environmentParameters[j]
+                for network in networks:
+                    selNetwork = data["network"] == network
 
-                        # restrict rows according to selectors
-                        selection = data.loc[
-                            selEpsilon & selGenerator & selLearningRate & selLearningRate & selNetwork & selTrainEpisodes & selEnvironmentParameters]
+                    # calculate success rate
+                    for i in range(0, len(trainEpisodes)):
+                        for j in range(0, len(environmentParameters)):
+                            selTrainEpisodes = data["trainEpisodes"] == trainEpisodes[i]
+                            selEnvironmentParameters = data["environmentParameters"] == environmentParameters[j]
 
-                        if len(selection) == 0:
-                            print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate,
-                                                                                           network, epsilon))
-                        else:
-                            successRate[i][j] = sum(selection["success"]) / len(selection["success"])
+                            # restrict rows according to selectors
+                            selection = data.loc[
+                                selEpsilon & selGenerator & selLearningRate & selLearningRate & selDiscount & selNetwork & selTrainEpisodes & selEnvironmentParameters]
 
-                # get steps
-                for i in range(0, len(trainEpisodes)):
-                    for j in range(0, len(environmentParameters)):
-                        selTrainEpisodes = data["trainEpisodes"] == trainEpisodes[i]
-                        selEnvironmentParameters = data["environmentParameters"] == environmentParameters[j]
+                            if len(selection) == 0:
+                                print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate,
+                                                                                               network, epsilon))
+                            else:
+                                successRate[i][j] = sum(selection["success"]) / len(selection["success"])
 
-                        # restrict rows according to selectors
-                        selection = data.loc[
-                            selEpsilon & selGenerator & selLearningRate & selLearningRate & selNetwork & selTrainEpisodes & selEnvironmentParameters]
+                    # get steps
+                    for i in range(0, len(trainEpisodes)):
+                        for j in range(0, len(environmentParameters)):
+                            selTrainEpisodes = data["trainEpisodes"] == trainEpisodes[i]
+                            selEnvironmentParameters = data["environmentParameters"] == environmentParameters[j]
 
-                        if len(selection) == 0:
-                            print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate,
-                                                                                           network, epsilon))
-                        else:
-                            steps[i][j] = sum(selection["steps"]) / len(selection["steps"])
+                            # restrict rows according to selectors
+                            selection = data.loc[
+                                selEpsilon & selGenerator & selLearningRate & selLearningRate & selNetwork & selTrainEpisodes & selEnvironmentParameters]
 
-                # plot it
-                fig, axes = plt.subplots(1, 2, sharey=True)
+                            if len(selection) == 0:
+                                print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate,
+                                                                                               network, epsilon))
+                            else:
+                                steps[i][j] = sum(selection["steps"]) / len(selection["steps"])
 
-                # axes[0].pcolormesh(environmentParameters, trainEpisodes, successRate)
-                # axes[1].pcolormesh(environmentParameters, trainEpisodes, steps)
-                image0 = axes[0].imshow(successRate, cmap="winter")
-                image1 = axes[1].imshow(steps)
+                    # plot it
+                    fig, axes = plt.subplots(1, 2, sharey=True)
 
-                fig.suptitle(r"{}, {}, $\alpha$={}, $\epsilon$={}".format(generator, network, learningRate, epsilon))
-                axes[0].set_title("success rate")
-                axes[1].set_title("steps")
+                    image0 = axes[0].imshow(successRate, cmap="winter")
+                    image1 = axes[1].imshow(steps)
 
-                for ax in axes:
-                    ax.set_xticks(np.arange(len(successRate[0])))
-                    ax.set_yticks(np.arange(len(successRate)))
-                    ax.set_yticklabels(trainEpisodes)
-                    ax.set_xticklabels(environmentParameters)
+                    fig.suptitle(
+                        "{}, {}".format(generator, network) + "\n" + r"$\alpha$={}, $\epsilon$={}, $\gamma$={}".format(
+                            learningRate, epsilon, discount))
+                    axes[0].set_title("success rate")
+                    axes[1].set_title("steps")
 
-                    for tick in ax.get_xticklabels():
-                        tick.set_rotation(45)
+                    for ax in axes:
+                        ax.set_xticks(np.arange(len(successRate[0])))
+                        ax.set_yticks(np.arange(len(successRate)))
+                        ax.set_yticklabels(trainEpisodes)
+                        ax.set_xticklabels(environmentParameters)
 
-                    ax.set_xlabel(ax.get_xlabel(), size='x-large')
-                    ax.set_ylabel(ax.get_ylabel(), size='x-large')
+                        for tick in ax.get_xticklabels():
+                            tick.set_rotation(45)
 
-                # add colorbars
-                divider = make_axes_locatable(axes[0])
-                cax = divider.append_axes('right', size='5%', pad=0.05)
-                fig.colorbar(mappable=image0, cax=cax, orientation="vertical")
+                        ax.set_xlabel(ax.get_xlabel(), size='x-large')
+                        ax.set_ylabel(ax.get_ylabel(), size='x-large')
 
-                divider = make_axes_locatable(axes[1])
-                cax = divider.append_axes('right', size='5%', pad=0.05)
-                fig.colorbar(mappable=image1, cax=cax, orientation="vertical")
+                    # add colorbars
+                    divider = make_axes_locatable(axes[0])
+                    cax = divider.append_axes('right', size='5%', pad=0.05)
+                    fig.colorbar(mappable=image0, cax=cax, orientation="vertical")
 
+                    divider = make_axes_locatable(axes[1])
+                    cax = divider.append_axes('right', size='5%', pad=0.05)
+                    fig.colorbar(mappable=image1, cax=cax, orientation="vertical")
 
-                plt.show()
-                plt.close()
+                    plt.show()
+                    plt.close()
 
-                continue
+                    continue
 
 
 def stepPlot(data):
