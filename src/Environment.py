@@ -15,6 +15,8 @@ class Environment(object):
     """
     Simulated Environment.
     """
+    # define focus goal
+    focusGoal = torch.tensor((8e-3, 8e-3), dtype=torch.float)
 
     def __init__(self, strengthA, strengthB):
         """
@@ -48,7 +50,6 @@ class Environment(object):
         copy("../res/run.ele", self.dir)
 
         # define focus goal
-        self.focusGoal = torch.tensor((8e-3, 8e-3), dtype=torch.float)
 
         self.acceptance = 5e-3  # max distance between focus goal and beam focus of a state for the state to be considered terminal
         targetDiameter = 3e-2  # diameter of target

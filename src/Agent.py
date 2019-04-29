@@ -29,7 +29,7 @@ class Agent(object):
         self.traceDecay = traceDecay
 
         self.replayMemory = []
-        self.replayMemorySize = int(1e4)
+        self.replayMemorySize = int(1e5)
 
         # learning
         self.discount = discount
