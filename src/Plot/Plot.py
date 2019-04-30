@@ -33,65 +33,6 @@ def boxPlot(data, x, y, hue=None, **kwargs):
     return
 
 
-def successPlot(data):
-    # axes
-    trainEpisodes = data["trainEpisodes"].unique()
-    environmentParameters = data["environmentParameters"].unique()
-
-    successRate = np.empty((len(trainEpisodes), len(environmentParameters)))
-
-    # selectors
-    networks = data["network"].unique()
-    generators = data["targetGenerator"].unique()
-    learningRates = data["learningRate"].unique()
-
-    epsilon = 0.9
-    selEpsilon = data["epsilon"] == epsilon
-
-    # do the plots
-    for generator in generators:
-        selGenerator = data["targetGenerator"] == generator
-
-        for learningRate in learningRates:
-            selLearningRate = data["learningRate"] == learningRate
-
-            for network in networks:
-                selNetwork = data["network"] == network
-
-                # calculate success rate
-                for i in range(0, len(trainEpisodes)):
-                    for j in range(0, len(environmentParameters)):
-                        selTrainEpisodes = data["trainEpisodes"] == trainEpisodes[i]
-                        selEnvironmentParameters = data["environmentParameters"] == environmentParameters[j]
-
-                        # restrict rows according to selectors
-                        selection = data.loc[
-                            selEpsilon & selGenerator & selLearningRate & selLearningRate & selNetwork & selTrainEpisodes & selEnvironmentParameters]
-
-                        if len(selection) == 0:
-                            print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate,
-                                                                                           network, epsilon))
-                        else:
-                            successRate[i][j] = sum(selection["success"]) / len(selection["success"])
-
-                # plot it
-                fig, ax = plt.subplots()
-
-                ax.pcolormesh(environmentParameters, trainEpisodes, successRate)
-
-                fig.suptitle(r"{}, $\alpha$={}, $\epsilon$={}".format(generator, learningRate, epsilon))
-                ax.set_title("{}".format(network))
-
-                for tick in ax.get_xticklabels():
-                    tick.set_rotation(45)
-
-                ax.set_xlabel(ax.get_xlabel(), size='x-large')
-                ax.set_ylabel(ax.get_ylabel(), size='x-large')
-
-                plt.show()
-                plt.close()
-
-                continue
 
 
 def stepsAndSuccess(data):
@@ -195,65 +136,44 @@ def stepsAndSuccess(data):
                     continue
 
 
-def stepPlot(data):
-    # axes
-    trainEpisodes = data["trainEpisodes"].unique()
-    environmentParameters = data["environmentParameters"].unique()
 
-    steps = np.empty((len(trainEpisodes), len(environmentParameters)))
-
+def distributions(results):
     # selectors
-    networks = data["network"].unique()
-    generators = data["targetGenerator"].unique()
-    learningRates = data["learningRate"].unique()
+    networks = results["network"].unique()
+    generators = results["targetGenerator"].unique()
+    learningRates = results["learningRate"].unique()
+    discounts = results["discount"].unique()
 
+    # restrict to trained agents acting greedy
     epsilon = 0.9
-    selEpsilon = data["epsilon"] == epsilon
+    selEpsilon = results["epsilon"] == epsilon
+
+    maxTrainEpisodes = results["trainEpisodes"].max()
+    selTrainEpisodes = results["trainEpisodes"] == maxTrainEpisodes
 
     # do the plots
     for generator in generators:
-        selGenerator = data["targetGenerator"] == generator
+        selGenerator = results["targetGenerator"] == generator
 
         for learningRate in learningRates:
-            selLearningRate = data["learningRate"] == learningRate
+            selLearningRate = results["learningRate"] == learningRate
 
-            for network in networks:
-                selNetwork = data["network"] == network
+            for discount in discounts:
+                selDiscount = results["discount"] == discount
 
-                # get steps
-                for i in range(0, len(trainEpisodes)):
-                    for j in range(0, len(environmentParameters)):
-                        selTrainEpisodes = data["trainEpisodes"] == trainEpisodes[i]
-                        selEnvironmentParameters = data["environmentParameters"] == environmentParameters[j]
+                for network in networks:
+                    selNetwork = results["network"] == network
 
-                        # restrict rows according to selectors
-                        selection = data.loc[
-                            selEpsilon & selGenerator & selLearningRate & selLearningRate & selNetwork & selTrainEpisodes & selEnvironmentParameters]
+                    # restrict rows according to selectors
+                    selection = results.loc[selEpsilon & selGenerator & selLearningRate & selLearningRate & selDiscount & selNetwork & selTrainEpisodes]
 
-                        if len(selection) == 0:
-                            print(r"no data for {}, $\alpha$={}, {}, $\epsilon$={}".format(generator, learningRate,
-                                                                                           network, epsilon))
-                        else:
-                            steps[i][j] = sum(selection["steps"]) / len(selection["steps"])
+                    # plot
+                    sns.jointplot(x="return", y="steps", data=selection)
 
-                # plot it
-                fig, ax = plt.subplots()
+                    plt.show()
+                    plt.close()
 
-                ax.pcolormesh(environmentParameters, trainEpisodes, steps)
-
-                fig.suptitle(r"{}, $\alpha$={}, $\epsilon$={}".format(generator, learningRate, epsilon))
-                ax.set_title("{}".format(network))
-
-                for tick in ax.get_xticklabels():
-                    tick.set_rotation(45)
-
-                ax.set_xlabel(ax.get_xlabel(), size='x-large')
-                ax.set_ylabel(ax.get_ylabel(), size='x-large')
-
-                plt.show()
-                plt.close()
-
-                continue
+    return
 
 
 def plotStateDistribution(memory):
