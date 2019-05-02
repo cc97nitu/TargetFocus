@@ -34,8 +34,6 @@ def boxPlot(data, x, y, hue=None, **kwargs):
     return
 
 
-
-
 def stepsAndSuccess(data):
     # axes
     trainEpisodes = data["trainEpisodes"].unique()
@@ -137,8 +135,7 @@ def stepsAndSuccess(data):
                     continue
 
 
-
-def distributions(results):
+def distributions(results, kind=None):
     # selectors
     networks = results["network"].unique()
     generators = results["targetGenerator"].unique()
@@ -166,10 +163,18 @@ def distributions(results):
                     selNetwork = results["network"] == network
 
                     # restrict rows according to selectors
-                    selection = results.loc[selEpsilon & selGenerator & selLearningRate & selLearningRate & selDiscount & selNetwork & selTrainEpisodes]
+                    selection = results.loc[
+                        selEpsilon & selGenerator & selLearningRate & selLearningRate & selDiscount & selNetwork & selTrainEpisodes]
 
                     # plot
-                    sns.jointplot(x="return", y="steps", data=selection)
+                    if kind is not None:
+                        plot = sns.jointplot(x="return", y="steps", data=selection, kind=kind)
+                    else:
+                        plot = sns.jointplot(x="return", y="steps", data=selection)
+
+                    plot.fig.suptitle(
+                        "{}, {}".format(generator, network) + "\n" + r"$\alpha$={}, $\epsilon$={}, $\gamma$={}".format(
+                            learningRate, epsilon, discount))
 
                     plt.show()
                     plt.close()
