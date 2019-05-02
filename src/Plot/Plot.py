@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colorbar import ColorbarBase
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
+import pandas as pd
 
 
 def boxPlot(data, x, y, hue=None, **kwargs):
@@ -178,19 +179,17 @@ def distributions(results):
 
 def plotStateDistribution(memory):
     # extract relative coordinates
-    relCoords = list()
+    x, y = list(), list()
     for transition in memory:
-        relCoords.append(transition.action.state.relCoord)
+        x.append(transition.action.state.relCoord[0])
+        y.append(transition.action.state.relCoord[1])
+
+    # put them into pandas data frame
+    coordinates = [("x", x), ("y", y)]
+    coordinates = pd.DataFrame.from_items(coordinates)
 
     # plot them
-    fig, ax = plt.subplots()
-
-    for coord in relCoords:
-        ax.scatter(coord[0], coord[1])
-
-    ax.axhline(0)
-    ax.axvline(0)
-
+    sns.jointplot(x="x", y="y", data=coordinates, kind="kde")
     plt.show()
     plt.close()
 

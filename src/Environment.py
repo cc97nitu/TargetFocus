@@ -87,7 +87,7 @@ class Environment(object):
 
         # run elegant simulation
         with open(os.devnull, "w") as f:
-            sp.call(["elegant", "run.ele"], stdout=f, cwd=self.dir)
+            sp.call(["elegant", "run.ele", "-rpnDefns=/etc/defns.rpn"], stdout=f, cwd=self.dir)
 
         # read elegant output
         os.chdir(self.dir)
