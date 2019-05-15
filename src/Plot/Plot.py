@@ -4,6 +4,7 @@ from matplotlib.colorbar import ColorbarBase
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import seaborn as sns
 import pandas as pd
+import torch
 
 
 def boxPlot(data, x, y, hue=None, **kwargs):
@@ -182,20 +183,72 @@ def distributions(results, kind=None):
     return
 
 
-def plotStateDistribution(memory):
-    # extract relative coordinates
-    x, y = list(), list()
-    for transition in memory:
-        x.append(transition.action.state.relCoord[0])
-        y.append(transition.action.state.relCoord[1])
+def plotMemoryDistribution(memory):
+    def stateDistribution(memory):
+        # extract relative coordinates
+        x, y = list(), list()
+        for transition in memory:
+            x.append(transition.action.state.relCoord[0])
+            y.append(transition.action.state.relCoord[1])
 
-    # put them into pandas data frame
-    coordinates = [("x", x), ("y", y)]
-    coordinates = pd.DataFrame.from_items(coordinates)
+        # put them into pandas data frame
+        coordinates = [("x", x), ("y", y)]
+        coordinates = pd.DataFrame.from_items(coordinates)
 
-    # plot them
-    sns.jointplot(x="x", y="y", data=coordinates, kind="kde")
-    plt.show()
-    plt.close()
+        # plot them
+        g = sns.jointplot(x="x", y="y", data=coordinates, kind="kde")
+        # g.plot_joint(plt.scatter, c="w", s=30, linewidth=1, marker="+")
+        # g.ax_joint.collections[0].set_alpha(0)
+        # g.set_axis_labels("$X$", "$Y$");
 
+        plt.show()
+        plt.close()
+
+        return
+
+    def rewardDistribution(memory):
+        # get change in distance to origin
+        distances, rewards = list(), list()
+        for transition in memory:
+            distanceVec = transition.nextState.relCoord - transition.action.state.relCoord
+            distances.append(torch.sqrt(torch.sum(distanceVec ** 2)).item())
+            rewards.append(transition.reward)
+
+        # put them into pandas data frame
+        data = [("distance", distances), ("reward", rewards)]
+        data = pd.DataFrame.from_items(data)
+
+        # plot them
+        sns.distplot(data["distance"])
+        plt.show()
+        plt.close()
+
+        sns.distplot(data["reward"])
+        # sns.jointplot(x="distance", y="reward", data=data, kind="kde")
+        plt.show()
+        plt.close()
+
+        return
+
+    def actionDistribution(memory):
+        # get actions
+        changeX, changeY = list(), list()
+
+        for transition in memory:
+            changeX.append(transition.action.changes[0].item())
+            changeY.append(transition.action.changes[1].item())
+
+        # put them into pandas data frame
+        data = [("changeX", changeX), ("changeY", changeY)]
+        data = pd.DataFrame.from_items(data)
+
+        # plot them
+        sns.jointplot(x="changeX", y="changeY", data=data)
+        plt.show()
+        plt.close()
+        return
+
+    stateDistribution(memory)
+    rewardDistribution(memory)
+    actionDistribution(memory)
     return
