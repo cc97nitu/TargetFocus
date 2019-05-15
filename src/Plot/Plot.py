@@ -210,8 +210,9 @@ def plotMemoryDistribution(memory):
         # get change in distance to origin
         distances, rewards = list(), list()
         for transition in memory:
-            distanceVec = transition.nextState.relCoord - transition.action.state.relCoord
-            distances.append(torch.sqrt(torch.sum(distanceVec ** 2)).item())
+            previousDistance = torch.sqrt(torch.sum(transition.action.state.relCoord ** 2)).item()
+            afterwardsDistance = torch.sqrt(torch.sum(transition.nextState.relCoord ** 2)).item()
+            distances.append(afterwardsDistance - previousDistance)  # negative distance means coming closer to goal
             rewards.append(transition.reward)
 
         # put them into pandas data frame
@@ -224,7 +225,10 @@ def plotMemoryDistribution(memory):
         plt.close()
 
         sns.distplot(data["reward"])
-        # sns.jointplot(x="distance", y="reward", data=data, kind="kde")
+        plt.show()
+        plt.close()
+
+        sns.jointplot(x="distance", y="reward", data=data, kind="kde")
         plt.show()
         plt.close()
 
