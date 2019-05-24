@@ -18,6 +18,9 @@ class State(object):
                     return True
         return False
 
+    def toTensor(self):
+        return torch.cat([self.strengths, self.relCoord])
+
     def __repr__(self):
         return "State(strengths={}, focus={})".format(self.strengths, self.relCoord)
 
