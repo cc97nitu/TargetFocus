@@ -1,3 +1,4 @@
+import torch
 # data class
 
 
@@ -8,8 +9,14 @@ class State(object):
         self.strengths = strengths
         self.relCoord = relCoord
         self.terminalState = terminalState
-
         return
+
+    def __eq__(self, other):
+        if torch.equal(self.strengths, other.strengths):
+            if torch.equal(self.relCoord, other.relCoord):
+                if self.terminalState == other.terminalState:
+                    return True
+        return False
 
     def __repr__(self):
         return "State(strengths={}, focus={})".format(self.strengths, self.relCoord)
@@ -25,8 +32,14 @@ class Action(object):
         self.state = state
         self.changes = changes
         self.eligibility = 1
-
         return
+
+    def __eq__(self, other):
+        if self.eligibility == other.eligibility:
+            if torch.equal(self.changes, other.changes):
+                if self.state == other.state:
+                    return True
+        return False
 
     def __repr__(self):
         return "Action({}, changes={}".format(self.state, self.changes)
@@ -46,3 +59,14 @@ class Transition(object):
     def __mul__(self, other):
         self.action.eligibility *= other
         return
+
+
+if __name__ == '__main__':
+    state = State(torch.randn(2), torch.randn(2))
+    changes = torch.randn(2)
+
+    firstAction = Action(state, changes)
+    secondAction = Action(state, changes)
+
+    if firstAction == secondAction:
+        print(True)

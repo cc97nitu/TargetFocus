@@ -100,7 +100,7 @@ class Environment(object):
 
         # return terminal state if maximal amount of reactions exceeded
         if not self.reactCount < self.reactCountMax:
-            print("forced abortion of episode, max steps exceeded")
+            # print("forced abortion of episode, max steps exceeded")
             return State(self.strengths, focus, terminalState=True), -100
         else:
             self.reactCount += 1
