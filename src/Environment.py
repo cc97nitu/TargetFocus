@@ -8,25 +8,30 @@ from itertools import product
 from shutil import copy, rmtree
 from sdds import SDDS
 
-from Struct import State, Action
-
 
 class Environment(object):
     """
     Simulated Environment.
     """
+    # number of variables representing a state
+    features = 6
+
     # define focus goal
     focusGoal = torch.tensor((8e-3, 8e-3), dtype=torch.float)
+
+    # path to run.ele
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    pathRunEle = os.path.abspath("../res/") + "/run.ele"
 
     def __init__(self, strengthA, strengthB):
         """
         Constructor.
-        :param strengthA: initial horizontal deflection
-        :param strengthB:   initial vertical deflection
+        :param strengthA: initial horizontal focusing strength
+        :param strengthB:   initial vertical focusing strength
         """
         # reward on success / penalty on failure
-        self.bounty = 100
-        self.penalty = -100
+        self.bounty = 10
+        self.penalty = -10
 
         # count how often the environment reacted
         self.reactCountMax = 50
@@ -46,8 +51,7 @@ class Environment(object):
         self.dir = workDir + dir
 
         # copy elegant config file to working directory
-        os.chdir(os.path.dirname(os.path.abspath(__file__)))
-        copy("../res/run.ele", self.dir)
+        copy(Environment.pathRunEle, self.dir)
 
         # define focus goal
 
@@ -61,26 +65,24 @@ class Environment(object):
         self.strengths = torch.tensor((strengthA, strengthB), dtype=torch.float)
 
         # get initial focus / initial state from them
-        initialState = self.react(
-            Action(State(torch.tensor((strengthA, strengthB), dtype=torch.float), torch.zeros(2, dtype=torch.float)),
-                   torch.zeros(2, dtype=torch.float)))[0]  # action is a dummy action
+        initialState, _, episodeTerminated = self.react(torch.zeros(2))  # action is a dummy action
 
-        if initialState.terminalState:
+        if episodeTerminated:
             raise ValueError("starting in terminal state")
         else:
             self.initialState = initialState
 
         return
 
-    def react(self, action):
+    def react(self, action: torch.tensor):
         """
         Simulate response to an action performed by the agent.
         :param action:  action to respond to
-        :return: reward and new state
+        :return: new state, reward, termination
         """
 
         # update magnet strengths according to chosen action
-        self.strengths = self.strengths + action.changes
+        self.strengths = self.strengths + action
 
         # create lattice
         self.__createLattice(self.strengths)
@@ -94,31 +96,37 @@ class Environment(object):
         dataSet = SDDS(0)
         dataSet.load(self.dir + "/run.out")
 
+        # get absolute coordinates of beam center
+        absCoords = torch.tensor((dataSet.columnData[0], dataSet.columnData[2]), dtype=torch.float).mean(1)
+        absCoords = absCoords.mean(1)
+
         # calculate relative distance between beam focus and focus goal
-        focus = torch.tensor((torch.tensor(dataSet.columnData[0]).mean(), torch.tensor(dataSet.columnData[2]).mean()))
-        relCoord = focus - self.focusGoal
+        relCoords = absCoords - self.focusGoal
+
+        # create state tensor
+        state = torch.cat((self.strengths, absCoords, relCoords))
 
         # return terminal state if maximal amount of reactions exceeded
         if not self.reactCount < self.reactCountMax:
             # print("forced abortion of episode, max steps exceeded")
-            return State(self.strengths, focus, terminalState=True), -100
+            return state, self.penalty, True
         else:
             self.reactCount += 1
 
         # return state and reward
-        newDistanceToGoal = torch.sqrt(torch.sum(relCoord ** 2)).item()
+        newDistanceToGoal = relCoords.norm().item()
         distanceChange = newDistanceToGoal - self.distanceToGoal
         self.distanceToGoal = newDistanceToGoal
 
         if newDistanceToGoal < self.acceptance:
             # goal reached
-            return State(self.strengths, relCoord, terminalState=True), self.bounty
-        elif torch.sqrt(torch.sum(focus ** 2)).item() >= self.targetRadius:
+            return state, self.bounty, True
+        elif absCoords.norm().item() >= self.targetRadius:
             # beam spot left target
-            return State(self.strengths, relCoord, terminalState=True), self.penalty
+            return state, self.penalty, True
         else:
             # reward according to distanceChange
-            return State(self.strengths, relCoord), self.__reward(distanceChange, 10 ** 3)
+            return state, self.__reward(distanceChange, 10 ** 3), False
 
     def __createLattice(self, strengths):
         """
@@ -193,6 +201,5 @@ if __name__ == '__main__':
 
     env = Environment(0, 0)
     state = env.initialState
-    action = Action(state, torch.tensor((0.01, 0.01)))
 
     eliParam = EligibleEnvironmentParameters(-0.05, 0.05, 0.01)

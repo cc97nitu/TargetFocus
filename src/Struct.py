@@ -1,67 +1,31 @@
+from __future__ import annotations
+import random
+from collections import namedtuple
+
 import torch
-# data class
+
+Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
 
-class State(object):
-    __slots__ = ['strengths', 'relCoord', 'terminalState']
+class ReplayMemory(object):
 
-    def __init__(self, strengths, relCoord, terminalState=False):
-        self.strengths = strengths
-        self.relCoord = relCoord
-        self.terminalState = terminalState
-        return
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.memory = []
+        self.position = 0
 
-    def __eq__(self, other):
-        if torch.equal(self.strengths, other.strengths):
-            if torch.equal(self.relCoord, other.relCoord):
-                if self.terminalState == other.terminalState:
-                    return True
-        return False
+    def push(self, *args):
+        """Saves a transition."""
+        if len(self.memory) < self.capacity:
+            self.memory.append(None)
+        self.memory[self.position] = Transition(*args)
+        self.position = (self.position + 1) % self.capacity
 
-    def toTensor(self):
-        return torch.cat([self.strengths, self.relCoord])
+    def sample(self, batch_size):
+        return random.sample(self.memory, batch_size)
 
-    def __repr__(self):
-        return "State(strengths={}, focus={})".format(self.strengths, self.relCoord)
-
-    def __bool__(self):
-        return self.terminalState
-
-
-class Action(object):
-    __slots__ = ['state', 'changes', 'eligibility']
-
-    def __init__(self, state, changes):
-        self.state = state
-        self.changes = changes
-        self.eligibility = 1
-        return
-
-    def __eq__(self, other):
-        if self.eligibility == other.eligibility:
-            if torch.equal(self.changes, other.changes):
-                if self.state == other.state:
-                    return True
-        return False
-
-    def __repr__(self):
-        return "Action({}, changes={}".format(self.state, self.changes)
-
-
-class Transition(object):
-    __slots__ = ['action', 'reward', 'nextState']
-
-    def __init__(self, action, reward, nextState):
-        self.action = action
-        self.reward = reward
-        self.nextState = nextState
-
-    def __repr__(self):
-        return "Transition from {0} with reward {1} to {2}".format(self.action, self.reward, self.nextState)
-
-    def __mul__(self, other):
-        self.action.eligibility *= other
-        return
+    def __len__(self):
+        return len(self.memory)
 
 
 if __name__ == '__main__':
