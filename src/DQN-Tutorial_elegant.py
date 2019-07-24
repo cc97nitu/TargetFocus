@@ -1,7 +1,5 @@
 import random
 import math
-from itertools import count, product
-from collections import namedtuple
 
 import torch
 import torch.optim
@@ -26,34 +24,54 @@ BATCH_SIZE = 128
 GAMMA = 0.999
 TARGET_UPDATE = 10
 
-policy_net = Network.FC1(numberFeatures, numberActions).to(device)
-target_net = Network.FC1(numberFeatures, numberActions).to(device)
+policy_net = Network.FC2(numberFeatures, numberActions).to(device)
+target_net = Network.FC2(numberFeatures, numberActions).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
-EPS_START = 0.9
-EPS_END = 0.05
-EPS_DECAY = 200
+EPS_START = 0.5
+EPS_END = 0.0
+EPS_DECAY = 100
 
 # store accumulated reward
 episodeReturns = []
 
+# store epsilon at the episode's beginning
+episodeEpsilon = []
+
+fig, axes = plt.subplots(2, 1, sharex=True, gridspec_kw={'height_ratios': [3, 1]})
+
 
 def plot_durations():
-    plt.figure(2)
-    plt.clf()
-    returns_t = torch.tensor(episodeReturns, dtype=torch.float)
-    plt.title('Training...')
-    plt.xlabel('Episode')
-    plt.ylabel('Duration')
-    plt.plot(returns_t.numpy(), color="orange", label="return")
-    # Take 10 episode averages and plot them too
-    if len(returns_t) >= 10:
-        means = returns_t.unfold(0, 10, 1).mean(1).view(-1)
-        means = torch.cat((torch.zeros(9), means))
-        plt.plot(range(len(means))[10:], means.numpy()[10:], color="blue", label="mean")
+    # clear axes
+    axes[0].clear()
+    axes[1].clear()
 
-    plt.legend()
+    # show return on first axes
+    returns_t = torch.tensor(episodeReturns, dtype=torch.float)
+    axes[0].set_title('Training...')
+    axes[0].set_ylabel('Return')
+    axes[0].plot(returns_t.numpy(), color="orange", label="return")
+    # Take 10 episode averages and plot them too
+    if len(returns_t) >= 20:
+        means = returns_t.unfold(0, 20, 1).mean(1).view(-1)
+        means = torch.cat((torch.zeros(19), means))
+        axes[0].plot(range(len(means))[20:], means.numpy()[20:], color="blue", label="mean")
+
+    axes[0].yaxis.grid(linestyle="-")
+    axes[0].legend()
+
+    # show epsilon on second axes
+    axes[1].plot(episodeEpsilon, color="black")
+    x = range(0, len(episodeEpsilon))
+    axes[1].fill_between(x, episodeEpsilon, color='#539ecd')
+
+    axes[1].set_ylim(0, 1)
+    axes[1].yaxis.grid()
+    axes[1].set_ylabel("epsilon")
+    axes[1].set_xlabel('Episode')
+
+    fig.tight_layout()
     plt.pause(0.001)  # pause a bit so that plots are updated
 
 
@@ -65,14 +83,14 @@ def selectAction(model, state):
     sample = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * stepsDone / EPS_DECAY)
     stepsDone += 1
-    # if sample > eps_threshold:  # bug in original code??
-    #     with torch.no_grad():
-    #         # t.max(1) will return largest column value of each row.
-    #         # second column on max result is index of where max element was
-    #         # found, so we pick action with the larger expected reward.
-    #         return policy_net(state).argmax().unsqueeze_(0).unsqueeze_(0)
-    # else:
-    #     return torch.tensor([[random.randrange(numberActions)]], device=device, dtype=torch.long)
+    if sample > eps_threshold:  # bug in original code??
+        with torch.no_grad():
+            # t.max(1) will return largest column value of each row.
+            # second column on max result is index of where max element was
+            # found, so we pick action with the larger expected reward.
+            return policy_net(state).argmax().unsqueeze_(0).unsqueeze_(0)
+    else:
+        return torch.tensor([[random.randrange(numberActions)]], device=device, dtype=torch.long)
 
     return torch.tensor([[random.randrange(numberActions)]], device=device, dtype=torch.long)
 
@@ -130,8 +148,11 @@ def optimizeModel():
 
 
 # let the agent learn
-num_episodes = 200
+num_episodes = 1000
 for i_episode in range(num_episodes):
+    # store current epsilon
+    episodeEpsilon.append(EPS_END + (EPS_START - EPS_END) * math.exp(-1. * stepsDone / EPS_DECAY))
+
     # Initialize the environment and state
     env = Environment(0, 0)
     state = env.initialState
