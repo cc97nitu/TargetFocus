@@ -2,12 +2,23 @@ import os
 import subprocess as sp
 import threading
 import torch
+from collections import namedtuple
+
 
 from time import time
 from itertools import product
 from shutil import copy, rmtree
+from itertools import product
 from sdds import SDDS
 
+# if gpu is to be used
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# create action set
+posChanges = [-1e-2, -1e-3, 0, 1e-3, 1e-2]
+actionSet = [torch.tensor([x, y], dtype=torch.float, device=device) for x, y in product(posChanges, posChanges)]
+
+terminations = namedtuple("terminations", ["successful", "failed", "aborted"])
 
 class Environment(object):
     """
@@ -16,8 +27,14 @@ class Environment(object):
     # number of variables representing a state
     features = 6
 
+    # define action set
+    actionSet = actionSet
+
     # define focus goal
     focusGoal = torch.tensor((8e-3, 8e-3), dtype=torch.float)
+
+    # count how episodes terminated
+    terminations = {"successful": 0, "failed": 0, "aborted": 0}
 
     # path to run.ele
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -30,8 +47,8 @@ class Environment(object):
         :param strengthB:   initial vertical focusing strength
         """
         # reward on success / penalty on failure
-        self.bounty = torch.tensor(10, dtype=torch.float)
-        self.penalty = torch.tensor(-10, dtype=torch.float)
+        self.bounty = torch.tensor([10], dtype=torch.float).unsqueeze_(0)
+        self.penalty = torch.tensor([-10], dtype=torch.float).unsqueeze_(0)
 
         # count how often the environment reacted
         self.reactCountMax = 50
@@ -65,7 +82,7 @@ class Environment(object):
         self.strengths = torch.tensor((strengthA, strengthB), dtype=torch.float)
 
         # get initial focus / initial state from them
-        initialState, _, episodeTerminated = self.react(torch.zeros(2))  # action is a dummy action
+        initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0), initialize=True)  # action is a dummy action
 
         if episodeTerminated:
             raise ValueError("starting in terminal state")
@@ -74,15 +91,16 @@ class Environment(object):
 
         return
 
-    def react(self, action: torch.tensor):
+    def react(self, action: torch.tensor, initialize=False):
         """
         Simulate response to an action performed by the agent.
-        :param action:  action to respond to
+        :param action: index of action to respond to
         :return: next_state, reward, termination
         """
 
         # update magnet strengths according to chosen action
-        self.strengths = self.strengths + action
+        if not initialize:
+            self.strengths = self.strengths + Environment.actionSet[action[0].item()]
 
         # create lattice
         self.__createLattice(self.strengths)
@@ -104,11 +122,12 @@ class Environment(object):
         relCoords = absCoords - self.focusGoal
 
         # create state tensor
-        state = torch.cat((self.strengths, absCoords, relCoords))
+        state = torch.cat((self.strengths, absCoords, relCoords)).unsqueeze(0)
 
         # return terminal state if maximal amount of reactions exceeded
         if not self.reactCount < self.reactCountMax:
             # print("forced abortion of episode, max steps exceeded")
+            Environment.terminations["aborted"] += 1
             return None, self.penalty, True
         else:
             self.reactCount += 1
@@ -120,13 +139,15 @@ class Environment(object):
 
         if newDistanceToGoal < self.acceptance:
             # goal reached
+            Environment.terminations["successful"] += 1
             return None, self.bounty, True
         elif absCoords.norm().item() >= self.targetRadius:
             # beam spot left target
+            Environment.terminations["failed"] += 1
             return None, self.penalty, True
         else:
             # reward according to distanceChange
-            return state, torch.tensor(self.__reward(distanceChange, 10 ** 3), dtype=torch.float), False
+            return state, torch.tensor([self.__reward(distanceChange, 10 ** 3)], dtype=torch.float).unsqueeze_(0), False
 
     def __createLattice(self, strengths):
         """

@@ -5,6 +5,7 @@ from collections import namedtuple
 
 import torch
 import torch.optim
+import torch.nn.functional
 import matplotlib.pyplot as plt
 
 import Struct
@@ -16,49 +17,23 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # number features describing a state
 numberFeatures = Environment.features
-
-
-class ActionSet(object):
-    eps_start = 0.1
-    eps_end = 0.9
-    eps_decay = 1000
-
-    def __init__(self):
-        # possible changes in focusing strengths
-        posChanges = [-1e-2, -1e-3, 0, 1e-3, 1e-2]
-        posChanges = [i for i in product(posChanges, posChanges)]
-        self.actions = torch.tensor(posChanges, dtype=torch.float, device=device)
-        self.numDecisions = 0
-        return
-
-    def __len__(self):
-        return len(self.actions)
-
-    def select(self, model, state):
-        sample = random.random()
-        eps_threshold = ActionSet.eps_end + (ActionSet.eps_start - ActionSet.eps_end) * math.exp(
-            -1. * self.numDecisions / ActionSet.eps_decay)
-        if sample > 1 - eps_threshold:  # bug in original code??
-            with torch.no_grad():
-                actionIndex = model(state).argmax()
-                return self.actions[actionIndex]
-        else:
-            return self.actions[random.randrange(len(self))]
-
-
+numberActions = len(Environment.actionSet)
 
 # initialize
 memory = Struct.ReplayMemory(int(1e4))
-actionSet = ActionSet()
 
 BATCH_SIZE = 128
 GAMMA = 0.999
 TARGET_UPDATE = 10
 
-policy_net = Network.FC1(numberFeatures, len(actionSet)).to(device)
-target_net = Network.FC1(numberFeatures, len(actionSet)).to(device)
+policy_net = Network.FC1(numberFeatures, numberActions).to(device)
+target_net = Network.FC1(numberFeatures, numberActions).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
+
+EPS_START = 0.9
+EPS_END = 0.05
+EPS_DECAY = 200
 
 # store accumulated reward
 episodeReturns = []
@@ -82,12 +57,33 @@ def plot_durations():
     plt.pause(0.001)  # pause a bit so that plots are updated
 
 
+stepsDone = 0
+
+
+def selectAction(model, state):
+    global stepsDone
+    sample = random.random()
+    eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * stepsDone / EPS_DECAY)
+    stepsDone += 1
+    # if sample > eps_threshold:  # bug in original code??
+    #     with torch.no_grad():
+    #         # t.max(1) will return largest column value of each row.
+    #         # second column on max result is index of where max element was
+    #         # found, so we pick action with the larger expected reward.
+    #         return policy_net(state).argmax().unsqueeze_(0).unsqueeze_(0)
+    # else:
+    #     return torch.tensor([[random.randrange(numberActions)]], device=device, dtype=torch.long)
+
+    return torch.tensor([[random.randrange(numberActions)]], device=device, dtype=torch.long)
+
+
 optimizer = torch.optim.RMSprop(policy_net.parameters())
 
 
-def optimize_model():
+def optimizeModel():
     if len(memory) < BATCH_SIZE:
         return
+
     transitions = memory.sample(BATCH_SIZE)
     # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
     # detailed explanation). This converts batch-array of Transitions
@@ -107,14 +103,34 @@ def optimize_model():
     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
     # columns of actions taken. These are the actions which would've been taken
     # for each batch state according to policy_net
-    # state_action_values = policy_net(state_batch).gather(1, action_batch)
+    state_action_values = policy_net(state_batch).gather(1, action_batch)
 
+    # Compute V(s_{t+1}) for all next states.
+    # Expected values of actions for non_final_next_states are computed based
+    # on the "older" target_net; selecting their best reward with max(1)[0].
+    # This is merged based on the mask, such that we'll have either the expected
+    # state value or 0 in case the state was final.
+    next_state_values = torch.zeros(BATCH_SIZE, device=device)
+    next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
 
-    return action_batch
+    # Compute the expected Q values
+    expected_state_action_values = (next_state_values * GAMMA) + reward_batch
+
+    # Compute Huber loss
+    loss = torch.nn.functional.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1))
+
+    # Optimize the model
+    optimizer.zero_grad()
+    loss.backward()
+    for param in policy_net.parameters():
+        param.grad.data.clamp_(-1, 1)
+    optimizer.step()
+
+    return
 
 
 # let the agent learn
-num_episodes = 30
+num_episodes = 200
 for i_episode in range(num_episodes):
     # Initialize the environment and state
     env = Environment(0, 0)
@@ -124,10 +140,9 @@ for i_episode in range(num_episodes):
     episodeTerminated = False
     while not episodeTerminated:
         # Select and perform an action
-        action = actionSet.select(policy_net, state)
+        action = selectAction(policy_net, state)
         nextState, reward, episodeTerminated = env.react(action)
         episodeReturn += reward
-        reward = torch.tensor([reward], device=device)
 
         # Store the transition in memory
         memory.push(state, action, nextState, reward)
@@ -136,7 +151,7 @@ for i_episode in range(num_episodes):
         state = nextState
 
         # # Perform one step of the optimization (on the target network)
-        optimize_model()
+        optimizeModel()
 
     episodeReturns.append(episodeReturn)
 
@@ -145,3 +160,18 @@ for i_episode in range(num_episodes):
         target_net.load_state_dict(policy_net.state_dict())
         plot_durations()
 
+print('Complete')
+plt.ioff()
+plt.show()
+
+#########
+env = Environment(0, 0)
+state = env.initialState
+
+transitions = memory.sample(BATCH_SIZE)
+# Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
+# detailed explanation). This converts batch-array of Transitions
+# to Transition of batch-arrays.
+batch = Struct.Transition(*zip(*transitions))
+
+print("episode terminations: successful {}, failed {}, aborted {}".format(*Environment.terminations.values()))

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 eps_start = 0.1
 eps_end = 0.9
-eps_decay = 1000
+eps_decay = 100
 
 def eps_threshold(x):
     return eps_end + (eps_start - eps_end) * np.exp(-1. * x / eps_decay)
