@@ -30,8 +30,8 @@ class Environment(object):
         :param strengthB:   initial vertical focusing strength
         """
         # reward on success / penalty on failure
-        self.bounty = 10
-        self.penalty = -10
+        self.bounty = torch.tensor(10, dtype=torch.float)
+        self.penalty = torch.tensor(-10, dtype=torch.float)
 
         # count how often the environment reacted
         self.reactCountMax = 50
@@ -78,7 +78,7 @@ class Environment(object):
         """
         Simulate response to an action performed by the agent.
         :param action:  action to respond to
-        :return: new state, reward, termination
+        :return: next_state, reward, termination
         """
 
         # update magnet strengths according to chosen action
@@ -109,7 +109,7 @@ class Environment(object):
         # return terminal state if maximal amount of reactions exceeded
         if not self.reactCount < self.reactCountMax:
             # print("forced abortion of episode, max steps exceeded")
-            return state, self.penalty, True
+            return None, self.penalty, True
         else:
             self.reactCount += 1
 
@@ -120,13 +120,13 @@ class Environment(object):
 
         if newDistanceToGoal < self.acceptance:
             # goal reached
-            return state, self.bounty, True
+            return None, self.bounty, True
         elif absCoords.norm().item() >= self.targetRadius:
             # beam spot left target
-            return state, self.penalty, True
+            return None, self.penalty, True
         else:
             # reward according to distanceChange
-            return state, self.__reward(distanceChange, 10 ** 3), False
+            return state, torch.tensor(self.__reward(distanceChange, 10 ** 3), dtype=torch.float), False
 
     def __createLattice(self, strengths):
         """

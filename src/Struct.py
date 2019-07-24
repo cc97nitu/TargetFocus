@@ -27,13 +27,3 @@ class ReplayMemory(object):
     def __len__(self):
         return len(self.memory)
 
-
-if __name__ == '__main__':
-    state = State(torch.randn(2), torch.randn(2))
-    changes = torch.randn(2)
-
-    firstAction = Action(state, changes)
-    secondAction = Action(state, changes)
-
-    if firstAction == secondAction:
-        print(True)
