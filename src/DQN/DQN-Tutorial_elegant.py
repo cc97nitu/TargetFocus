@@ -7,8 +7,8 @@ import torch.nn.functional
 import matplotlib.pyplot as plt
 
 import Struct
-import Network
 from Environment import Environment
+import Network
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -22,7 +22,7 @@ memory = Struct.ReplayMemory(int(1e4))
 
 BATCH_SIZE = 128
 GAMMA = 0.999
-TARGET_UPDATE = 10
+TARGET_UPDATE = 30
 
 policy_net = Network.FC2(numberFeatures, numberActions).to(device)
 target_net = Network.FC2(numberFeatures, numberActions).to(device)
@@ -30,8 +30,8 @@ target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 
 EPS_START = 0.5
-EPS_END = 0.0
-EPS_DECAY = 100
+EPS_END = 0
+EPS_DECAY = 500
 
 # store accumulated reward
 episodeReturns = []
@@ -95,7 +95,7 @@ def selectAction(model, state):
     return torch.tensor([[random.randrange(numberActions)]], device=device, dtype=torch.long)
 
 
-optimizer = torch.optim.RMSprop(policy_net.parameters())
+optimizer = torch.optim.Adam(policy_net.parameters(), lr=1e-4)
 
 
 def optimizeModel():
@@ -148,7 +148,7 @@ def optimizeModel():
 
 
 # let the agent learn
-num_episodes = 1000
+num_episodes = 300
 for i_episode in range(num_episodes):
     # store current epsilon
     episodeEpsilon.append(EPS_END + (EPS_START - EPS_END) * math.exp(-1. * stepsDone / EPS_DECAY))
