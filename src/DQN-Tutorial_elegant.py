@@ -6,9 +6,9 @@ import torch.optim
 import torch.nn.functional
 import matplotlib.pyplot as plt
 
-import Struct
-from Environment import Environment
-import Network
+import DQN.Struct as Struct
+from DQN import Environment
+import DQN.Network as Network
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
