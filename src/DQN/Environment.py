@@ -34,6 +34,17 @@ class Environment(object):
     # define focus goal
     focusGoal = torch.tensor((8e-3, 8e-3), dtype=torch.float)
 
+    acceptance = 5e-3  # max distance between focus goal and beam focus of a state for the state to be considered terminal
+    targetDiameter = 3e-2  # diameter of target
+    targetRadius = targetDiameter / 2
+
+    # reward on success / penalty on failure
+    bounty = torch.tensor([10], dtype=torch.float).unsqueeze_(0)
+    penalty = torch.tensor([-10], dtype=torch.float).unsqueeze_(0)
+
+    # abort if episode takes to long
+    reactCountMax = 50
+
     # count how episodes terminated
     terminations = {"successful": 0, "failed": 0, "aborted": 0}
 
@@ -41,18 +52,19 @@ class Environment(object):
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     pathRunEle = os.path.abspath("../DQN/res/") + "/run.ele"
 
-    def __init__(self, strengthA, strengthB):
+    @staticmethod
+    def resetTerminations():
+        Environment.terminations = {"successful": 0, "failed": 0, "aborted": 0}
+        return
+
+    def __init__(self, *args):
         """
         Constructor.
         :param strengthA: initial horizontal focusing strength
         :param strengthB:   initial vertical focusing strength
         """
-        # reward on success / penalty on failure
-        self.bounty = torch.tensor([10], dtype=torch.float).unsqueeze_(0)
-        self.penalty = torch.tensor([-10], dtype=torch.float).unsqueeze_(0)
 
         # count how often the environment reacted
-        self.reactCountMax = 50
         self.reactCount = 0
 
         # working directory
@@ -71,24 +83,37 @@ class Environment(object):
         # copy elegant config file to working directory
         copy(Environment.pathRunEle, self.dir)
 
-        # define focus goal
+        # distance to goal gets updated upon call of react()
+        self.distanceToGoal = 0
 
-        self.acceptance = 5e-3  # max distance between focus goal and beam focus of a state for the state to be considered terminal
-        targetDiameter = 3e-2  # diameter of target
-        self.targetRadius = targetDiameter / 2
+        # initial magnets' deflection and beam spot's position
+        if len(args) == 2:
+            self.deflections = torch.tensor((args[0], args[1]), dtype=torch.float)
 
-        self.distanceToGoal = 0  # distance to goal gets updated upon call of react()
+            # get initial focus / initial state from them
+            initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
+                                                            initialize=True)  # action is a dummy action
 
-        # initial strengths of magnets
-        self.strengths = torch.tensor((strengthA, strengthB), dtype=torch.float)
+            if episodeTerminated:
+                raise ValueError("starting in terminal state")
+            else:
+                self.initialState = initialState
 
-        # get initial focus / initial state from them
-        initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0), initialize=True)  # action is a dummy action
+        elif len(args) == 0:
+            while True:
 
-        if episodeTerminated:
-            raise ValueError("starting in terminal state")
+                self.deflections = torch.randn(2, dtype=torch.float) * 0.1 # rescale to fit onto target
+
+                # get initial focus / initial state from them
+                initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
+                                                                initialize=True)  # action is a dummy action
+
+                if not episodeTerminated:
+                    self.initialState = initialState
+                    break
         else:
-            self.initialState = initialState
+            # illegal number of arguments
+            raise ValueError("check arguments passed to Environment!")
 
         return
 
@@ -101,10 +126,10 @@ class Environment(object):
 
         # update magnet strengths according to chosen action
         if not initialize:
-            self.strengths = self.strengths + Environment.actionSet[action[0].item()]
+            self.deflections = self.deflections + Environment.actionSet[action[0].item()]
 
         # create lattice
-        self.__createLattice(self.strengths)
+        self.__createLattice(self.deflections)
 
         # run elegant simulation
         with open(os.devnull, "w") as f:
@@ -123,7 +148,7 @@ class Environment(object):
         relCoords = absCoords - self.focusGoal
 
         # create state tensor
-        state = torch.cat((self.strengths, absCoords, relCoords)).unsqueeze(0)
+        state = torch.cat((self.deflections, absCoords, relCoords)).unsqueeze(0)
 
         # return terminal state if maximal amount of reactions exceeded
         if not self.reactCount < self.reactCountMax:
@@ -184,6 +209,8 @@ class Environment(object):
         rmtree(self.dir)
 
         return
+
+
 
 
 class EligibleEnvironmentParameters(list):

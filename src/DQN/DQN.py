@@ -143,6 +143,9 @@ class Trainer(object):
         return
 
     def trainAgent(self, num_episodes):
+        # reset Environment.terminations
+        Environment.resetTerminations()
+
         # keep track of epsilon and received return
         episodeEpsilon, episodeReturns = [], []
 
@@ -153,7 +156,7 @@ class Trainer(object):
                 self.EPS_END + (self.EPS_START - self.EPS_END) * math.exp(-1. * self.stepsDone / self.EPS_DECAY))
 
             # Initialize the environment and state
-            env = Environment(0, 0)
+            env = Environment()  # no arguments => random initialization of starting point
             state = env.initialState
             episodeReturn = 0
 
@@ -180,9 +183,12 @@ class Trainer(object):
                 self.model.target_net.load_state_dict(self.model.policy_net.state_dict())
 
         print("Complete")
-        return episodeReturns
+        return episodeReturns, Environment.terminations
 
     def benchAgent(self, num_episodes):
+        # reset Environment.terminations
+        Environment.resetTerminations()
+
         # keep track of epsilon and received return
         episodeReturns = []
 
@@ -206,7 +212,7 @@ class Trainer(object):
             episodeReturns.append(episodeReturn)
 
         print("Complete")
-        return episodeReturns
+        return episodeReturns, Environment.terminations
 
 
 
