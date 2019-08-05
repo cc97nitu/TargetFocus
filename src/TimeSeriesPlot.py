@@ -1,4 +1,5 @@
 import pickle
+import torch
 import numpy as np
 
 import seaborn as sns
@@ -18,10 +19,13 @@ with open("/dev/shm/benchmark", "rb") as file:
 
 meanReturns = data["meanReturn"]
 
+# data = torch.load("/home/dylan/RL/TempDiff/TargetFocus/src/dump/randomStart_randomGoal_agents.tar")
+# meanReturns = data["returns"]
+
 # plot
 sns.set(style="darkgrid")
 
-sns.lineplot(x="episode", y="return", hue="behavior", data=meanReturns)
+sns.lineplot(x="episode", y="return", data=meanReturns)
 
 plt.show()
 plt.close()

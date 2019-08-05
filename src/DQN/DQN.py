@@ -156,7 +156,7 @@ class Trainer(object):
                 self.EPS_END + (self.EPS_START - self.EPS_END) * math.exp(-1. * self.stepsDone / self.EPS_DECAY))
 
             # Initialize the environment and state
-            env = Environment("random")  # no arguments => random initialization of starting point
+            env = Environment()  # no arguments => random initialization of starting point
             state = env.initialState
             episodeReturn = 0
 
@@ -195,7 +195,7 @@ class Trainer(object):
         # episodes
         for i_episode in range(num_episodes):
             # Initialize the environment and state
-            env = Environment(0, 0)
+            env = Environment("random")
             state = env.initialState
             episodeReturn = 0
 
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     model = Model()
 
     # define hyper parameters
-    hyperParamsDict = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 30, "EPS_START": 0.5, "EPS_END": 0,
+    hyperParamsDict = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
                        "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
     # set up trainer

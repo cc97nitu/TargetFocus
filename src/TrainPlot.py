@@ -8,11 +8,11 @@ import DQN
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # define hyper parameters
-hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 30, "EPS_START": 0.5, "EPS_END": 0,
+hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
                "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
 # train an agent and plot his return per episode during training
-trainEpisodes = 800
+trainEpisodes = 400
 
 model = DQN.Model()
 model.train()
@@ -31,8 +31,8 @@ for j in range(meanSamples, len(episodeReturns)):
 # make a plot
 fig, ax = plt.subplots()
 
-ax.plot(range(trainEpisodes), episodeReturns, label="return")
-ax.plot(range(trainEpisodes)[meanSamples:], meanEpisodeReturn, label="avg_return")
+ax.plot(range(trainEpisodes), episodeReturns, label="return", color="orange")
+ax.plot(range(trainEpisodes)[meanSamples:], meanEpisodeReturn, label="avg_return", color="blue")
 
 ax.set_xlabel("episode")
 ax.set_ylabel("return")
