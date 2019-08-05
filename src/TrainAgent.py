@@ -25,4 +25,4 @@ for i in range(20):
 
 
 ### save the trained agents to disk
-torch.save({"hyperParameters": hyperParams, "trainEpisodes": trainEpisodes, "agents": agents}, "/home/dylan/RL/TempDiff/TargetFocus/src/dump/agents.tar")
+torch.save({"hyperParameters": hyperParams, "trainEpisodes": trainEpisodes, "agents": agents}, "/dev/shm/agents.tar")

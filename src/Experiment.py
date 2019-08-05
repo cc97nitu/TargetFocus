@@ -13,7 +13,7 @@ hypPara_GreedyBehavior = {"BATCH_SIZE": None, "GAMMA": None, "TARGET_UPDATE": No
                           "EPS_DECAY": 1, "MEMORY_SIZE": None}
 
 # fetch pre-trained agents
-trainResults = torch.load("/home/dylan/RL/TempDiff/TargetFocus/src/dump/agents.tar")
+trainResults = torch.load("/dev/shm/agents.tar")
 agents = trainResults["agents"]
 
 # save mean returns whereas each entry is the average over the last meanSamples returns
@@ -59,5 +59,5 @@ for i in range(len(agents)):
 returns = pd.concat(returns)
 
 # dump
-with open("/home/dylan/RL/TempDiff/TargetFocus/src/dump/benchmark", "wb") as file:
+with open("/dev/shm/benchmark", "wb") as file:
     pickle.dump(returns, file)

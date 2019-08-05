@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 # fetch data
-with open("dump/benchmark_08.01.19", "rb") as file:
+with open("dump/benchmark", "rb") as file:
     data = pickle.load(file)
 
 # plot
