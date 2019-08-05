@@ -1,4 +1,5 @@
-import os
+import pandas as pd
+import numpy as np
 import torch
 
 import DQN
@@ -12,17 +13,33 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 30, "EPS_STAR
 
 ### train 20 agents and store the corresponding models in agents
 agents = dict()
+returns = list()
 trainEpisodes = 200
+
+meanSamples = 10
 
 for i in range(20):
     print("training agent number {}".format(i))
     model = DQN.Model()
 
     trainer = DQN.Trainer(model, **hyperParams)
-    trainer.trainAgent(trainEpisodes)
+    episodeReturns, _ = trainer.trainAgent(trainEpisodes)
+    episodeReturns = [x[0].item() for x in episodeReturns]
+
+    # mean over last meanSamples episodes
+    mean = list()
+    for j in range(meanSamples, len(episodeReturns)):
+        mean.append(np.mean(episodeReturns[j - meanSamples:j + 1]))
+
+    returns.append(pd.DataFrame({"episode": [i + 1 for i in range(meanSamples, len(episodeReturns))],
+                                     "behavior": ["random" for i in range(meanSamples, len(episodeReturns))],
+                                     "return": mean}))
+
 
     agents["agent_{}".format(i)] = model.to_dict()
 
+# merge data frames
+returns = pd.concat(returns)
 
 ### save the trained agents to disk
-torch.save({"hyperParameters": hyperParams, "trainEpisodes": trainEpisodes, "agents": agents}, "/dev/shm/agents.tar")
+torch.save({"hyperParameters": hyperParams, "trainEpisodes": trainEpisodes, "agents": agents, "returns": returns}, "/dev/shm/agents.tar")

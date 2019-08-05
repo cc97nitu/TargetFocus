@@ -156,7 +156,7 @@ class Trainer(object):
                 self.EPS_END + (self.EPS_START - self.EPS_END) * math.exp(-1. * self.stepsDone / self.EPS_DECAY))
 
             # Initialize the environment and state
-            env = Environment()  # no arguments => random initialization of starting point
+            env = Environment("random")  # no arguments => random initialization of starting point
             state = env.initialState
             episodeReturn = 0
 

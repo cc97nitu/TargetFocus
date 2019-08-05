@@ -4,7 +4,6 @@ import threading
 import torch
 from collections import namedtuple
 
-
 from time import time
 from itertools import product
 from shutil import copy, rmtree
@@ -20,6 +19,7 @@ posChanges = [-5e-3, 0, 5e-3]
 actionSet = [torch.tensor([x, y], dtype=torch.float, device=device) for x, y in product(posChanges, posChanges)]
 
 terminations = namedtuple("terminations", ["successful", "failed", "aborted"])
+
 
 class Environment(object):
     """
@@ -100,9 +100,10 @@ class Environment(object):
                 self.initialState = initialState
 
         elif len(args) == 0:
+            # find random starting point
             while True:
 
-                self.deflections = torch.randn(2, dtype=torch.float) * 0.1 # rescale to fit onto target
+                self.deflections = torch.randn(2, dtype=torch.float) * 0.1  # rescale to fit onto target
 
                 # get initial focus / initial state from them
                 initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
@@ -111,6 +112,29 @@ class Environment(object):
                 if not episodeTerminated:
                     self.initialState = initialState
                     break
+
+        elif len(args) == 1:
+            # find center of goal which lies on the target
+            while True:
+                focusGoal = torch.randn(2, dtype=torch.float) * 0.1  # rescale to match target size
+
+                if focusGoal.norm() < Environment.targetRadius:
+                    self.focusGoal = focusGoal
+                    break
+
+            # find random starting point
+            while True:
+                self.deflections = torch.randn(2, dtype=torch.float) * 0.1  # rescale to fit onto target
+
+                # get initial focus / initial state from them
+                initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
+                                                                initialize=True)  # action is a dummy action
+
+                if not episodeTerminated:
+                    self.initialState = initialState
+                    break
+
+
         else:
             # illegal number of arguments
             raise ValueError("check arguments passed to Environment!")
@@ -209,8 +233,6 @@ class Environment(object):
         rmtree(self.dir)
 
         return
-
-
 
 
 class EligibleEnvironmentParameters(list):

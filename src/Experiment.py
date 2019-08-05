@@ -18,7 +18,9 @@ agents = trainResults["agents"]
 
 # save mean returns whereas each entry is the average over the last meanSamples returns
 returns = list()
-greedyTerminations, randomTerminations = {"successful": list(), "failed": list(), "aborted": list()}, {"successful": list(), "failed": list(), "aborted": list()}
+meanReturns = list()
+greedyTerminations, randomTerminations = {"successful": list(), "failed": list(), "aborted": list()}, {
+    "successful": list(), "failed": list(), "aborted": list()}
 meanSamples = 10
 
 # run simulation with greedy behavior
@@ -35,6 +37,10 @@ for agent in agents:
     mean = list()
     for j in range(meanSamples, len(episodeReturns)):
         mean.append(np.mean(episodeReturns[j - meanSamples:j + 1]))
+
+    meanReturns.append(pd.DataFrame({"episode": [i + 1 for i in range(meanSamples, len(episodeReturns))],
+                                     "behavior": ["greedy" for i in range(meanSamples, len(episodeReturns))],
+                                     "return": mean}))
 
     returns.append(pd.DataFrame({"episode": [i + 1 for i in range(len(episodeReturns))],
                                  "behavior": ["greedy" for i in range(len(episodeReturns))],
@@ -59,6 +65,10 @@ for i in range(len(agents)):
     for j in range(meanSamples, len(episodeReturns)):
         mean.append(np.mean(episodeReturns[j - meanSamples:j + 1]))
 
+    meanReturns.append(pd.DataFrame({"episode": [i + 1 for i in range(meanSamples, len(episodeReturns))],
+                                     "behavior": ["random" for i in range(meanSamples, len(episodeReturns))],
+                                     "return": mean}))
+
     returns.append(pd.DataFrame({"episode": [i + 1 for i in range(len(episodeReturns))],
                                  "behavior": ["random" for i in range(len(episodeReturns))],
                                  "return": episodeReturns}))
@@ -68,11 +78,12 @@ for i in range(len(agents)):
     randomTerminations["failed"].append(episodeTerminations["failed"])
     randomTerminations["aborted"].append(episodeTerminations["aborted"])
 
-
 # concat to pandas data frame
 returns = pd.concat(returns)
+meanReturns = pd.concat(meanReturns)
 
-overallResults = {"returns": returns, "greedyTerminations": greedyTerminations, "randomTerminations": randomTerminations}
+overallResults = {"return": returns, "meanReturn": meanReturns, "greedyTerminations": greedyTerminations,
+                  "randomTerminations": randomTerminations}
 
 # dump
 with open("/dev/shm/benchmark", "wb") as file:
