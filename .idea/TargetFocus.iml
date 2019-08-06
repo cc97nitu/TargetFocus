@@ -6,7 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/DQN" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/DQN/res" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.7 (TargetFocus)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.7" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="PyTorch_DQN-Tutorial" />
     <orderEntry type="module" module-name="PyTorch_DQN-Tutorial" />

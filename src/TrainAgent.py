@@ -14,14 +14,13 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_STAR
 ### train 20 agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = 100
+trainEpisodes = 400
 
 meanSamples = 10
 
 for i in range(20):
     print("training agent number {}".format(i))
     model = DQN.Model()
-    model.train()
 
     trainer = DQN.Trainer(model, **hyperParams)
     episodeReturns, _ = trainer.trainAgent(trainEpisodes)

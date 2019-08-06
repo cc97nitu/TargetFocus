@@ -22,8 +22,8 @@ class Model(object):
     """Class describing a model consisting of two neural networks."""
 
     def __init__(self):
-        self.policy_net = Network.FC4(numberFeatures, numberActions).to(device)
-        self.target_net = Network.FC4(numberFeatures, numberActions).to(device)
+        self.policy_net = Network.FC5BN(numberFeatures, numberActions).to(device)
+        self.target_net = Network.FC5BN(numberFeatures, numberActions).to(device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         return
@@ -90,6 +90,7 @@ class Trainer(object):
                 # t.max(1) will return largest column value of each row.
                 # second column on max result is index of where max element was
                 # found, so we pick action with the larger expected reward.
+                self.model.eval()
                 return self.model.policy_net(state).argmax().unsqueeze_(0).unsqueeze_(0)
         else:
             return torch.tensor([[random.randrange(numberActions)]], device=device, dtype=torch.long)
@@ -98,6 +99,10 @@ class Trainer(object):
         if len(self.memory) < self.BATCH_SIZE:
             return
 
+        # put model in training mode
+        self.model.train()
+
+        # sample from replay memory
         transitions = self.memory.sample(self.BATCH_SIZE)
         # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
         # detailed explanation). This converts batch-array of Transitions
@@ -140,6 +145,8 @@ class Trainer(object):
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
+        # put model in evaluation mode again
+        self.model.eval()
         return
 
     def trainAgent(self, num_episodes):
@@ -156,7 +163,7 @@ class Trainer(object):
                 self.EPS_END + (self.EPS_START - self.EPS_END) * math.exp(-1. * self.stepsDone / self.EPS_DECAY))
 
             # Initialize the environment and state
-            env = Environment()  # no arguments => random initialization of starting point
+            env = Environment(0, 0)  # no arguments => random initialization of starting point
             state = env.initialState
             episodeReturn = 0
 
