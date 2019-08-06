@@ -1,6 +1,7 @@
 import os
 import subprocess as sp
 import threading
+import enum
 import torch
 from collections import namedtuple
 
@@ -19,6 +20,13 @@ posChanges = [-5e-3, 0, 5e-3]
 actionSet = [torch.tensor([x, y], dtype=torch.float, device=device) for x, y in product(posChanges, posChanges)]
 
 terminations = namedtuple("terminations", ["successful", "failed", "aborted"])
+
+
+class Termination(enum.Enum):
+    INCOMPLETE = enum.auto()
+    SUCCESSFUL = enum.auto()
+    FAILED = enum.auto()
+    ABORTED = enum.auto()
 
 
 class Environment(object):
@@ -45,17 +53,9 @@ class Environment(object):
     # abort if episode takes to long
     reactCountMax = 50
 
-    # count how episodes terminated
-    terminations = {"successful": 0, "failed": 0, "aborted": 0}
-
     # path to run.ele
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
     pathRunEle = os.path.abspath("../DQN/res/") + "/run.ele"
-
-    @staticmethod
-    def resetTerminations():
-        Environment.terminations = {"successful": 0, "failed": 0, "aborted": 0}
-        return
 
     def __init__(self, *args):
         """
@@ -94,7 +94,7 @@ class Environment(object):
             initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
                                                             initialize=True)  # action is a dummy action
 
-            if episodeTerminated:
+            if episodeTerminated != Termination.INCOMPLETE:
                 raise ValueError("starting in terminal state")
             else:
                 self.initialState = initialState
@@ -109,7 +109,8 @@ class Environment(object):
                 initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
                                                                 initialize=True)  # action is a dummy action
 
-                if not episodeTerminated:
+                if episodeTerminated == Termination.INCOMPLETE:
+                    # starting in a non-terminal state
                     self.initialState = initialState
                     break
 
@@ -130,7 +131,8 @@ class Environment(object):
                 initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
                                                                 initialize=True)  # action is a dummy action
 
-                if not episodeTerminated:
+                if episodeTerminated == Termination.INCOMPLETE:
+                    # starting in a non-terminal state
                     self.initialState = initialState
                     break
 
@@ -145,7 +147,7 @@ class Environment(object):
         """
         Simulate response to an action performed by the agent.
         :param action: index of action to respond to
-        :return: next_state, reward, termination
+        :return: next_state, reward, termination: bool, type_termination: Termination
         """
 
         # update magnet strengths according to chosen action
@@ -177,8 +179,7 @@ class Environment(object):
         # return terminal state if maximal amount of reactions exceeded
         if not self.reactCount < self.reactCountMax:
             # print("forced abortion of episode, max steps exceeded")
-            Environment.terminations["aborted"] += 1
-            return None, self.penalty, True
+            return None, self.penalty, Termination.ABORTED
         else:
             self.reactCount += 1
 
@@ -189,15 +190,14 @@ class Environment(object):
 
         if newDistanceToGoal < self.acceptance:
             # goal reached
-            Environment.terminations["successful"] += 1
-            return None, self.bounty, True
+            return None, self.bounty, Termination.SUCCESSFUL
         elif absCoords.norm().item() >= self.targetRadius:
             # beam spot left target
-            Environment.terminations["failed"] += 1
-            return None, self.penalty, True
+            return None, self.penalty, Termination.FAILED
         else:
             # reward according to distanceChange
-            return state, torch.tensor([self.__reward(distanceChange, 10 ** 3)], dtype=torch.float).unsqueeze_(0), False
+            return state, torch.tensor([self.__reward(distanceChange, 10 ** 3)], dtype=torch.float).unsqueeze_(
+                0), Termination.INCOMPLETE
 
     def __createLattice(self, strengths):
         """

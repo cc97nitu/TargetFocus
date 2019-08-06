@@ -7,7 +7,7 @@ import torch.nn.functional
 import matplotlib.pyplot as plt
 
 from DQN import Struct
-from DQN.Environment import Environment
+from DQN import Environment, Termination
 from DQN import Network
 
 # if gpu is to be used
@@ -22,8 +22,8 @@ class Model(object):
     """Class describing a model consisting of two neural networks."""
 
     def __init__(self):
-        self.policy_net = Network.FC2(numberFeatures, numberActions).to(device)
-        self.target_net = Network.FC2(numberFeatures, numberActions).to(device)
+        self.policy_net = Network.FC3(numberFeatures, numberActions).to(device)
+        self.target_net = Network.FC3(numberFeatures, numberActions).to(device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         return
@@ -143,11 +143,11 @@ class Trainer(object):
         return
 
     def trainAgent(self, num_episodes):
-        # reset Environment.terminations
-        Environment.resetTerminations()
-
         # keep track of epsilon and received return
         episodeEpsilon, episodeReturns = [], []
+
+        # count how episodes terminate
+        episodeTerminations = {"successful": 0, "failed": 0, "aborted": 0}
 
         # let the agent learn
         for i_episode in range(num_episodes):
@@ -156,12 +156,12 @@ class Trainer(object):
                 self.EPS_END + (self.EPS_START - self.EPS_END) * math.exp(-1. * self.stepsDone / self.EPS_DECAY))
 
             # Initialize the environment and state
-            env = Environment()  # no arguments => random initialization of starting point
+            env = Environment(0, 0)  # no arguments => random initialization of starting point
             state = env.initialState
             episodeReturn = 0
 
-            episodeTerminated = False
-            while not episodeTerminated:
+            episodeTerminated = Termination.INCOMPLETE
+            while episodeTerminated == Termination.INCOMPLETE:
                 # Select and perform an action
                 action = self.selectAction(state)
                 nextState, reward, episodeTerminated = env.react(action)
@@ -177,30 +177,36 @@ class Trainer(object):
                 self.optimizeModel()
 
             episodeReturns.append(episodeReturn)
+            if episodeTerminated == Termination.SUCCESSFUL:
+                episodeTerminations["successful"] += 1
+            elif episodeTerminated == Termination.FAILED:
+                episodeTerminations["failed"] += 1
+            elif episodeTerminated == Termination.ABORTED:
+                episodeTerminations["aborted"] += 1
 
             # Update the target network, copying all weights and biases in DQN
             if i_episode % self.TARGET_UPDATE == 0:
                 self.model.target_net.load_state_dict(self.model.policy_net.state_dict())
 
         print("Complete")
-        return episodeReturns, Environment.terminations
+        return episodeReturns, episodeTerminations
 
     def benchAgent(self, num_episodes):
-        # reset Environment.terminations
-        Environment.resetTerminations()
-
         # keep track of epsilon and received return
         episodeReturns = []
+
+        # count how episodes terminate
+        episodeTerminations = {"successful": 0, "failed": 0, "aborted": 0}
 
         # episodes
         for i_episode in range(num_episodes):
             # Initialize the environment and state
-            env = Environment("random")
+            env = Environment(0, 0)
             state = env.initialState
             episodeReturn = 0
 
-            episodeTerminated = False
-            while not episodeTerminated:
+            episodeTerminated = Termination.INCOMPLETE
+            while episodeTerminated == Termination.INCOMPLETE:
                 # Select and perform an action
                 action = self.selectAction(state)
                 nextState, reward, episodeTerminated = env.react(action)
@@ -210,9 +216,16 @@ class Trainer(object):
                 state = nextState
 
             episodeReturns.append(episodeReturn)
+            if episodeTerminated == Termination.SUCCESSFUL:
+                episodeTerminations["successful"] += 1
+            elif episodeTerminated == Termination.FAILED:
+                episodeTerminations["failed"] += 1
+            elif episodeTerminated == Termination.ABORTED:
+                episodeTerminations["aborted"] += 1
+
 
         print("Complete")
-        return episodeReturns, Environment.terminations
+        return episodeReturns, episodeTerminations
 
 
 
