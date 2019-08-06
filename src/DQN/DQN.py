@@ -22,8 +22,8 @@ class Model(object):
     """Class describing a model consisting of two neural networks."""
 
     def __init__(self):
-        self.policy_net = Network.FC3(numberFeatures, numberActions).to(device)
-        self.target_net = Network.FC3(numberFeatures, numberActions).to(device)
+        self.policy_net = Network.FC4(numberFeatures, numberActions).to(device)
+        self.target_net = Network.FC4(numberFeatures, numberActions).to(device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         return
@@ -156,7 +156,7 @@ class Trainer(object):
                 self.EPS_END + (self.EPS_START - self.EPS_END) * math.exp(-1. * self.stepsDone / self.EPS_DECAY))
 
             # Initialize the environment and state
-            env = Environment(0, 0)  # no arguments => random initialization of starting point
+            env = Environment()  # no arguments => random initialization of starting point
             state = env.initialState
             episodeReturn = 0
 

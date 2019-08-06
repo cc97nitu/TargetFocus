@@ -45,3 +45,19 @@ class FC3(nn.Module):
         x = self.activation(self.fc2(x))
         x = self.output(x)
         return x
+
+
+class FC4(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(FC4, self).__init__()
+        self.fc1 = nn.Linear(features, 80)
+        self.fc2 = nn.Linear(80, 80)
+        self.output = nn.Linear(80, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.output(x)
+        return x
