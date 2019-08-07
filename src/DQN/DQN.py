@@ -22,8 +22,8 @@ class Model(object):
     """Class describing a model consisting of two neural networks."""
 
     def __init__(self):
-        self.policy_net = Network.FC5BN(numberFeatures, numberActions).to(device)
-        self.target_net = Network.FC5BN(numberFeatures, numberActions).to(device)
+        self.policy_net = Network.FC6BN(numberFeatures, numberActions).to(device)
+        self.target_net = Network.FC6BN(numberFeatures, numberActions).to(device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         return

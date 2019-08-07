@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as functional
 
+
 class FC1(nn.Module):
     def __init__(self, features: int, outputs: int):
         super(FC1, self).__init__()
@@ -129,3 +130,79 @@ class FC5BN(nn.Module):
         x = self.bn4(x)
         x = self.output(x)
         return x
+
+
+class FC6(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(FC6, self).__init__()
+        self.fc1 = nn.Linear(features, 40)
+        self.fc2 = nn.Linear(40, 40)
+        self.fc3 = nn.Linear(40, 40)
+        self.output = nn.Linear(40, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.activation(self.fc3(x))
+        x = self.output(x)
+        return x
+
+
+class FC6BN(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(FC6BN, self).__init__()
+        self.fc1 = nn.Linear(features, 40)
+        self.fc2 = nn.Linear(40, 40)
+        self.fc3 = nn.Linear(40, 40)
+        self.bn1 = nn.BatchNorm1d(40)
+        self.bn2 = nn.BatchNorm1d(40)
+        self.bn3 = nn.BatchNorm1d(40)
+        self.output = nn.Linear(40, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = self.bn1(x)
+        x = self.activation(self.fc2(x))
+        x = self.bn2(x)
+        x = self.activation(self.fc3(x))
+        x = self.bn3(x)
+        x = self.output(x)
+        return x
+
+
+class CNN1(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(CNN1, self).__init__()
+        self.conv1 = nn.Conv1d(1, 4, 2)
+        self.pool1 = nn.MaxPool1d(2)
+
+        self.fc1 = nn.Linear(1*4*2, 40)
+        self.output = nn.Linear(40, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        # add channel dimension
+        x = x.unsqueeze(1)
+
+        # convolutional part
+        x = self.activation(self.conv1(x))
+        x = self.pool1(x)
+
+        # flatten out channels
+        x = x.view(-1, 1*4*2)
+
+        # fully connected part
+        x = self.activation(self.fc1(x))
+        x = self.output(x)
+        return x
+
+
+if __name__ == "__main__":
+    import torch
+    inp = torch.randn(2, 6)
+    net = CNN1(6, 25)
