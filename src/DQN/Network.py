@@ -202,6 +202,37 @@ class CNN1(nn.Module):
         return x
 
 
+class CNN2(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(CNN2, self).__init__()
+        self.conv1 = nn.Conv1d(1, 4, 2)
+        self.pool1 = nn.MaxPool1d(2)
+
+        self.fc1 = nn.Linear(1*4*2, 40)
+        self.fc2 = nn.Linear(40, 40)
+        self.output = nn.Linear(40, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        # add channel dimension
+        x = x.unsqueeze(1)
+
+        # convolutional part
+        x = self.activation(self.conv1(x))
+        x = self.pool1(x)
+
+        # flatten out channels
+        x = x.view(-1, 1*4*2)
+
+        # fully connected part
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.output(x)
+        return x
+
+
+
 if __name__ == "__main__":
     import torch
     inp = torch.randn(2, 6)
