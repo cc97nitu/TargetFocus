@@ -174,6 +174,20 @@ class FC6BN(nn.Module):
         return x
 
 
+class Cat1(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(Cat1, self).__init__()
+        self.fc1 = nn.Linear(features, 128)
+        self.output = nn.Linear(128, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = functional.softmax(self.output(x), dim=1)
+        return x
+
+
 class CNN1(nn.Module):
     def __init__(self, features: int, outputs: int):
         super(CNN1, self).__init__()

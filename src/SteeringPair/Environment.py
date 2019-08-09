@@ -55,7 +55,7 @@ class Environment(object):
 
     # path to run.ele
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
-    pathRunEle = os.path.abspath("../DQN/res/") + "/run.ele"
+    pathRunEle = os.path.abspath("../SteeringPair/res/") + "/run.ele"
 
     def __init__(self, *args):
         """

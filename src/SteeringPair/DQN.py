@@ -6,9 +6,9 @@ import torch.optim
 import torch.nn.functional
 import matplotlib.pyplot as plt
 
-from DQN import Struct
-from DQN import Environment, Termination
-from DQN import Network
+from SteeringPair import Struct
+from SteeringPair import Environment, Termination
+from SteeringPair import Network
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -22,8 +22,8 @@ class Model(object):
     """Class describing a model consisting of two neural networks."""
 
     def __init__(self):
-        self.policy_net = Network.FC2BN(numberFeatures, numberActions).to(device)
-        self.target_net = Network.FC2BN(numberFeatures, numberActions).to(device)
+        self.policy_net = Network.FC4(numberFeatures, numberActions).to(device)
+        self.target_net = Network.FC4(numberFeatures, numberActions).to(device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         return
@@ -163,7 +163,7 @@ class Trainer(object):
                 self.EPS_END + (self.EPS_START - self.EPS_END) * math.exp(-1. * self.stepsDone / self.EPS_DECAY))
 
             # Initialize the environment and state
-            env = Environment(0, 0)  # no arguments => random initialization of starting point
+            env = Environment()  # no arguments => random initialization of starting point
             state = env.initialState
             episodeReturn = 0
 
@@ -191,7 +191,7 @@ class Trainer(object):
             elif episodeTerminated == Termination.ABORTED:
                 episodeTerminations["aborted"] += 1
 
-            # Update the target network, copying all weights and biases in DQN
+            # Update the target network, copying all weights and biases in SteeringPair
             if i_episode % self.TARGET_UPDATE == 0:
                 self.model.target_net.load_state_dict(self.model.policy_net.state_dict())
 

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 
-import DQN
+import SteeringPair
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -14,9 +14,9 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_STAR
 # train an agent and plot his return per episode during training
 trainEpisodes = 400
 
-model = DQN.Model()
+model = SteeringPair.Model()
 model.train()
-trainer = DQN.Trainer(model, **hyperParams)
+trainer = SteeringPair.Trainer(model, **hyperParams)
 
 episodeReturns, _ = trainer.trainAgent(trainEpisodes)
 episodeReturns = [x[0].item() for x in episodeReturns]

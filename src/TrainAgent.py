@@ -2,13 +2,13 @@ import pandas as pd
 import numpy as np
 import torch
 
-import DQN
+import SteeringPair
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # define hyper parameters
-hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.1, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
+hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
                "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
 ### train 20 agents and store the corresponding models in agents
@@ -20,9 +20,9 @@ meanSamples = 10
 
 for i in range(20):
     print("training agent number {}".format(i))
-    model = DQN.Model()
+    model = SteeringPair.REINFORCE.Model()
 
-    trainer = DQN.Trainer(model, **hyperParams)
+    trainer = SteeringPair.REINFORCE.Trainer(model, **hyperParams)
     episodeReturns, _ = trainer.trainAgent(trainEpisodes)
     episodeReturns = [x[0].item() for x in episodeReturns]
 

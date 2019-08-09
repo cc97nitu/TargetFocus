@@ -275,7 +275,7 @@ for i_episode in range(num_episodes):
             episode_durations.append(t + 1)
             # plot_durations()
             break
-    # Update the target network, copying all weights and biases in DQN
+    # Update the target network, copying all weights and biases in SteeringPair
     if i_episode % TARGET_UPDATE == 0:
         target_net.load_state_dict(policy_net.state_dict())
 

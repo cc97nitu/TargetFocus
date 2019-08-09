@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import torch
 
-import DQN
+import SteeringPair
 
 # define dummy hyper parameters in order to create trainer-objects for benching
 hypPara_RandomBehavior = {"BATCH_SIZE": None, "GAMMA": None, "TARGET_UPDATE": None, "EPS_START": 1, "EPS_END": 1,
@@ -26,10 +26,10 @@ meanSamples = 10
 # run simulation with greedy behavior
 for agent in agents:
     print("greedy run {}".format(agent))
-    model = DQN.Model()
+    model = SteeringPair.REINFORCE.Model()
     model.load_state_dict(agents[agent])
     model.eval()
-    trainer = DQN.Trainer(model, **hypPara_GreedyBehavior)
+    trainer = SteeringPair.REINFORCE.Trainer(model, **hypPara_GreedyBehavior)
     episodeReturns, episodeTerminations = trainer.benchAgent(50)
     episodeReturns = [x[0].item() for x in episodeReturns]
 
@@ -54,9 +54,9 @@ for agent in agents:
 # run simulation with random behavior
 for i in range(len(agents)):
     print("random run {}".format(i))
-    dummyModel = DQN.Model()
+    dummyModel = SteeringPair.Model()
     dummyModel.eval()
-    trainer = DQN.Trainer(dummyModel, **hypPara_RandomBehavior)
+    trainer = SteeringPair.Trainer(dummyModel, **hypPara_RandomBehavior)
     episodeReturns, episodeTerminations = trainer.benchAgent(50)
     episodeReturns = [x[0].item() for x in episodeReturns]
 
