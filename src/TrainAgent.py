@@ -14,7 +14,7 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_STAR
 ### train 20 agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = 400
+trainEpisodes = 800
 
 meanSamples = 10
 

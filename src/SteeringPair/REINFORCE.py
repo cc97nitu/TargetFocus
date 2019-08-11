@@ -43,9 +43,11 @@ class Trainer(object):
             raise ValueError("Cannot read hyper parameters: {}".format(e))
 
     def selectAction(self, state):
-        probs = self.model.policy_net.forward(Variable(state))
+        log_probs = self.model.policy_net.forward(Variable(state))
+        probs = torch.exp(log_probs)
         highest_prob_action = np.random.choice(len(Environment.actionSet), p=np.squeeze(probs.detach().numpy()))
-        log_prob = torch.log(probs.squeeze(0)[highest_prob_action])
+        # log_prob = torch.log(log_probs.squeeze(0)[highest_prob_action])
+        log_prob = log_probs.squeeze(0)[highest_prob_action]
         highest_prob_action = torch.tensor([highest_prob_action], dtype=torch.long)
         return highest_prob_action, log_prob
 
@@ -61,8 +63,8 @@ class Trainer(object):
             observedReturns.append(Gt)
 
         observedReturns = torch.tensor(observedReturns)
-        observedReturns = (observedReturns - observedReturns.mean()) / (
-                observedReturns.std() + 1e-9)  # normalize discounted rewards
+        # observedReturns = (observedReturns - observedReturns.mean()) / (
+        #         observedReturns.std() + 1e-9)  # normalize discounted rewards
 
         policy_gradient = []
         for log_prob, Gt in zip(log_probs, observedReturns):
@@ -87,7 +89,7 @@ class Trainer(object):
             rewards, log_probs = [], []
 
             # Initialize the environment and state
-            env = Environment(0, 0)  # no arguments => random initialization of starting point
+            env = Environment()  # no arguments => random initialization of starting point
             state = env.initialState
             episodeReturn = 0
 
@@ -156,3 +158,9 @@ class Trainer(object):
 
         print("Complete")
         return episodeReturns, episodeTerminations
+
+
+if __name__ == "__main__":
+    model = Model()
+    train = Trainer(model, **{"GAMMA": 0.999})
+    train.trainAgent(40)

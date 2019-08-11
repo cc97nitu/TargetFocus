@@ -184,7 +184,7 @@ class Cat1(nn.Module):
 
     def forward(self, x):
         x = self.activation(self.fc1(x))
-        x = functional.softmax(self.output(x), dim=1)
+        x = functional.log_softmax(self.output(x), dim=1)
         return x
 
 
