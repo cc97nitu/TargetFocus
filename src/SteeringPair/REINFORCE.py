@@ -1,13 +1,10 @@
-import torch
 import numpy as np
-import torch.nn as nn
+import torch
 import torch.optim as optim
-import torch.nn.functional as F
 from torch.autograd import Variable
-import matplotlib.pyplot as plt
 
-from SteeringPair import Environment, Termination
 import SteeringPair.Network as Network
+from SteeringPair import Environment, Termination
 
 
 class Model(object):
@@ -33,7 +30,7 @@ class Model(object):
 
 class Trainer(object):
     def __init__(self, model, **kwargs):
-        self.model = Model()
+        self.model = model
         self.optimizer = optim.Adam(self.model.policy_net.parameters(), lr=3e-4)
 
         # extract hyper parameters from kwargs
@@ -117,6 +114,9 @@ class Trainer(object):
             elif episodeTerminated == Termination.ABORTED:
                 episodeTerminations["aborted"] += 1
 
+            # status report
+            print("episode: {}/{}".format(i_episode+1, num_episodes), end="\r")
+
         print("Complete")
         # plt.plot(episodeReturns)
         # plt.show()
@@ -163,4 +163,6 @@ class Trainer(object):
 if __name__ == "__main__":
     model = Model()
     train = Trainer(model, **{"GAMMA": 0.999})
-    train.trainAgent(40)
+    train.trainAgent(400)
+    _, terminations = train.benchAgent(50)
+    print(terminations)
