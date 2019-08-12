@@ -121,20 +121,32 @@ class Environment(object):
 
                 if focusGoal.norm() < Environment.targetRadius:
                     self.focusGoal = focusGoal
+
+                    # find random starting point
+                    attempts = 0
+                    while True:
+                        attempts += 1
+                        self.deflections = torch.randn(2, dtype=torch.float) * 0.1  # rescale to fit onto target
+
+                        # get initial focus / initial state from them
+                        initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
+                                                                        initialize=True)  # action is a dummy action
+
+                        if episodeTerminated == Termination.INCOMPLETE:
+                            # starting in a non-terminal state
+                            self.initialState = initialState
+                            break
+
+                        if attempts > 100:
+                            print("Environment stuck at initialization")
+                            break
+
+                    if attempts > 100:
+                        # retry with new goal
+                        continue
+
                     break
 
-            # find random starting point
-            while True:
-                self.deflections = torch.randn(2, dtype=torch.float) * 0.1  # rescale to fit onto target
-
-                # get initial focus / initial state from them
-                initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
-                                                                initialize=True)  # action is a dummy action
-
-                if episodeTerminated == Termination.INCOMPLETE:
-                    # starting in a non-terminal state
-                    self.initialState = initialState
-                    break
 
 
         else:
@@ -196,7 +208,7 @@ class Environment(object):
             return None, self.penalty, Termination.FAILED
         else:
             # reward according to distanceChange
-            return state, torch.tensor([self.__reward(distanceChange, 10 ** 3)], dtype=torch.float).unsqueeze_(
+            return state, torch.tensor([self.reward(distanceChange, 10 ** 3)], dtype=torch.float).unsqueeze_(
                 0), Termination.INCOMPLETE
 
     def __createLattice(self, strengths):
@@ -219,14 +231,14 @@ class Environment(object):
 
             return
 
-    def __reward(self, distanceChange, scale):
+    def reward(self, distanceChange, scale):
         """
         Gives reward according to the change in distance to goal in the latest step.
         :param distanceChange: change in distance to goal
         :param scale: scalar value to adjust reward size
         :return: reward
         """
-        return -scale * (10 ** 5 * distanceChange ** 3 + distanceChange)
+        return -scale * distanceChange
 
     def __del__(self):
         """clean up before destruction"""
