@@ -12,7 +12,7 @@ def plotTrainResults(data: pd.DataFrame):
     # plot
     sns.set(style="darkgrid")
 
-    sns.lineplot(x="episode", y="return", data=data)
+    sns.lineplot(x="episode", y="return", hue="actions", data=data)
 
     plt.title("random start, random goal")
     plt.show()
@@ -21,19 +21,23 @@ def plotTrainResults(data: pd.DataFrame):
 
 if __name__ == "__main__":
     ### train results ###
-    # fetch data
-    data = torch.load("/dev/shm/agents.tar")
-
-    plotTrainResults(data["returns"])
-
-    # # concat two data frames
-    # data6dRaw = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-raw/gamma=0.999/No-Return-Normalization/Cat1/RR_Cat1_400_agents.tar")
-    # data2dNormalized = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/2d-states-normalized/Cat1/RR_Cat1_400_agents.tar")
+    # # fetch data
+    # data = torch.load("/dev/shm/agents.tar")
     #
-    # data6dRaw = data6dRaw["returns"]
-    # data6dRaw["states"] = pd.Series("6d-raw", index=data6dRaw.index)
-    # data2dNormalized = data2dNormalized["returns"]
-    # data2dNormalized["states"] = pd.Series("2d-norm", index=data2dNormalized.index)
-    #
-    # concat = pd.concat([data6dRaw, data2dNormalized,])
-    # plotTrainResults(concat)
+    # plotTrainResults(data["returns"])
+
+    # concat two data frames
+    data4A = torch.load("/home/dylan/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/6d-norm_4A_RR_Cat1_2000_agents.tar")
+    data9A = torch.load("/home/dylan/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/6d-norm_9A_Cat1_2000_agents.tar")
+    data25A = torch.load("/home/dylan/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/6d-norm_25A_RR_Cat1_2000_agents.tar")
+
+    data4A = data4A["returns"]
+    data4A["actions"] = pd.Series("four", index=data4A.index)
+    data9A = data9A["returns"]
+    data9A["actions"] = pd.Series("nine", index=data9A.index)
+    data25A = data25A["returns"]
+    data25A["actions"] = pd.Series("twenty-five", index=data25A.index)
+
+
+    concat = pd.concat([data4A, data9A, data25A ])
+    plotTrainResults(concat)

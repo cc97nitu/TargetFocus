@@ -163,7 +163,13 @@ class Trainer(object):
                 self.EPS_END + (self.EPS_START - self.EPS_END) * math.exp(-1. * self.stepsDone / self.EPS_DECAY))
 
             # Initialize the environment and state
-            env = Environment()  # no arguments => random initialization of starting point
+            while True:
+                try:
+                    env = Environment("random")  # no arguments => random initialization of starting point
+                    break
+                except ValueError:
+                    continue
+
             state = env.initialState
             episodeReturn = 0
 
@@ -195,6 +201,9 @@ class Trainer(object):
             if i_episode % self.TARGET_UPDATE == 0:
                 self.model.target_net.load_state_dict(self.model.policy_net.state_dict())
 
+            # status report
+            print("episode: {}/{}".format(i_episode+1, num_episodes), end="\r")
+
         print("Complete")
         return episodeReturns, episodeTerminations
 
@@ -208,7 +217,13 @@ class Trainer(object):
         # episodes
         for i_episode in range(num_episodes):
             # Initialize the environment and state
-            env = Environment(0, 0)
+            while True:
+                try:
+                    env = Environment("random")  # no arguments => random initialization of starting point
+                    break
+                except ValueError:
+                    continue
+
             state = env.initialState
             episodeReturn = 0
 
