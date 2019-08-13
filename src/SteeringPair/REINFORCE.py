@@ -86,7 +86,13 @@ class Trainer(object):
             rewards, log_probs = [], []
 
             # Initialize the environment and state
-            env = Environment()  # no arguments => random initialization of starting point
+            while True:
+                try:
+                    env = Environment("random")  # no arguments => random initialization of starting point
+                    break
+                except ValueError:
+                    continue
+
             state = env.initialState
             episodeReturn = 0
 
@@ -133,7 +139,13 @@ class Trainer(object):
         # episodes
         for i_episode in range(num_episodes):
             # Initialize the environment and state
-            env = Environment(0, 0)
+            while True:
+                try:
+                    env = Environment("random")  # no arguments => random initialization of starting point
+                    break
+                except ValueError:
+                    continue
+
             state = env.initialState
             episodeReturn = 0
 

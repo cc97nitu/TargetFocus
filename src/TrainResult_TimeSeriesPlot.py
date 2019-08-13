@@ -14,6 +14,7 @@ def plotTrainResults(data: pd.DataFrame):
 
     sns.lineplot(x="episode", y="return", data=data)
 
+    plt.title("random start, random goal")
     plt.show()
     plt.close()
 
@@ -25,17 +26,14 @@ if __name__ == "__main__":
 
     plotTrainResults(data["returns"])
 
-    # concat two data frames
-    # dataFixedFixed = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/fixedStart_fixedGoal_agents.tar")
-    # dataRandomFixed = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/randomStart_fixedGoal_agents.tar")
-    # dataRandomRandom = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/randomStart_randomGoal_agents.tar")
+    # # concat two data frames
+    # data6dRaw = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-raw/gamma=0.999/No-Return-Normalization/Cat1/RR_Cat1_400_agents.tar")
+    # data2dNormalized = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/2d-states-normalized/Cat1/RR_Cat1_400_agents.tar")
     #
-    # dataFixedFixed = dataFixedFixed["returns"]
-    # dataFixedFixed["type"] = pd.Series("FF", index=dataFixedFixed.index)
-    # dataRandomFixed = dataRandomFixed["returns"]
-    # dataRandomFixed["type"] = pd.Series("RF", index=dataRandomFixed.index)
-    # dataRandomRandom = dataRandomRandom["returns"]
-    # dataRandomRandom["type"] = pd.Series("RR", index=dataRandomRandom.index)
+    # data6dRaw = data6dRaw["returns"]
+    # data6dRaw["states"] = pd.Series("6d-raw", index=data6dRaw.index)
+    # data2dNormalized = data2dNormalized["returns"]
+    # data2dNormalized["states"] = pd.Series("2d-norm", index=data2dNormalized.index)
     #
-    # concat = pd.concat([dataFixedFixed, dataRandomFixed, dataRandomRandom])
+    # concat = pd.concat([data6dRaw, data2dNormalized,])
     # plotTrainResults(concat)

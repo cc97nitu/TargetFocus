@@ -16,8 +16,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # create action set
 # posChanges = [-1e-2, -1e-3, 0, 1e-3, 1e-2]
-# posChanges = [-5e-3, 0, 5e-3]
-posChanges = [-5e-3, 5e-3]
+posChanges = [-5e-3, 0, 5e-3]
+# posChanges = [-5e-3, 5e-3]
 actionSet = [torch.tensor([x, y], dtype=torch.float, device=device) for x, y in product(posChanges, posChanges)]
 
 terminations = namedtuple("terminations", ["successful", "failed", "aborted"])
@@ -35,7 +35,7 @@ class Environment(object):
     Simulated Environment.
     """
     # number of variables representing a state
-    features = 2
+    features = 6
 
     # define action set
     actionSet = actionSet
@@ -60,11 +60,9 @@ class Environment(object):
 
     def __init__(self, *args):
         """
-        Constructor.
-        :param strengthA: initial horizontal focusing strength
-        :param strengthB:   initial vertical focusing strength
+        Creates an environment.
+        :param args: if empty: choose random start; if  one single arg: random start, random goal; if two args: use as start coordinates
         """
-
         # count how often the environment reacted
         self.reactCount = 0
 
@@ -117,38 +115,36 @@ class Environment(object):
 
         elif len(args) == 1:
             # find center of goal which lies on the target
+            def findGoal():
+                while True:
+                    focusGoal = torch.randn(2, dtype=torch.float) * 0.1  # rescale to match target size
+
+                    if focusGoal.norm() < Environment.targetRadius:
+                        return focusGoal
+
+            self.focusGoal = findGoal()
+
+            # find random starting point
+            stuck = False
+            attempts = 0
             while True:
-                focusGoal = torch.randn(2, dtype=torch.float) * 0.1  # rescale to match target size
+                attempts += 1
+                self.deflections = torch.randn(2, dtype=torch.float) * 0.1  # rescale to fit onto target
 
-                if focusGoal.norm() < Environment.targetRadius:
-                    self.focusGoal = focusGoal
+                # get initial focus / initial state from them
+                initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
+                                                                initialize=True)  # action is a dummy action
 
-                    # find random starting point
-                    attempts = 0
-                    while True:
-                        attempts += 1
-                        self.deflections = torch.randn(2, dtype=torch.float) * 0.1  # rescale to fit onto target
-
-                        # get initial focus / initial state from them
-                        initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
-                                                                        initialize=True)  # action is a dummy action
-
-                        if episodeTerminated == Termination.INCOMPLETE:
-                            # starting in a non-terminal state
-                            self.initialState = initialState
-                            break
-
-                        if attempts > 100:
-                            print("Environment stuck at initialization")
-                            break
-
-                    if attempts > 100:
-                        # retry with new goal
-                        continue
-
+                if episodeTerminated == Termination.INCOMPLETE:
+                    # starting in a non-terminal state
+                    self.initialState = initialState
+                    if stuck:
+                        print("init successful")
                     break
 
-
+                if attempts > 100:
+                    print("Environment stuck at initialization")
+                    raise ValueError("unable to find random starting points")
 
         else:
             # illegal number of arguments
@@ -186,11 +182,14 @@ class Environment(object):
         # calculate relative distance between beam focus and focus goal
         relCoords = absCoords - self.focusGoal
 
-        # create state tensor
+        #### create state tensor
         # state = torch.cat((self.deflections, absCoords, relCoords)).unsqueeze(0)
 
-        state = relCoords / 1e-2  # shall normalize to mean=0 and std=1
-        state.unsqueeze_(0)
+        # substract mean (which is zero) and divide through standard deviation
+        state = torch.cat((self.deflections / 3.33e-2, absCoords / 7.5e-3, relCoords / 1e-2)).unsqueeze(0)
+
+        # state = relCoords / 1e-2  # shall normalize to mean=0 and std=1
+        # state.unsqueeze_(0)
 
         # return terminal state if maximal amount of reactions exceeded
         if not self.reactCount < self.reactCountMax:
@@ -289,4 +288,21 @@ if __name__ == '__main__':
     env = Environment(0, 0)
     state = env.initialState
 
-    eliParam = EligibleEnvironmentParameters(-0.05, 0.05, 0.01)
+    # sample deflections and absolute coordinates
+    Environment.acceptance = 0
+
+    # deflection range
+    defRange = torch.arange(-0.1, 0.1, 5e-3)
+
+    states = list()
+    # find eligible starting points
+    for x, y in product(defRange, defRange):
+        try:
+            env = Environment(x, y)
+            states.append(env.initialState)
+        except ValueError:
+            continue
+
+    states = torch.cat(states)
+    statesMean = states.transpose(1, 0).mean(1)
+    statesStd = states.transpose(1, 0).std(1)
