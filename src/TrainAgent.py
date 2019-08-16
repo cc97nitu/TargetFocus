@@ -14,15 +14,15 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_STAR
 ### train 20 agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = 2000
+trainEpisodes = 400
 
 meanSamples = 10
 
 for i in range(20):
     print("training agent number {}".format(i))
-    model = SteeringPair.REINFORCE.Model()
+    model = SteeringPair.DQN.Model()
 
-    trainer = SteeringPair.REINFORCE.Trainer(model, **hyperParams)
+    trainer = SteeringPair.DQN.Trainer(model, **hyperParams)
     episodeReturns, _ = trainer.trainAgent(trainEpisodes)
     episodeReturns = [x[0].item() for x in episodeReturns]
 
@@ -42,4 +42,4 @@ for i in range(20):
 returns = pd.concat(returns)
 
 ### save the trained agents to disk
-torch.save({"hyperParameters": hyperParams, "trainEpisodes": trainEpisodes, "agents": agents, "returns": returns}, "/dev/shm/6d-norm_9A_Cat1_2000_agents.tar")
+torch.save({"hyperParameters": hyperParams, "trainEpisodes": trainEpisodes, "agents": agents, "returns": returns}, "/dev/shm/agents.tar")
