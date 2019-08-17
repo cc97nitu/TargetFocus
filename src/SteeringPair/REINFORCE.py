@@ -49,6 +49,7 @@ class Trainer(object):
         return highest_prob_action, log_prob
 
     def optimizeModel(self, rewards, log_probs):
+        # calculate observed returns from observed rewards
         observedReturns = []
 
         for t in range(len(rewards)):
@@ -63,6 +64,7 @@ class Trainer(object):
         # observedReturns = (observedReturns - observedReturns.mean()) / (
         #         observedReturns.std() + 1e-9)  # normalize discounted rewards
 
+        # calculate policy gradient
         policy_gradient = []
         for log_prob, Gt in zip(log_probs, observedReturns):
             policy_gradient.append(-log_prob * Gt)

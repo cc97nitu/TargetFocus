@@ -22,8 +22,8 @@ class Model(object):
     """Class describing a model consisting of two neural networks."""
 
     def __init__(self):
-        self.policy_net = Network.FC4(numberFeatures, numberActions).to(device)
-        self.target_net = Network.FC4(numberFeatures, numberActions).to(device)
+        self.policy_net = Network.FC7(numberFeatures, numberActions).to(device)
+        self.target_net = Network.FC7(numberFeatures, numberActions).to(device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         return
@@ -78,7 +78,7 @@ class Trainer(object):
         self.stepsDone = 0
 
         # define optimizer
-        self.optimizer = torch.optim.Adam(self.model.policy_net.parameters(), lr=1e-4)
+        self.optimizer = torch.optim.Adam(self.model.policy_net.parameters(), lr=2e-5)
         return
 
     def selectAction(self, state):

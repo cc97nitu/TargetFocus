@@ -16,8 +16,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # create action set
 # posChanges = [-1e-2, -1e-3, 0, 1e-3, 1e-2]
-posChanges = [-5e-3, 0, 5e-3]
-# posChanges = [-5e-3, 5e-3]
+# posChanges = [-5e-3, 0, 5e-3]
+posChanges = [-5e-3, 5e-3]
 actionSet = [torch.tensor([x, y], dtype=torch.float, device=device) for x, y in product(posChanges, posChanges)]
 
 terminations = namedtuple("terminations", ["successful", "failed", "aborted"])
@@ -35,7 +35,7 @@ class Environment(object):
     Simulated Environment.
     """
     # number of variables representing a state
-    features = 6
+    features = 2
 
     # define action set
     actionSet = actionSet
@@ -186,10 +186,10 @@ class Environment(object):
         # state = torch.cat((self.deflections, absCoords, relCoords)).unsqueeze(0)
 
         # substract mean (which is zero) and divide through standard deviation
-        state = torch.cat((self.deflections / 3.33e-2, absCoords / 7.5e-3, relCoords / 1e-2)).unsqueeze(0)
+        # state = torch.cat((self.deflections / 3.33e-2, absCoords / 7.5e-3, relCoords / 1e-2)).unsqueeze(0)
 
-        # state = relCoords / 1e-2  # shall normalize to mean=0 and std=1
-        # state.unsqueeze_(0)
+        state = relCoords / 1.225e-2  # shall normalize to mean=0 and std=1
+        state.unsqueeze_(0)
 
         # return terminal state if maximal amount of reactions exceeded
         if not self.reactCount < self.reactCountMax:
@@ -241,7 +241,7 @@ class Environment(object):
         :param scale: scalar value to adjust reward size
         :return: reward
         """
-        return -scale * distanceChange
+        return -scale * distanceChange - 0.5
 
     def __del__(self):
         """clean up before destruction"""

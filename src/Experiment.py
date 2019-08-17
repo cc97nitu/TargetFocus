@@ -26,10 +26,10 @@ meanSamples = 10
 # run simulation with greedy behavior
 for agent in agents:
     print("greedy run {}".format(agent))
-    model = SteeringPair.REINFORCE.Model()
+    model = SteeringPair.DQN.Model()
     model.load_state_dict(agents[agent])
     model.eval()
-    trainer = SteeringPair.REINFORCE.Trainer(model, **hypPara_GreedyBehavior)
+    trainer = SteeringPair.DQN.Trainer(model, **hypPara_GreedyBehavior)
     episodeReturns, episodeTerminations = trainer.benchAgent(50)
     episodeReturns = [x[0].item() for x in episodeReturns]
 

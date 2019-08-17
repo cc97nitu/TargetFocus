@@ -22,7 +22,7 @@ def plotTrainResults(data: pd.DataFrame):
 if __name__ == "__main__":
     # ### train results ###
     # fetch data
-    data = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/2d-states-normalized/Cat1/RR_Cat1_400_agents.tar")
+    data = torch.load("/dev/shm/agents.tar")
 
     plotTrainResults(data["returns"])
 
