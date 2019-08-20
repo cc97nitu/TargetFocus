@@ -12,7 +12,7 @@ from SteeringPair import Environment, Termination
 from SteeringPair import Network
 
 # if gpu is to be used
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
 
 # number features describing a state
 numberFeatures = Environment.features
@@ -150,6 +150,7 @@ class Trainer(object):
         states = torch.cat(states)
         actions = torch.cat(actions).unsqueeze(1)
         qValues = self.model.qTrainNet(states).gather(1, actions)
+        qValues.detach_()
 
         # calculate policy gradient
         log_probs = torch.stack(log_probs)
