@@ -1,5 +1,3 @@
-import random
-import math
 import numpy as np
 
 import torch
@@ -88,7 +86,7 @@ class Trainer(object):
         probs = torch.exp(log_probs)
         selectedAction = np.random.choice(len(Environment.actionSet), p=np.squeeze(probs.detach().numpy()))
         log_prob = log_probs.squeeze(0)[selectedAction]
-        selectedAction = torch.tensor([selectedAction], dtype=torch.long)
+        selectedAction = torch.tensor([selectedAction], dtype=torch.long, device=device)
         return selectedAction, log_prob
 
     def optimizeQTrainNet(self):

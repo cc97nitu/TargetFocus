@@ -41,15 +41,15 @@ class Environment(object):
     actionSet = actionSet
 
     # define focus goal
-    focusGoal = torch.tensor((8e-3, 8e-3), dtype=torch.float)
+    focusGoal = torch.tensor((8e-3, 8e-3), dtype=torch.float, device=device)
 
     acceptance = 5e-3  # max distance between focus goal and beam focus of a state for the state to be considered terminal
     targetDiameter = 3e-2  # diameter of target
     targetRadius = targetDiameter / 2
 
     # reward on success / penalty on failure
-    bounty = torch.tensor([10], dtype=torch.float).unsqueeze_(0)
-    penalty = torch.tensor([-10], dtype=torch.float).unsqueeze_(0)
+    bounty = torch.tensor([10], dtype=torch.float, device=device).unsqueeze_(0)
+    penalty = torch.tensor([-10], dtype=torch.float, device=device).unsqueeze_(0)
 
     # abort if episode takes to long
     reactCountMax = 50
@@ -87,10 +87,10 @@ class Environment(object):
 
         # initial magnets' deflection and beam spot's position
         if len(args) == 2:
-            self.deflections = torch.tensor((args[0], args[1]), dtype=torch.float)
+            self.deflections = torch.tensor((args[0], args[1]), dtype=torch.float, device=device)
 
             # get initial focus / initial state from them
-            initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
+            initialState, _, episodeTerminated = self.react(torch.zeros(1, device=device).unsqueeze(0),
                                                             initialize=True)  # action is a dummy action
 
             if episodeTerminated != Termination.INCOMPLETE:
@@ -102,10 +102,10 @@ class Environment(object):
             # find random starting point
             while True:
 
-                self.deflections = torch.randn(2, dtype=torch.float) * 0.1  # rescale to fit onto target
+                self.deflections = torch.randn(2, dtype=torch.float, device=device) * 0.1  # rescale to fit onto target
 
                 # get initial focus / initial state from them
-                initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
+                initialState, _, episodeTerminated = self.react(torch.zeros(1, device=device).unsqueeze(0),
                                                                 initialize=True)  # action is a dummy action
 
                 if episodeTerminated == Termination.INCOMPLETE:
@@ -117,7 +117,7 @@ class Environment(object):
             # find center of goal which lies on the target
             def findGoal():
                 while True:
-                    focusGoal = torch.randn(2, dtype=torch.float) * 0.1  # rescale to match target size
+                    focusGoal = torch.randn(2, dtype=torch.float, device=device) * 0.1  # rescale to match target size
 
                     if focusGoal.norm() < Environment.targetRadius:
                         return focusGoal
@@ -129,10 +129,10 @@ class Environment(object):
             attempts = 0
             while True:
                 attempts += 1
-                self.deflections = torch.randn(2, dtype=torch.float) * 0.1  # rescale to fit onto target
+                self.deflections = torch.randn(2, dtype=torch.float, device=device) * 0.1  # rescale to fit onto target
 
                 # get initial focus / initial state from them
-                initialState, _, episodeTerminated = self.react(torch.zeros(1).unsqueeze(0),
+                initialState, _, episodeTerminated = self.react(torch.zeros(1, device=device).unsqueeze(0),
                                                                 initialize=True)  # action is a dummy action
 
                 if episodeTerminated == Termination.INCOMPLETE:
@@ -176,7 +176,7 @@ class Environment(object):
         dataSet.load(self.dir + "/run.out")
 
         # get absolute coordinates of beam center
-        absCoords = torch.tensor((dataSet.columnData[0], dataSet.columnData[2]), dtype=torch.float).mean(1)
+        absCoords = torch.tensor((dataSet.columnData[0], dataSet.columnData[2]), dtype=torch.float, device=device).mean(1)
         absCoords = absCoords.mean(1)
 
         # calculate relative distance between beam focus and focus goal
@@ -211,7 +211,7 @@ class Environment(object):
             return None, self.penalty, Termination.FAILED
         else:
             # reward according to distanceChange
-            return state, torch.tensor([self.reward(distanceChange, 10 ** 3)], dtype=torch.float).unsqueeze_(
+            return state, torch.tensor([self.reward(distanceChange, 10 ** 3)], dtype=torch.float, device=device).unsqueeze_(
                 0), Termination.INCOMPLETE
 
     def __createLattice(self, strengths):
