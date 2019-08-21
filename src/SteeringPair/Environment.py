@@ -16,8 +16,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # create action set
 # posChanges = [-1e-2, -1e-3, 0, 1e-3, 1e-2]
-# posChanges = [-5e-3, 0, 5e-3]
-posChanges = [-5e-3, 5e-3]
+posChanges = [-5e-3, 0, 5e-3]
+# posChanges = [-5e-3, 5e-3]
 actionSet = [torch.tensor([x, y], dtype=torch.float, device=device) for x, y in product(posChanges, posChanges)]
 
 terminations = namedtuple("terminations", ["successful", "failed", "aborted"])

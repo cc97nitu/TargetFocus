@@ -20,9 +20,9 @@ meanSamples = 10
 
 for i in range(20):
     print("training agent number {}".format(i))
-    model = SteeringPair.DQN.Model()
+    model = SteeringPair.REINFORCE.Model()
 
-    trainer = SteeringPair.DQN.Trainer(model, **hyperParams)
+    trainer = SteeringPair.REINFORCE.Trainer(model, **hyperParams)
     episodeReturns, _ = trainer.trainAgent(trainEpisodes)
     episodeReturns = [x[0].item() for x in episodeReturns]
 

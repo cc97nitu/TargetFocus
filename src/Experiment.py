@@ -13,7 +13,7 @@ hypPara_GreedyBehavior = {"BATCH_SIZE": None, "GAMMA": None, "TARGET_UPDATE": No
                           "EPS_DECAY": 1, "MEMORY_SIZE": None}
 
 # fetch pre-trained agents
-trainResults = torch.load("/dev/shm/agents.tar")
+trainResults = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/propRewardStepPenalty/6d-norm_9A_RR_Cat1_2000_agents.tar")
 agents = trainResults["agents"]
 
 # save mean returns whereas each entry is the average over the last meanSamples returns
@@ -26,10 +26,10 @@ meanSamples = 10
 # run simulation with greedy behavior
 for agent in agents:
     print("greedy run {}".format(agent))
-    model = SteeringPair.DQN.Model()
+    model = SteeringPair.REINFORCE.Model()
     model.load_state_dict(agents[agent])
     model.eval()
-    trainer = SteeringPair.DQN.Trainer(model, **hypPara_GreedyBehavior)
+    trainer = SteeringPair.REINFORCE.Trainer(model, **hypPara_GreedyBehavior)
     episodeReturns, episodeTerminations = trainer.benchAgent(50)
     episodeReturns = [x[0].item() for x in episodeReturns]
 

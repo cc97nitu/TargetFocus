@@ -56,19 +56,19 @@ if __name__ == "__main__":
     #     data = pickle.load(file)
     # plotStatistics(buildPdFrame(data, "REINFORCE"))
 
-    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/DQN/Adam(lr=2e-5)/propReward/gamma=0/6d-norm_4A_RR_FC7_2000_benchmark"
+    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/propReward/6d-norm_9A_RR_Cat1_2000_benchmark"
     with open(path, "rb") as file:
         frame_4a = pickle.load(file)
 
-    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/DQN/Adam(lr=2e-5)/propReward/gamma=0/6d-norm_9A_RR_FC7_2000_benchmark"
+    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/propRewardStepPenalty/6d-norm_9A_RR_Cat1_2000_benchmark"
     with open(path, "rb") as file:
         frame_9a = pickle.load(file)
 
-    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/DQN/Adam(lr=2e-5)/propReward/gamma=0/6d-norm_25A_RR_FC7_2000_benchmark"
+    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/ConstantRewardPerStep/6d-norm_9A_RR_Cat1_2000_benchmark"
     with open(path, "rb") as file:
         frame_25a = pickle.load(file)
 
-    args = [(frame_4a, r"$\mathit{A}_{4}$"), (frame_9a, r"$\mathit{A}_{9}$"), (frame_25a, r"$\mathit{A}_{25}$")]
+    args = [(frame_4a, "A"), (frame_9a, "B"), (frame_25a, "C")]
 
     plotStatistics(buildPdFrame(*args))
 
