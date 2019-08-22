@@ -3,7 +3,7 @@ import torch
 import torch.optim as optim
 from torch.autograd import Variable
 
-# import SteeringPair.Network as Network
+import SteeringPair.Network as Network
 from SteeringPair import Environment, Termination, initEnvironment
 from SteeringPair.AbstractAlgorithm import AbstractModel, AbstractTrainer
 
@@ -14,7 +14,7 @@ class Model(AbstractModel):
         self.policy_net = PolicyNetwork(Environment.features, len(Environment.actionSet)).to(self.device)
 
     def to_dict(self):
-        return {"policy_net_state_dict": self.policy_net.state_dict(),}
+        return {"policy_net_state_dict": self.policy_net.state_dict(), }
 
     def load_state_dict(self, dictionary: dict):
         try:
@@ -30,7 +30,6 @@ class Model(AbstractModel):
 
     def __repr__(self):
         return "PolicyNetwork={}".format(str(self.policy_net.__class__.__name__))
-
 
 
 class Trainer(AbstractTrainer):
@@ -130,7 +129,7 @@ class Trainer(AbstractTrainer):
                 episodeTerminations["aborted"] += 1
 
             # status report
-            print("episode: {}/{}".format(i_episode+1, num_episodes), end="\r")
+            print("episode: {}/{}".format(i_episode + 1, num_episodes), end="\r")
 
         print("Complete")
         # plt.plot(episodeReturns)
@@ -176,7 +175,6 @@ class Trainer(AbstractTrainer):
             elif episodeTerminated == Termination.ABORTED:
                 episodeTerminations["aborted"] += 1
 
-
         print("Complete")
         return episodeReturns, episodeTerminations
 
@@ -188,7 +186,7 @@ if __name__ == "__main__":
                  "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
     initEnvironment(**envConfig)
 
-    model = Model()
+    model = Model(PolicyNetwork=Network.Cat1)
     train = Trainer(model, **{"GAMMA": 0.999})
     train.trainAgent(400)
     _, terminations = train.benchAgent(50)

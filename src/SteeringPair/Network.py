@@ -210,6 +210,24 @@ class FC7BN(nn.Module):
         return x
 
 
+class FC7BN2(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(FC7BN, self).__init__()
+        self.fc1 = nn.Linear(features, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.bn1 = nn.BatchNorm1d(128)
+        self.bn2 = nn.BatchNorm1d(128)
+        self.output = nn.Linear(128, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.bn1(self.fc1(x)))
+        x = self.activation(self.bn2(self.fc2(x)))
+        x = self.output(x)
+        return x
+
+
 class Cat1(nn.Module):
     def __init__(self, features: int, outputs: int):
         super(Cat1, self).__init__()
@@ -220,6 +238,82 @@ class Cat1(nn.Module):
 
     def forward(self, x):
         x = self.activation(self.fc1(x))
+        x = functional.log_softmax(self.output(x), dim=1)
+        return x
+
+
+class Cat2(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(Cat2, self).__init__()
+        self.fc1 = nn.Linear(features, 256)
+        self.output = nn.Linear(256, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = functional.log_softmax(self.output(x), dim=1)
+        return x
+
+
+class Cat3(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(Cat3, self).__init__()
+        self.fc1 = nn.Linear(features, 1024)
+        self.output = nn.Linear(1024, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = functional.log_softmax(self.output(x), dim=1)
+        return x
+
+
+class Cat4(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(Cat4, self).__init__()
+        self.fc1 = nn.Linear(features, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.output = nn.Linear(128, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = functional.log_softmax(self.output(x), dim=1)
+        return x
+
+
+class Cat5(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(Cat5, self).__init__()
+        self.fc1 = nn.Linear(features, 256)
+        self.fc2 = nn.Linear(256, 256)
+        self.output = nn.Linear(256, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = functional.log_softmax(self.output(x), dim=1)
+        return x
+
+
+class Cat6(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(Cat6, self).__init__()
+        self.fc1 = nn.Linear(features, 1024)
+        self.fc2 = nn.Linear(1024, 1024)
+        self.output = nn.Linear(1024, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
         x = functional.log_softmax(self.output(x), dim=1)
         return x
 

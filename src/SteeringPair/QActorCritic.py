@@ -48,8 +48,8 @@ class Model(AbstractModel):
         self.policyNet.train()
 
     def __repr__(self):
-        return "QNetwork={}, PolicyNetwork={}".format(str(self.qTrainNet.__class__.__name__), str(self.policyNet.__class__.__name__))
-
+        return "QNetwork={}, PolicyNetwork={}".format(str(self.qTrainNet.__class__.__name__),
+                                                      str(self.policyNet.__class__.__name__))
 
 
 class Trainer(AbstractTrainer):
@@ -220,7 +220,7 @@ class Trainer(AbstractTrainer):
                 episodeTerminations["aborted"] += 1
 
             # status report
-            print("episode: {}/{}".format(i_episode+1, num_episodes), end="\r")
+            print("episode: {}/{}".format(i_episode + 1, num_episodes), end="\r")
 
         print("Complete")
         # plt.plot(episodeReturns)
@@ -266,7 +266,6 @@ class Trainer(AbstractTrainer):
             elif episodeTerminated == Termination.ABORTED:
                 episodeTerminations["aborted"] += 1
 
-
         print("Complete")
         return episodeReturns, episodeTerminations
 
@@ -293,10 +292,3 @@ if __name__ == "__main__":
 
     _, terminations = trainer.benchAgent(50)
     print(terminations)
-
-
-
-
-
-
-

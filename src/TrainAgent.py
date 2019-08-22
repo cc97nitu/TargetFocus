@@ -7,15 +7,15 @@ from SteeringPair import DQN, REINFORCE, QActorCritic
 from SteeringPair.Environment import initEnvironment
 
 # choose algorithm
-Algorithm = DQN
-QNetwork = Network.FC7
+Algorithm = REINFORCE
+QNetwork = Network.FC7BN2
 PolicyNetwork = Network.Cat1
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # configure environment
-envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propReward",
+envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
              "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
              "failurePenalty": -10, "device": device}
 initEnvironment(**envConfig)
@@ -27,7 +27,7 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.0, "TARGET_UPDATE": 10, "EPS_START"
 ### train 20 agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = 30
+trainEpisodes = 1000
 
 meanSamples = 10
 
