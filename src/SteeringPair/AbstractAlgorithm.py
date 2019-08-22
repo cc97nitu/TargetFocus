@@ -8,6 +8,7 @@ class AbstractModel(ABC):
         # number features describing a state
         self.numberFeatures = Environment.features
         self.numberActions = len(Environment.actionSet)
+        self.device = Environment.device
 
     @abstractmethod
     def to_dict(self):

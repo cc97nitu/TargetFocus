@@ -7,7 +7,7 @@ from SteeringPair import DQN, REINFORCE, QActorCritic
 from SteeringPair.Environment import initEnvironment
 
 # choose algorithm
-Algorithm = QActorCritic
+Algorithm = DQN
 QNetwork = Network.FC7
 PolicyNetwork = Network.Cat1
 

@@ -4,15 +4,11 @@ import math
 import torch
 import torch.optim
 import torch.nn.functional
-import matplotlib.pyplot as plt
 
 from SteeringPair import Struct
 from SteeringPair import Environment, Termination, initEnvironment
 from SteeringPair import Network
 from SteeringPair.AbstractAlgorithm import AbstractModel, AbstractTrainer
-
-# if gpu is to be used
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class Model(AbstractModel):
@@ -21,8 +17,8 @@ class Model(AbstractModel):
     def __init__(self, QNetwork, **kwargs):
         super().__init__(**kwargs)
 
-        self.policy_net = QNetwork(self.numberFeatures, self.numberActions).to(device)
-        self.target_net = QNetwork(self.numberFeatures, self.numberActions).to(device)
+        self.policy_net = QNetwork(self.numberFeatures, self.numberActions).to(self.device)
+        self.target_net = QNetwork(self.numberFeatures, self.numberActions).to(self.device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         return
@@ -96,7 +92,7 @@ class Trainer(AbstractTrainer):
                 self.model.eval()
                 return self.model.policy_net(state).argmax().unsqueeze_(0).unsqueeze_(0)
         else:
-            return torch.tensor([[random.randrange(self.model.numberActions)]], device=device, dtype=torch.long)
+            return torch.tensor([[random.randrange(self.model.numberActions)]], device=Environment.device, dtype=torch.long)
 
     def optimizeModel(self):
         if len(self.memory) < self.BATCH_SIZE:
@@ -115,7 +111,7 @@ class Trainer(AbstractTrainer):
         # Compute a mask of non-final states and concatenate the batch elements
         # (a final state would've been the one after which simulation ended)
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                                batch.next_state)), device=device, dtype=torch.uint8)
+                                                batch.next_state)), device=Environment.device, dtype=torch.uint8)
         non_final_next_states = torch.cat([s for s in batch.next_state
                                            if s is not None])
         state_batch = torch.cat(batch.state)
@@ -132,7 +128,7 @@ class Trainer(AbstractTrainer):
         # on the "older" target_net; selecting their best reward with max(1)[0].
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
-        next_state_values = torch.zeros(self.BATCH_SIZE, device=device)
+        next_state_values = torch.zeros(self.BATCH_SIZE, device=Environment.device)
         next_state_values[non_final_mask] = self.model.target_net(non_final_next_states).max(1)[0].detach()
 
         # Compute the expected Q values

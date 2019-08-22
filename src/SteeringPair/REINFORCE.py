@@ -11,7 +11,7 @@ from SteeringPair.AbstractAlgorithm import AbstractModel, AbstractTrainer
 class Model(AbstractModel):
     def __init__(self, PolicyNetwork, **kwargs):
         super().__init__(**kwargs)
-        self.policy_net = PolicyNetwork(Environment.features, len(Environment.actionSet))
+        self.policy_net = PolicyNetwork(Environment.features, len(Environment.actionSet)).to(self.device)
 
     def to_dict(self):
         return {"policy_net_state_dict": self.policy_net.state_dict(),}
@@ -52,7 +52,7 @@ class Trainer(AbstractTrainer):
         highest_prob_action = np.random.choice(len(Environment.actionSet), p=np.squeeze(probs.detach().numpy()))
         # log_prob = torch.log(log_probs.squeeze(0)[highest_prob_action])
         log_prob = log_probs.squeeze(0)[highest_prob_action]
-        highest_prob_action = torch.tensor([highest_prob_action], dtype=torch.long)
+        highest_prob_action = torch.tensor([highest_prob_action], dtype=torch.long, device=Environment.device)
         return highest_prob_action, log_prob
 
     def optimizeModel(self, rewards, log_probs):
@@ -67,7 +67,7 @@ class Trainer(AbstractTrainer):
                 pw = pw + 1
             observedReturns.append(Gt)
 
-        observedReturns = torch.tensor(observedReturns)
+        observedReturns = torch.tensor(observedReturns, device=Environment.device)
         # observedReturns = (observedReturns - observedReturns.mean()) / (
         #         observedReturns.std() + 1e-9)  # normalize discounted rewards
 

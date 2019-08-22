@@ -10,21 +10,18 @@ from SteeringPair import Environment, Termination, initEnvironment
 from SteeringPair import Network
 from SteeringPair.AbstractAlgorithm import AbstractModel, AbstractTrainer
 
-# if gpu is to be used
-device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
-
 
 class Model(AbstractModel):
     """Class describing a model consisting of two neural networks."""
 
     def __init__(self, QNetwork, PolicyNetwork, **kwargs):
         super().__init__(**kwargs)
-        self.qTrainNet = QNetwork(self.numberFeatures, self.numberActions).to(device)
-        self.qTargetNet = QNetwork(self.numberFeatures, self.numberActions).to(device)
+        self.qTrainNet = QNetwork(self.numberFeatures, self.numberActions).to(self.device)
+        self.qTargetNet = QNetwork(self.numberFeatures, self.numberActions).to(self.device)
         self.qTargetNet.load_state_dict(self.qTrainNet.state_dict())
         self.qTargetNet.eval()
 
-        self.policyNet = PolicyNetwork(self.numberFeatures, self.numberActions).to(device)
+        self.policyNet = PolicyNetwork(self.numberFeatures, self.numberActions).to(self.device)
         return
 
     def to_dict(self):
@@ -90,7 +87,7 @@ class Trainer(AbstractTrainer):
         probs = torch.exp(log_probs)
         selectedAction = np.random.choice(len(Environment.actionSet), p=np.squeeze(probs.detach().numpy()))
         log_prob = log_probs.squeeze(0)[selectedAction]
-        selectedAction = torch.tensor([selectedAction], dtype=torch.long, device=device)
+        selectedAction = torch.tensor([selectedAction], dtype=torch.long, device=Environment.device)
         return selectedAction, log_prob
 
     def optimizeQTrainNet(self):

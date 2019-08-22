@@ -58,15 +58,12 @@ class StateDefinition(enum.Enum):
     TWODNORM = enum.auto()
 
 
-# if gpu is to be used
-device = None
-
-
 def initEnvironment(**kwargs):
     """Set up Environment class."""
     try:
         # if gpu is to be used
         device = kwargs["device"]
+        Environment.device = device
 
         # choose reward function
         if kwargs["rewardFunction"] == "propReward":
@@ -122,6 +119,9 @@ class Environment(object):
     """
     # has initEnvironment() been called?
     configured = False
+
+    # if gpu is to be used
+    device = None
 
     # number of variables representing a state
     features = None
@@ -181,10 +181,10 @@ class Environment(object):
 
         # initial magnets' deflection and beam spot's position
         if len(args) == 2:
-            self.deflections = torch.tensor((args[0], args[1]), dtype=torch.float, device=device)
+            self.deflections = torch.tensor((args[0], args[1]), dtype=torch.float, device=Environment.device)
 
             # get initial focus / initial state from them
-            initialState, _, episodeTerminated = self.react(torch.zeros(1, device=device).unsqueeze(0),
+            initialState, _, episodeTerminated = self.react(torch.zeros(1, device=Environment.device).unsqueeze(0),
                                                             initialize=True)  # action is a dummy action
 
             if episodeTerminated != Termination.INCOMPLETE:
@@ -196,10 +196,10 @@ class Environment(object):
             # find random starting point
             while True:
 
-                self.deflections = torch.randn(2, dtype=torch.float, device=device) * 0.1  # rescale to fit onto target
+                self.deflections = torch.randn(2, dtype=torch.float, device=Environment.device) * 0.1  # rescale to fit onto target
 
                 # get initial focus / initial state from them
-                initialState, _, episodeTerminated = self.react(torch.zeros(1, device=device).unsqueeze(0),
+                initialState, _, episodeTerminated = self.react(torch.zeros(1, device=Environment.device).unsqueeze(0),
                                                                 initialize=True)  # action is a dummy action
 
                 if episodeTerminated == Termination.INCOMPLETE:
@@ -211,7 +211,7 @@ class Environment(object):
             # find center of goal which lies on the target
             def findGoal():
                 while True:
-                    focusGoal = torch.randn(2, dtype=torch.float, device=device) * 0.1  # rescale to match target size
+                    focusGoal = torch.randn(2, dtype=torch.float, device=Environment.device) * 0.1  # rescale to match target size
 
                     if focusGoal.norm() < Environment.targetRadius:
                         return focusGoal
@@ -223,10 +223,10 @@ class Environment(object):
             attempts = 0
             while True:
                 attempts += 1
-                self.deflections = torch.randn(2, dtype=torch.float, device=device) * 0.1  # rescale to fit onto target
+                self.deflections = torch.randn(2, dtype=torch.float, device=Environment.device) * 0.1  # rescale to fit onto target
 
                 # get initial focus / initial state from them
-                initialState, _, episodeTerminated = self.react(torch.zeros(1, device=device).unsqueeze(0),
+                initialState, _, episodeTerminated = self.react(torch.zeros(1, device=Environment.device).unsqueeze(0),
                                                                 initialize=True)  # action is a dummy action
 
                 if episodeTerminated == Termination.INCOMPLETE:
@@ -270,7 +270,7 @@ class Environment(object):
         dataSet.load(self.dir + "/run.out")
 
         # get absolute coordinates of beam center
-        absCoords = torch.tensor((dataSet.columnData[0], dataSet.columnData[2]), dtype=torch.float, device=device).mean(
+        absCoords = torch.tensor((dataSet.columnData[0], dataSet.columnData[2]), dtype=torch.float, device=Environment.device).mean(
             1)
         absCoords = absCoords.mean(1)
 
@@ -308,7 +308,7 @@ class Environment(object):
         else:
             # reward according to distanceChange
             return state, torch.tensor([self.reward(distanceChange, 10 ** 3)], dtype=torch.float,
-                                       device=device).unsqueeze_(
+                                       device=Environment.device).unsqueeze_(
                 0), Termination.INCOMPLETE
 
     def __createLattice(self, strengths):
