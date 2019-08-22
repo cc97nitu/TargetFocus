@@ -17,14 +17,14 @@ device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
 class Model(AbstractModel):
     """Class describing a model consisting of two neural networks."""
 
-    def __init__(self):
-        super().__init__()
-        self.qTrainNet = Network.FC7(self.numberFeatures, self.numberActions).to(device)
-        self.qTargetNet = Network.FC7(self.numberFeatures, self.numberActions).to(device)
+    def __init__(self, QNetwork, PolicyNetwork, **kwargs):
+        super().__init__(**kwargs)
+        self.qTrainNet = QNetwork(self.numberFeatures, self.numberActions).to(device)
+        self.qTargetNet = QNetwork(self.numberFeatures, self.numberActions).to(device)
         self.qTargetNet.load_state_dict(self.qTrainNet.state_dict())
         self.qTargetNet.eval()
 
-        self.policyNet = Network.Cat1(self.numberFeatures, self.numberActions).to(device)
+        self.policyNet = PolicyNetwork(self.numberFeatures, self.numberActions).to(device)
         return
 
     def to_dict(self):
@@ -49,6 +49,10 @@ class Model(AbstractModel):
         self.qTrainNet.train()
         self.qTargetNet.eval()  ## target net is never trained but updated by copying weights
         self.policyNet.train()
+
+    def __repr__(self):
+        return "QNetwork={}, PolicyNetwork={}".format(str(self.qTrainNet.__class__.__name__), str(self.policyNet.__class__.__name__))
+
 
 
 class Trainer(AbstractTrainer):

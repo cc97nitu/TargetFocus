@@ -18,11 +18,11 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class Model(AbstractModel):
     """Class describing a model consisting of two neural networks."""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, QNetwork, **kwargs):
+        super().__init__(**kwargs)
 
-        self.policy_net = Network.FC7(self.numberFeatures, self.numberActions).to(device)
-        self.target_net = Network.FC7(self.numberFeatures, self.numberActions).to(device)
+        self.policy_net = QNetwork(self.numberFeatures, self.numberActions).to(device)
+        self.target_net = QNetwork(self.numberFeatures, self.numberActions).to(device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         return
@@ -45,6 +45,9 @@ class Model(AbstractModel):
     def train(self):
         self.policy_net.train()
         self.target_net.eval()  ## target net is never trained but updated by copying weights
+
+    def __repr__(self):
+        return "QNetwork={}".format(str(self.policy_net.__class__.__name__))
 
 
 class Trainer(AbstractTrainer):
@@ -259,7 +262,7 @@ if __name__ == "__main__":
     initEnvironment(**envConfig)
 
     # create model
-    model = Model()
+    model = Model(QNetwork=Network.FC7)
 
     # define hyper parameters
     hyperParamsDict = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,

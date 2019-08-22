@@ -4,7 +4,7 @@ from SteeringPair import Environment
 
 class AbstractModel(ABC):
     @abstractmethod
-    def __init__(self):
+    def __init__(self, **kwargs):
         # number features describing a state
         self.numberFeatures = Environment.features
         self.numberActions = len(Environment.actionSet)
@@ -23,6 +23,10 @@ class AbstractModel(ABC):
 
     @abstractmethod
     def eval(self):
+        pass
+
+    @abstractmethod
+    def __repr__(self):
         pass
 
 

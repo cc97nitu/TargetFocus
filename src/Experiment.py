@@ -3,11 +3,14 @@ import pandas as pd
 import numpy as np
 import torch
 
+from SteeringPair import Network
 from SteeringPair import DQN, REINFORCE, QActorCritic
 from SteeringPair.Environment import initEnvironment
 
 # choose algorithm
 Algorithm = REINFORCE
+QNetwork = Network.FC7
+PolicyNetwork = Network.Cat1
 
 # environment config
 envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "propReward",
@@ -36,7 +39,7 @@ meanSamples = 10
 # run simulation with greedy behavior
 for agent in agents:
     print("greedy run {}".format(agent))
-    model = Algorithm.Model()
+    model = Algorithm.Model(QNetwork=QNetwork, PolicyNetwork=PolicyNetwork)
     model.load_state_dict(agents[agent])
     model.eval()
     trainer = Algorithm.Trainer(model, **hypPara_GreedyBehavior)
@@ -64,7 +67,7 @@ for agent in agents:
 # run simulation with random behavior
 for i in range(len(agents)):
     print("random run {}".format(i))
-    dummyModel = Algorithm.Model()
+    dummyModel = Algorithm.Model(QNetwork=QNetwork, PolicyNetwork=PolicyNetwork)
     dummyModel.eval()
     trainer = Algorithm.Trainer(dummyModel, **hypPara_RandomBehavior)
     episodeReturns, episodeTerminations = trainer.benchAgent(50)

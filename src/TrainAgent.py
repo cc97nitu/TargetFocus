@@ -2,11 +2,14 @@ import pandas as pd
 import numpy as np
 import torch
 
+from SteeringPair import Network
 from SteeringPair import DQN, REINFORCE, QActorCritic
 from SteeringPair.Environment import initEnvironment
 
 # choose algorithm
-Algorithm = DQN
+Algorithm = QActorCritic
+QNetwork = Network.FC7
+PolicyNetwork = Network.Cat1
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -24,13 +27,13 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.0, "TARGET_UPDATE": 10, "EPS_START"
 ### train 20 agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = 100
+trainEpisodes = 30
 
 meanSamples = 10
 
-for i in range(3):
+for i in range(1):
     print("training agent number {}".format(i))
-    model = Algorithm.Model()
+    model = Algorithm.Model(QNetwork=QNetwork, PolicyNetwork=PolicyNetwork)
 
     trainer = Algorithm.Trainer(model, **hyperParams)
     episodeReturns, _ = trainer.trainAgent(trainEpisodes)
@@ -53,4 +56,4 @@ returns = pd.concat(returns)
 
 ### save the trained agents to disk
 envConfig["device"] = str(envConfig["device"].type)
-torch.save({"environmentConfig": envConfig, "hyperParameters": hyperParams, "trainEpisodes": trainEpisodes, "agents": agents, "returns": returns}, "/dev/shm/agents.tar")
+torch.save({"environmentConfig": envConfig, "hyperParameters": hyperParams, "network": trainer.model, "trainEpisodes": trainEpisodes, "agents": agents, "returns": returns}, "/dev/shm/agents.tar")

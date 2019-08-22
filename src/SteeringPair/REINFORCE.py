@@ -3,16 +3,15 @@ import torch
 import torch.optim as optim
 from torch.autograd import Variable
 
-import SteeringPair.Network as Network
+# import SteeringPair.Network as Network
 from SteeringPair import Environment, Termination, initEnvironment
 from SteeringPair.AbstractAlgorithm import AbstractModel, AbstractTrainer
 
 
 class Model(AbstractModel):
-    def __init__(self):
-        super().__init__()
-        self.policy_net = Network.Cat1(Environment.features, len(Environment.actionSet))
-        # self.policy_net = PolicyNetwork(Environment.features, len(Environment.actionSet), 128)
+    def __init__(self, PolicyNetwork, **kwargs):
+        super().__init__(**kwargs)
+        self.policy_net = PolicyNetwork(Environment.features, len(Environment.actionSet))
 
     def to_dict(self):
         return {"policy_net_state_dict": self.policy_net.state_dict(),}
@@ -28,6 +27,10 @@ class Model(AbstractModel):
 
     def train(self):
         self.policy_net.train()
+
+    def __repr__(self):
+        return "PolicyNetwork={}".format(str(self.policy_net.__class__.__name__))
+
 
 
 class Trainer(AbstractTrainer):
