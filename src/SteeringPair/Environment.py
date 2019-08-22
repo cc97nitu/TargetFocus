@@ -11,16 +11,38 @@ from shutil import copy, rmtree
 from itertools import product
 from sdds import SDDS
 
-# if gpu is to be used
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# create action set
-# posChanges = [-1e-2, -1e-3, 0, 1e-3, 1e-2]
-posChanges = [-5e-3, 0, 5e-3]
-# posChanges = [-5e-3, 5e-3]
-actionSet = [torch.tensor([x, y], dtype=torch.float, device=device) for x, y in product(posChanges, posChanges)]
-
 terminations = namedtuple("terminations", ["successful", "failed", "aborted"])
+
+
+class RewardFunctions(object):
+    """Storage for reward functions."""
+
+    def propReward(self, distanceChange, scale):
+        """
+        Gives reward according to the change in distance to goal in the latest step.
+        :param distanceChange: change in distance to goal
+        :param scale: scalar value to adjust reward size
+        :return: reward
+        """
+        return -scale * distanceChange
+
+    def propRewardStepPenalty(self, distanceChange, scale):
+        """
+        Gives reward according to the change in distance to goal in the latest step.
+        :param distanceChange: change in distance to goal
+        :param scale: scalar value to adjust reward size
+        :return: reward
+        """
+        return -scale * distanceChange - 0.5
+
+    def constantRewardPerStep(self, distanceChange, scale):
+        """
+        Gives reward according to the change in distance to goal in the latest step.
+        :param distanceChange: change in distance to goal
+        :param scale: scalar value to adjust reward size
+        :return: reward
+        """
+        return -1
 
 
 class Termination(enum.Enum):
@@ -30,29 +52,97 @@ class Termination(enum.Enum):
     ABORTED = enum.auto()
 
 
+class StateDefinition(enum.Enum):
+    SIXDRAW = enum.auto()
+    SIXDNORM = enum.auto()
+    TWODNORM = enum.auto()
+
+
+# if gpu is to be used
+device = None
+
+
+def initEnvironment(**kwargs):
+    """Set up Environment class."""
+    try:
+        # if gpu is to be used
+        device = kwargs["device"]
+
+        # choose reward function
+        if kwargs["rewardFunction"] == "propReward":
+            Environment.reward = RewardFunctions.propReward
+        elif kwargs["rewardFunction"] == "propRewardStepPenalty":
+            Environment.reward = RewardFunctions.propRewardStepPenalty
+        elif kwargs["constantRewardPerStep"] == "constantRewardPerStep":
+            Environment.reward = RewardFunctions.constantRewardPerStep
+
+        Environment.bounty = torch.tensor([kwargs["successBounty"]], dtype=torch.float, device=device).unsqueeze_(0)
+        Environment.penalty = torch.tensor([kwargs["failurePenalty"]], dtype=torch.float, device=device).unsqueeze_(0)
+
+        # environment properties
+        Environment.targetDiameter = kwargs["targetDiameter"]
+        Environment.targetRadius = Environment.targetDiameter / 2
+        Environment.acceptance = kwargs["acceptance"]
+        Environment.maxStepsPerEpisodes = kwargs["maxStepsPerEpisode"]
+
+        # state definition
+        if kwargs["stateDefinition"] == "2d-norm":
+            Environment.features = 2
+            Environment.stateDefinition = StateDefinition.TWODNORM
+        elif kwargs["stateDefinition"] == "6d-raw":
+            Environment.features = 6
+            Environment.stateDefinition = StateDefinition.SIXDRAW
+        elif kwargs["stateDefinition"] == "6d-norm":
+            Environment.features = 6
+            Environment.stateDefinition = StateDefinition.SIXDNORM
+        else:
+            raise ValueError("cannot interpret state definition")
+
+        # create action set
+        if kwargs["actionSet"] == "A4":
+            posChanges = [-5e-3, 5e-3]
+        elif kwargs["actionSet"] == "A9":
+            posChanges = [-5e-3, 0, 5e-3]
+        elif kwargs["actionSet"] == "A25":
+            posChanges = [-1e-2, -1e-3, 0, 1e-3, 1e-2]
+        else:
+            raise ValueError("cannot interpret action set!")
+
+        Environment.actionSet = [torch.tensor([x, y], dtype=torch.float, device=device) for x, y in
+                                 product(posChanges, posChanges)]
+    except KeyError:
+        raise ValueError("incomplete environment configuration!")
+
+    Environment.configured = True
+
+
 class Environment(object):
     """
     Simulated Environment.
     """
+    # has initEnvironment() been called?
+    configured = False
+
     # number of variables representing a state
-    features = 6
+    features = None
+    stateDefinition = None
 
     # define action set
-    actionSet = actionSet
+    actionSet = None
 
     # define focus goal
-    focusGoal = torch.tensor((8e-3, 8e-3), dtype=torch.float, device=device)
+    focusGoal = torch.tensor((8e-3, 8e-3), dtype=torch.float, device=device)  # historic dummy value
 
-    acceptance = 5e-3  # max distance between focus goal and beam focus of a state for the state to be considered terminal
-    targetDiameter = 3e-2  # diameter of target
-    targetRadius = targetDiameter / 2
+    acceptance = None  # max distance between focus goal and beam focus of a state for the state to be considered terminal
+    targetDiameter = None  # diameter of target
+    targetRadius = None
 
     # reward on success / penalty on failure
-    bounty = torch.tensor([10], dtype=torch.float, device=device).unsqueeze_(0)
-    penalty = torch.tensor([-10], dtype=torch.float, device=device).unsqueeze_(0)
+    bounty = None
+    penalty = None
 
     # abort if episode takes to long
-    reactCountMax = 50
+    maxStepsPerEpisodes = None
 
     # path to run.ele
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
@@ -63,6 +153,10 @@ class Environment(object):
         Creates an environment.
         :param args: if empty: choose random start; if  one single arg: random start, random goal; if two args: use as start coordinates
         """
+        # has initEnvironment() been called?
+        if not self.configured:
+            raise ImportWarning("Environment class needs to be configured with initEnvironment before usage!")
+
         # count how often the environment reacted
         self.reactCount = 0
 
@@ -176,23 +270,25 @@ class Environment(object):
         dataSet.load(self.dir + "/run.out")
 
         # get absolute coordinates of beam center
-        absCoords = torch.tensor((dataSet.columnData[0], dataSet.columnData[2]), dtype=torch.float, device=device).mean(1)
+        absCoords = torch.tensor((dataSet.columnData[0], dataSet.columnData[2]), dtype=torch.float, device=device).mean(
+            1)
         absCoords = absCoords.mean(1)
 
         # calculate relative distance between beam focus and focus goal
         relCoords = absCoords - self.focusGoal
 
         #### create state tensor
-        # state = torch.cat((self.deflections, absCoords, relCoords)).unsqueeze(0)
-
-        # substract mean (which is zero) and divide through standard deviation
-        state = torch.cat((self.deflections / 3.33e-2, absCoords / 7.5e-3, relCoords / 1e-2)).unsqueeze(0)
-
-        # state = relCoords / 1.225e-2  # shall normalize to mean=0 and std=1
-        # state.unsqueeze_(0)
+        if Environment.stateDefinition == StateDefinition.SIXDRAW:
+            state = torch.cat((self.deflections, absCoords, relCoords)).unsqueeze(0)
+        elif Environment.stateDefinition == StateDefinition.SIXDNORM:
+            # substract mean (which is zero) and divide through standard deviation
+            state = torch.cat((self.deflections / 3.33e-2, absCoords / 7.5e-3, relCoords / 1e-2)).unsqueeze(0)
+        elif Environment.stateDefinition == StateDefinition.TWODNORM:
+            state = relCoords / 1.225e-2  # shall normalize to mean=0 and std=1
+            state.unsqueeze_(0)
 
         # return terminal state if maximal amount of reactions exceeded
-        if not self.reactCount < self.reactCountMax:
+        if not self.reactCount < self.maxStepsPerEpisodes:
             # print("forced abortion of episode, max steps exceeded")
             return None, self.penalty, Termination.ABORTED
         else:
@@ -211,7 +307,8 @@ class Environment(object):
             return None, self.penalty, Termination.FAILED
         else:
             # reward according to distanceChange
-            return state, torch.tensor([self.reward(distanceChange, 10 ** 3)], dtype=torch.float, device=device).unsqueeze_(
+            return state, torch.tensor([self.reward(distanceChange, 10 ** 3)], dtype=torch.float,
+                                       device=device).unsqueeze_(
                 0), Termination.INCOMPLETE
 
     def __createLattice(self, strengths):
@@ -233,15 +330,6 @@ class Environment(object):
             lattice.write(content)
 
             return
-
-    def reward(self, distanceChange, scale):
-        """
-        Gives reward according to the change in distance to goal in the latest step.
-        :param distanceChange: change in distance to goal
-        :param scale: scalar value to adjust reward size
-        :return: reward
-        """
-        return -scale * distanceChange
 
     def __del__(self):
         """clean up before destruction"""
@@ -283,6 +371,12 @@ class EligibleEnvironmentParameters(list):
 
 
 if __name__ == '__main__':
+    # environment config
+    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propReward",
+                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
+                 "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
+    initEnvironment(**envConfig)
+
     torch.set_default_tensor_type(torch.FloatTensor)
 
     env = Environment(0, 0)

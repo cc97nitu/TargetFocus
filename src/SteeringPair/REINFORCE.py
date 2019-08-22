@@ -4,11 +4,13 @@ import torch.optim as optim
 from torch.autograd import Variable
 
 import SteeringPair.Network as Network
-from SteeringPair import Environment, Termination
+from SteeringPair import Environment, Termination, initEnvironment
+from SteeringPair.AbstractAlgorithm import AbstractModel, AbstractTrainer
 
 
-class Model(object):
+class Model(AbstractModel):
     def __init__(self):
+        super().__init__()
         self.policy_net = Network.Cat1(Environment.features, len(Environment.actionSet))
         # self.policy_net = PolicyNetwork(Environment.features, len(Environment.actionSet), 128)
 
@@ -28,8 +30,10 @@ class Model(object):
         self.policy_net.train()
 
 
-class Trainer(object):
+class Trainer(AbstractTrainer):
     def __init__(self, model, **kwargs):
+        super().__init__()
+
         self.model = model
         self.optimizer = optim.Adam(self.model.policy_net.parameters(), lr=3e-4)
 
@@ -175,6 +179,12 @@ class Trainer(object):
 
 
 if __name__ == "__main__":
+    # environment config
+    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propReward",
+                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
+                 "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
+    initEnvironment(**envConfig)
+
     model = Model()
     train = Trainer(model, **{"GAMMA": 0.999})
     train.trainAgent(400)

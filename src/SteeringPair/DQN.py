@@ -7,23 +7,22 @@ import torch.nn.functional
 import matplotlib.pyplot as plt
 
 from SteeringPair import Struct
-from SteeringPair import Environment, Termination
+from SteeringPair import Environment, Termination, initEnvironment
 from SteeringPair import Network
+from SteeringPair.AbstractAlgorithm import AbstractModel, AbstractTrainer
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# number features describing a state
-numberFeatures = Environment.features
-numberActions = len(Environment.actionSet)
 
-
-class Model(object):
+class Model(AbstractModel):
     """Class describing a model consisting of two neural networks."""
 
     def __init__(self):
-        self.policy_net = Network.FC7(numberFeatures, numberActions).to(device)
-        self.target_net = Network.FC7(numberFeatures, numberActions).to(device)
+        super().__init__()
+
+        self.policy_net = Network.FC7(self.numberFeatures, self.numberActions).to(device)
+        self.target_net = Network.FC7(self.numberFeatures, self.numberActions).to(device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         return
@@ -48,7 +47,7 @@ class Model(object):
         self.target_net.eval()  ## target net is never trained but updated by copying weights
 
 
-class Trainer(object):
+class Trainer(AbstractTrainer):
     """Class used to train a model under given hyper parameters."""
 
     def __init__(self, model: Model, **kwargs):
@@ -57,8 +56,7 @@ class Trainer(object):
         :param model: model to train
         :param kwargs: dictionary containing hyper parameters
         """
-        self.model = model
-
+        super().__init__()
         # extract hyper parameters from kwargs
         try:
             self.BATCH_SIZE = kwargs["BATCH_SIZE"]
@@ -70,6 +68,8 @@ class Trainer(object):
             self.MEMORY_SIZE = kwargs["MEMORY_SIZE"]
         except KeyError as e:
             raise ValueError("Cannot read hyper parameters: {}".format(e))
+
+        self.model = model
 
         # set up replay memory
         self.memory = Struct.ReplayMemory(self.MEMORY_SIZE)
@@ -93,7 +93,7 @@ class Trainer(object):
                 self.model.eval()
                 return self.model.policy_net(state).argmax().unsqueeze_(0).unsqueeze_(0)
         else:
-            return torch.tensor([[random.randrange(numberActions)]], device=device, dtype=torch.long)
+            return torch.tensor([[random.randrange(self.model.numberActions)]], device=device, dtype=torch.long)
 
     def optimizeModel(self):
         if len(self.memory) < self.BATCH_SIZE:
@@ -252,6 +252,12 @@ class Trainer(object):
 
 
 if __name__ == "__main__":
+    # environment config
+    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propReward",
+                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
+                 "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
+    initEnvironment(**envConfig)
+
     # create model
     model = Model()
 

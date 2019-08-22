@@ -6,27 +6,25 @@ import torch.nn.functional
 from torch.autograd import Variable
 
 from SteeringPair import Struct
-from SteeringPair import Environment, Termination
+from SteeringPair import Environment, Termination, initEnvironment
 from SteeringPair import Network
+from SteeringPair.AbstractAlgorithm import AbstractModel, AbstractTrainer
 
 # if gpu is to be used
 device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
 
-# number features describing a state
-numberFeatures = Environment.features
-numberActions = len(Environment.actionSet)
 
-
-class Model(object):
+class Model(AbstractModel):
     """Class describing a model consisting of two neural networks."""
 
     def __init__(self):
-        self.qTrainNet = Network.FC7(numberFeatures, numberActions).to(device)
-        self.qTargetNet = Network.FC7(numberFeatures, numberActions).to(device)
+        super().__init__()
+        self.qTrainNet = Network.FC7(self.numberFeatures, self.numberActions).to(device)
+        self.qTargetNet = Network.FC7(self.numberFeatures, self.numberActions).to(device)
         self.qTargetNet.load_state_dict(self.qTrainNet.state_dict())
         self.qTargetNet.eval()
 
-        self.policyNet = Network.Cat1(numberFeatures, numberActions).to(device)
+        self.policyNet = Network.Cat1(self.numberFeatures, self.numberActions).to(device)
         return
 
     def to_dict(self):
@@ -53,7 +51,7 @@ class Model(object):
         self.policyNet.train()
 
 
-class Trainer(object):
+class Trainer(AbstractTrainer):
     """Class used to train a model under given hyper parameters."""
 
     def __init__(self, model: Model, **kwargs):
@@ -62,6 +60,8 @@ class Trainer(object):
         :param model: model to train
         :param kwargs: dictionary containing hyper parameters
         """
+        super().__init__()
+
         self.model = model
 
         # extract hyper parameters from kwargs
@@ -227,6 +227,71 @@ class Trainer(object):
         # plt.close()
         return episodeReturns, episodeTerminations
 
+    def benchAgent(self, num_episodes):
+        # keep track of epsilon and received return
+        episodeReturns = []
+
+        # count how episodes terminate
+        episodeTerminations = {"successful": 0, "failed": 0, "aborted": 0}
+
+        # episodes
+        for i_episode in range(num_episodes):
+            # Initialize the environment and state
+            while True:
+                try:
+                    env = Environment("random")  # no arguments => random initialization of starting point
+                    break
+                except ValueError:
+                    continue
+
+            state = env.initialState
+            episodeReturn = 0
+
+            episodeTerminated = Termination.INCOMPLETE
+            while episodeTerminated == Termination.INCOMPLETE:
+                # Select and perform an action
+                action = self.selectAction(state)
+                nextState, reward, episodeTerminated = env.react(action)
+                episodeReturn += reward
+
+                # Move to the next state
+                state = nextState
+
+            episodeReturns.append(episodeReturn)
+            if episodeTerminated == Termination.SUCCESSFUL:
+                episodeTerminations["successful"] += 1
+            elif episodeTerminated == Termination.FAILED:
+                episodeTerminations["failed"] += 1
+            elif episodeTerminated == Termination.ABORTED:
+                episodeTerminations["aborted"] += 1
+
+
+        print("Complete")
+        return episodeReturns, episodeTerminations
+
+
+if __name__ == "__main__":
+    # environment config
+    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propReward",
+                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
+                 "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
+    initEnvironment(**envConfig)
+
+    # create model
+    model = Model()
+
+    # define hyper parameters
+    hyperParamsDict = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
+                       "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
+
+    # set up trainer
+    trainer = Trainer(model, **hyperParamsDict)
+
+    # train model under hyper parameters
+    trainer.trainAgent(500)
+
+    _, terminations = trainer.benchAgent(50)
+    print(terminations)
 
 
 

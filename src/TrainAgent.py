@@ -2,10 +2,20 @@ import pandas as pd
 import numpy as np
 import torch
 
-import SteeringPair
+from SteeringPair import DQN, REINFORCE, QActorCritic
+from SteeringPair.Environment import initEnvironment
+
+# choose algorithm
+Algorithm = DQN
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# configure environment
+envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propReward",
+             "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
+             "failurePenalty": -10, "device": device}
+initEnvironment(**envConfig)
 
 # define hyper parameters
 hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.0, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
@@ -14,15 +24,15 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.0, "TARGET_UPDATE": 10, "EPS_START"
 ### train 20 agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = 2000
+trainEpisodes = 100
 
 meanSamples = 10
 
-for i in range(20):
+for i in range(3):
     print("training agent number {}".format(i))
-    model = SteeringPair.REINFORCE.Model()
+    model = Algorithm.Model()
 
-    trainer = SteeringPair.REINFORCE.Trainer(model, **hyperParams)
+    trainer = Algorithm.Trainer(model, **hyperParams)
     episodeReturns, _ = trainer.trainAgent(trainEpisodes)
     episodeReturns = [x[0].item() for x in episodeReturns]
 
@@ -42,4 +52,5 @@ for i in range(20):
 returns = pd.concat(returns)
 
 ### save the trained agents to disk
-torch.save({"hyperParameters": hyperParams, "trainEpisodes": trainEpisodes, "agents": agents, "returns": returns}, "/dev/shm/agents.tar")
+envConfig["device"] = str(envConfig["device"].type)
+torch.save({"environmentConfig": envConfig, "hyperParameters": hyperParams, "trainEpisodes": trainEpisodes, "agents": agents, "returns": returns}, "/dev/shm/agents.tar")

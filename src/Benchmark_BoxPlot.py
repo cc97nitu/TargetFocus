@@ -52,23 +52,20 @@ def buildPdFrame(*args):
 if __name__ == "__main__":
     ### benchmark ###
     # # fetch data
-    # with open("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/2d-states-normalized/Cat1/RR_Cat1_400_benchmark", "rb") as file:
+    # with open("/home/conrad/RL/TempDiff/TargetFocus/src/dump/DQN/Adam(lr=2e-5)/propReward/gamma=0/6d-norm_4A_RR_FC7_2000_benchmark", "rb") as file:
     #     data = pickle.load(file)
-    # plotStatistics(buildPdFrame(data, "REINFORCE"))
+    # data = buildPdFrame((data, "agent_0"))
+    # plotStatistics(data,)
 
-    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/propReward/6d-norm_9A_RR_Cat1_2000_benchmark"
+    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/DQN/Adam(lr=2e-5)/propReward/gamma=0/6d-norm_4A_RR_FC7_2000_benchmark"
     with open(path, "rb") as file:
-        frame_4a = pickle.load(file)
+        frameA = pickle.load(file)
 
-    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/propRewardStepPenalty/6d-norm_9A_RR_Cat1_2000_benchmark"
+    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/DQN/Adam(lr=2e-5)/propReward/gamma=0/2d-norm_4A_RR_FC7_400_benchmark"
     with open(path, "rb") as file:
-        frame_9a = pickle.load(file)
+        frameB = pickle.load(file)
 
-    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/ConstantRewardPerStep/6d-norm_9A_RR_Cat1_2000_benchmark"
-    with open(path, "rb") as file:
-        frame_25a = pickle.load(file)
-
-    args = [(frame_4a, "A"), (frame_9a, "B"), (frame_25a, "C")]
+    args = [(frameA, "6d-norm"), (frameB, "2d-norm"),]
 
     plotStatistics(buildPdFrame(*args))
 
