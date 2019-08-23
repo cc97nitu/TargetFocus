@@ -10,7 +10,7 @@ from SteeringPair.Environment import initEnvironment
 # choose algorithm
 Algorithm = REINFORCE
 QNetwork = Network.FC7
-PolicyNetwork = Network.Cat1
+PolicyNetwork = Network.Cat3
 
 # environment config
 envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "propReward",
@@ -26,7 +26,7 @@ hypPara_GreedyBehavior = {"BATCH_SIZE": None, "GAMMA": None, "TARGET_UPDATE": No
                           "EPS_DECAY": 1, "MEMORY_SIZE": None}
 
 # fetch pre-trained agents
-trainResults = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/propRewardStepPenalty/6d-norm_9A_RR_Cat1_2000_agents.tar")
+trainResults = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/ConstantRewardPerStep/6d-norm_9A_RR_Cat3_constantRewardPerStep_2000_agents.tar")
 agents = trainResults["agents"]
 
 # save mean returns whereas each entry is the average over the last meanSamples returns
@@ -99,5 +99,5 @@ overallResults = {"return": returns, "meanReturn": meanReturns, "greedyTerminati
                   "randomTerminations": randomTerminations}
 
 # dump
-with open("/dev/shm/benchmark", "wb") as file:
+with open("/dev/shm/6d-norm_9A_RR_Cat3_constantRewardPerStep_2000_benchmark", "wb") as file:
     pickle.dump(overallResults, file)

@@ -70,7 +70,7 @@ def initEnvironment(**kwargs):
             Environment.reward = RewardFunctions.propReward
         elif kwargs["rewardFunction"] == "propRewardStepPenalty":
             Environment.reward = RewardFunctions.propRewardStepPenalty
-        elif kwargs["constantRewardPerStep"] == "constantRewardPerStep":
+        elif kwargs["rewardFunction"] == "constantRewardPerStep":
             Environment.reward = RewardFunctions.constantRewardPerStep
 
         Environment.bounty = torch.tensor([kwargs["successBounty"]], dtype=torch.float, device=device).unsqueeze_(0)

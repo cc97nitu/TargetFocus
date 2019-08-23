@@ -57,15 +57,20 @@ if __name__ == "__main__":
     # data = buildPdFrame((data, "agent_0"))
     # plotStatistics(data,)
 
-    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/DQN/Adam(lr=2e-5)/propReward/gamma=0/6d-norm_4A_RR_FC7_2000_benchmark"
+    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/propReward/6d-norm_9A_RR_Cat3_propReward_2000_benchmark"
     with open(path, "rb") as file:
         frameA = pickle.load(file)
 
-    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/DQN/Adam(lr=2e-5)/propReward/gamma=0/2d-norm_4A_RR_FC7_400_benchmark"
+    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/propRewardStepPenalty/6d-norm_9A_RR_Cat3_propRewardStepPenalty_2000_benchmark"
     with open(path, "rb") as file:
         frameB = pickle.load(file)
 
-    args = [(frameA, "6d-norm"), (frameB, "2d-norm"),]
+    path = "/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/propRewardStepPenalty/6d-norm_9A_RR_Cat3_propRewardStepPenalty_2000_benchmark"
+    with open(path, "rb") as file:
+        frameC = pickle.load(file)
+
+
+    args = [(frameA, "A"), (frameB, "B"), (frameC, "C")]
 
     plotStatistics(buildPdFrame(*args))
 

@@ -9,13 +9,13 @@ from SteeringPair.Environment import initEnvironment
 # choose algorithm
 Algorithm = REINFORCE
 QNetwork = Network.FC7BN2
-PolicyNetwork = Network.Cat1
+PolicyNetwork = Network.Cat3
 
 # if gpu is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # configure environment
-envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
+envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "constantRewardPerStep",
              "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
              "failurePenalty": -10, "device": device}
 initEnvironment(**envConfig)
@@ -27,11 +27,11 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.0, "TARGET_UPDATE": 10, "EPS_START"
 ### train 20 agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = 1000
+trainEpisodes = 2000
 
 meanSamples = 10
 
-for i in range(1):
+for i in range(20):
     print("training agent number {}".format(i))
     model = Algorithm.Model(QNetwork=QNetwork, PolicyNetwork=PolicyNetwork)
 
@@ -45,9 +45,8 @@ for i in range(1):
         mean.append(np.mean(episodeReturns[j - meanSamples:j + 1]))
 
     returns.append(pd.DataFrame({"episode": [i + 1 for i in range(meanSamples, len(episodeReturns))],
-                                     "behavior": ["random" for i in range(meanSamples, len(episodeReturns))],
-                                     "return": mean}))
-
+                                 "behavior": ["random" for i in range(meanSamples, len(episodeReturns))],
+                                 "return": mean}))
 
     agents["agent_{}".format(i)] = model.to_dict()
 
@@ -56,4 +55,6 @@ returns = pd.concat(returns)
 
 ### save the trained agents to disk
 envConfig["device"] = str(envConfig["device"].type)
-torch.save({"environmentConfig": envConfig, "hyperParameters": hyperParams, "network": trainer.model, "trainEpisodes": trainEpisodes, "agents": agents, "returns": returns}, "/dev/shm/agents.tar")
+torch.save({"environmentConfig": envConfig, "hyperParameters": hyperParams, "network": trainer.model,
+            "trainEpisodes": trainEpisodes, "agents": agents, "returns": returns},
+           "/dev/shm/6d-norm_9A_RR_Cat3_constantRewardPerStep_2000_agents.tar")
