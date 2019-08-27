@@ -49,7 +49,7 @@ class Model(AbstractModel):
 class Trainer(AbstractTrainer):
     """Class used to train a model under given hyper parameters."""
 
-    def __init__(self, model: Model, **kwargs):
+    def __init__(self, model: Model, optimizer, stepSize, **kwargs):
         """
         Set up trainer.
         :param model: model to train
@@ -77,7 +77,8 @@ class Trainer(AbstractTrainer):
         self.stepsDone = 0
 
         # define optimizer
-        self.optimizer = torch.optim.Adam(self.model.policy_net.parameters(), lr=2e-5)
+        self.optimizer = optimizer(self.model.policy_net.parameters(), lr=stepSize)
+        # self.optimizer = torch.optim.Adam(self.model.policy_net.parameters(), lr=2e-5)
         return
 
     def selectAction(self, state):

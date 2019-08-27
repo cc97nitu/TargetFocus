@@ -55,7 +55,7 @@ class Model(AbstractModel):
 class Trainer(AbstractTrainer):
     """Class used to train a model under given hyper parameters."""
 
-    def __init__(self, model: Model, **kwargs):
+    def __init__(self, model: Model, optimizer, stepSize, **kwargs):
         """
         Set up trainer.
         :param model: model to train
@@ -78,8 +78,10 @@ class Trainer(AbstractTrainer):
         self.memory = Struct.ReplayMemory(self.MEMORY_SIZE)
 
         # define optimizer
-        self.optimizerQTrain = torch.optim.Adam(self.model.qTrainNet.parameters(), lr=2e-5)
-        self.optimizerPolicy = torch.optim.Adam(self.model.policyNet.parameters(), lr=3e-4)
+        self.optimizerQTrain = optimizer(self.model.qTrainNet.parameters(), lr=stepSize)
+        self.optimizerPolicy = optimizer(self.model.policyNet.parameters(), lr=stepSize)
+        # self.optimizerQTrain = torch.optim.Adam(self.model.qTrainNet.parameters(), lr=2e-5)
+        # self.optimizerPolicy = torch.optim.Adam(self.model.policyNet.parameters(), lr=3e-4)
         return
 
     def selectAction(self, state):
@@ -107,7 +109,7 @@ class Trainer(AbstractTrainer):
         # Compute a mask of non-final states and concatenate the batch elements
         # (a final state would've been the one after which simulation ended)
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                                batch.next_state)), device=device, dtype=torch.uint8)
+                                                batch.next_state)), device=Environment.device, dtype=torch.uint8)
         non_final_next_states = torch.cat([s for s in batch.next_state
                                            if s is not None])
         state_batch = torch.cat(batch.state)
@@ -124,7 +126,7 @@ class Trainer(AbstractTrainer):
         # on the "older" target_net; selecting their best reward with max(1)[0].
         # This is merged based on the mask, such that we'll have either the expected
         # state value or 0 in case the state was final.
-        next_state_values = torch.zeros(self.BATCH_SIZE, device=device)
+        next_state_values = torch.zeros(self.BATCH_SIZE, device=Environment.device)
         next_state_values[non_final_mask] = self.model.qTrainNet(non_final_next_states).max(1)[0].detach()
 
         # Compute the expected Q values

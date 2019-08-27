@@ -33,11 +33,12 @@ class Model(AbstractModel):
 
 
 class Trainer(AbstractTrainer):
-    def __init__(self, model, **kwargs):
+    def __init__(self, model, optimizer, stepSize, **kwargs):
         super().__init__()
 
         self.model = model
-        self.optimizer = optim.Adam(self.model.policy_net.parameters(), lr=3e-4)
+        # self.optimizer = optim.Adam(self.model.policy_net.parameters(), lr=3e-4)
+        self.optimizer = optimizer(self.model.policy_net.parameters(), lr=stepSize)
 
         # extract hyper parameters from kwargs
         try:

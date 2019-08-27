@@ -190,6 +190,22 @@ class FC7(nn.Module):
         return x
 
 
+class FC8(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(FC8, self).__init__()
+        self.fc1 = nn.Linear(features, 256)
+        self.fc2 = nn.Linear(256, 256)
+        self.output = nn.Linear(256, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.output(x)
+        return x
+
+
 class FC7BN(nn.Module):
     def __init__(self, features: int, outputs: int):
         super(FC7BN, self).__init__()
