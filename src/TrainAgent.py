@@ -7,8 +7,10 @@ from SteeringPair import Network
 from SteeringPair import DQN, REINFORCE, QActorCritic
 from SteeringPair.Environment import initEnvironment
 
+import SQL
+
 # choose algorithm
-Algorithm = DQN
+Algorithm = REINFORCE
 QNetwork = Network.FC8
 PolicyNetwork = Network.Cat3
 
@@ -36,7 +38,7 @@ trainEpisodes = 200
 
 meanSamples = 10
 
-for i in range(3):
+for i in range(20):
     print("training agent number {}".format(i))
     model = Algorithm.Model(QNetwork=QNetwork, PolicyNetwork=PolicyNetwork)
 
@@ -75,3 +77,5 @@ torch.save({"environmentConfig": envConfig, "hyperParameters": hyperParams, "alg
 
 columnData = {**envConfig, **hyperParams, "algorithm": Algorithm.__name__, "network": str(trainer.model), "optimizer": optimizer.__name__,
               "stepSize": stepSize, "trainEpisodes": trainEpisodes}
+
+SQL.insert(columnData, buffer.getvalue())

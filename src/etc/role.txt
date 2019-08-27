@@ -1,0 +1,11 @@
+# assumes user dumpresults with password unsecure
+
+# enable connections to database RL
+grant connect on database RL to dumpresults;
+
+# grant read and append rights
+grant select, insert on Agents to dumpresults;
+
+# additional rights required to use autoincrement id
+grant usage, select on sequence agents_id_seq to dumpresults;
+
