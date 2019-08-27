@@ -4,7 +4,8 @@ import torch
 import io
 
 # try to establish connection
-conn = psycopg2.connect(dbname="RL", host="localhost", user="dumpresults", password="unsecure")
+credentials = {"dbname": "RL", "host": "192.168.5.148", "user": "dumpresults", "password": "unsecure"}
+conn = psycopg2.connect(**credentials)
 conn.close()
 
 
@@ -13,7 +14,7 @@ def insert(columnData, trainBlob):
     data = {**columnData, "trainBlob": trainBlob}
 
     # establish connection
-    conn = psycopg2.connect(dbname="RL", host="localhost", user="dumpresults", password="unsecure")
+    conn = psycopg2.connect(**credentials)
     db = conn.cursor()
     insertStatement = "insert into Agents (stateDefinition, actionSet, rewardFunction, acceptance, targetDiameter, maxStepsPerEpisode, successBounty, failurePenalty, device, BATCH_SIZE, GAMMA, TARGET_UPDATE, EPS_START, EPS_END, EPS_DECAY, MEMORY_SIZE, algorithm, network, optimizer, stepSize, trainEpisodes, trainBlob)" \
                       " values (%(stateDefinition)s, %(actionSet)s, %(rewardFunction)s, %(acceptance)s, %(targetDiameter)s, %(maxStepsPerEpisode)s, %(successBounty)s, %(failurePenalty)s, %(device)s, %(BATCH_SIZE)s, %(GAMMA)s, %(TARGET_UPDATE)s, %(EPS_START)s, %(EPS_END)s, %(EPS_DECAY)s, %(MEMORY_SIZE)s, %(algorithm)s, %(network)s, %(optimizer)s, %(stepSize)s, %(trainEpisodes)s, %(trainBlob)s)" \
@@ -24,7 +25,7 @@ def insert(columnData, trainBlob):
 
 def retrieve(row_id):
     # establish connection
-    conn = psycopg2.connect(dbname="RL", host="localhost", user="dumpresults", password="unsecure")
+    conn = psycopg2.connect(**credentials)
     db = conn.cursor()
 
     queryStatement = "select * from Agents where id = %s;"
@@ -39,5 +40,5 @@ def retrieve(row_id):
 
 if __name__ == "__main__":
     # retrieve a result and unpickle it
-    data = retrieve(4)
+    data = retrieve(1)
 
