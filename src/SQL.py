@@ -23,6 +23,7 @@ def insert(columnData, trainBlob):
     conn.commit()
     print("inserted into Agents with id {}".format(db.fetchone()[0]))
 
+
 def retrieve(row_id):
     # establish connection
     conn = psycopg2.connect(**credentials)
@@ -36,9 +37,33 @@ def retrieve(row_id):
     return torch.load(buffer)
 
 
+def insertBenchmark(agents_id, algorithm, bench_episodes, benchBlob):
+    # merge into single dictionary
+    data = {"agents_id": agents_id, "algorithm": algorithm, "bench_episodes": bench_episodes, "benchBlob": benchBlob}
+
+    # establish connection
+    conn = psycopg2.connect(**credentials)
+    db = conn.cursor()
+    insertStatement = "insert into Benchmarks (agents_id, algorithm, bench_episodes, benchBlob) values (%(agents_id)s, %(algorithm)s, %(bench_episodes)s, %(benchBlob)s)" \
+                      "returning bench_id;"
+    db.execute(insertStatement, data)
+    conn.commit()
+    print("inserted into Benchmarks with id {}".format(db.fetchone()[0]))
+
+
+def retrieveBenchmark(row_id):
+    # establish connection
+    conn = psycopg2.connect(**credentials)
+    db = conn.cursor()
+
+    queryStatement = "select * from Benchmarks where id = %s;"
+    db.execute(queryStatement, (row_id,))
+    data = db.fetchone()
+
+    buffer = io.BytesIO(data[-1])  # assumes train blob is located in last column
+    return torch.load(buffer)
 
 
 if __name__ == "__main__":
     # retrieve a result and unpickle it
     data = retrieve(1)
-

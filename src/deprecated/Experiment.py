@@ -1,5 +1,4 @@
 import pickle
-import io
 import pandas as pd
 import numpy as np
 import torch
@@ -8,22 +7,9 @@ from SteeringPair import Network
 from SteeringPair import DQN, REINFORCE, QActorCritic
 from SteeringPair.Environment import initEnvironment
 
-import SQL
-
-# fetch pre-trained agents
-agents_id = 5
-trainResults = SQL.retrieve(row_id=agents_id)
-agents = trainResults["agents"]
-
-# number of episodes during benchmark
-benchEpisodes = 100
-
-# arguments for SQL.insertBenchmark
-data = {"agents_id": agents_id, "algorithm": trainResults["algorithm"], "bench_episodes": benchEpisodes,}
-
 # choose algorithm
-Algorithm = DQN
-QNetwork = Network.FC8
+Algorithm = REINFORCE
+QNetwork = Network.FC7
 PolicyNetwork = Network.Cat3
 
 # environment config
@@ -39,8 +25,9 @@ hypPara_RandomBehavior = {"BATCH_SIZE": None, "GAMMA": None, "TARGET_UPDATE": No
 hypPara_GreedyBehavior = {"BATCH_SIZE": None, "GAMMA": None, "TARGET_UPDATE": None, "EPS_START": 0, "EPS_END": 0,
                           "EPS_DECAY": 1, "MEMORY_SIZE": None}
 
-dummyOptimizer = torch.optim.Adam
-dummyStepSize = 1e-3
+# fetch pre-trained agents
+trainResults = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/ConstantRewardPerStep/6d-norm_9A_RR_Cat3_constantRewardPerStep_2000_agents.tar")
+agents = trainResults["agents"]
 
 # save mean returns whereas each entry is the average over the last meanSamples returns
 returns = list()
@@ -55,8 +42,8 @@ for agent in agents:
     model = Algorithm.Model(QNetwork=QNetwork, PolicyNetwork=PolicyNetwork)
     model.load_state_dict(agents[agent])
     model.eval()
-    trainer = Algorithm.Trainer(model, dummyOptimizer, dummyStepSize, **hypPara_GreedyBehavior)
-    episodeReturns, episodeTerminations = trainer.benchAgent(benchEpisodes)
+    trainer = Algorithm.Trainer(model, **hypPara_GreedyBehavior)
+    episodeReturns, episodeTerminations = trainer.benchAgent(50)
     episodeReturns = [x[0].item() for x in episodeReturns]
 
     # mean over last meanSamples episodes
@@ -77,6 +64,32 @@ for agent in agents:
     greedyTerminations["failed"].append(episodeTerminations["failed"])
     greedyTerminations["aborted"].append(episodeTerminations["aborted"])
 
+# run simulation with random behavior
+for i in range(len(agents)):
+    print("random run {}".format(i))
+    dummyModel = Algorithm.Model(QNetwork=QNetwork, PolicyNetwork=PolicyNetwork)
+    dummyModel.eval()
+    trainer = Algorithm.Trainer(dummyModel, **hypPara_RandomBehavior)
+    episodeReturns, episodeTerminations = trainer.benchAgent(50)
+    episodeReturns = [x[0].item() for x in episodeReturns]
+
+    # mean over last meanSamples episodes
+    mean = list()
+    for j in range(meanSamples, len(episodeReturns)):
+        mean.append(np.mean(episodeReturns[j - meanSamples:j + 1]))
+
+    meanReturns.append(pd.DataFrame({"episode": [i + 1 for i in range(meanSamples, len(episodeReturns))],
+                                     "behavior": ["random" for i in range(meanSamples, len(episodeReturns))],
+                                     "return": mean}))
+
+    returns.append(pd.DataFrame({"episode": [i + 1 for i in range(len(episodeReturns))],
+                                 "behavior": ["random" for i in range(len(episodeReturns))],
+                                 "return": episodeReturns}))
+
+    # log how episodes ended
+    randomTerminations["successful"].append(episodeTerminations["successful"])
+    randomTerminations["failed"].append(episodeTerminations["failed"])
+    randomTerminations["aborted"].append(episodeTerminations["aborted"])
 
 # concat to pandas data frame
 returns = pd.concat(returns)
@@ -86,8 +99,5 @@ overallResults = {"return": returns, "meanReturn": meanReturns, "greedyTerminati
                   "randomTerminations": randomTerminations}
 
 # dump
-buffer = io.BytesIO()
-pickle.dump(overallResults, buffer)
-data["benchBlob"]  = buffer.getvalue()
-
-SQL.insertBenchmark(**data)
+with open("/dev/shm/6d-norm_9A_RR_Cat3_constantRewardPerStep_2000_benchmark", "wb") as file:
+    pickle.dump(overallResults, file)

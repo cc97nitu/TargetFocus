@@ -7,8 +7,10 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 
+import SQL
 
-def plotTrainResults(data: pd.DataFrame):
+
+def plotTrainResult(data: pd.DataFrame):
     # plot
     sns.set(style="whitegrid")
 
@@ -19,26 +21,40 @@ def plotTrainResults(data: pd.DataFrame):
     plt.show()
     plt.close()
 
+def multiTrainResults(dataSets: list, hueKeyword: str):
+    # build annotated data frame
+    dataFrames = []
+    for dataSet in dataSets:
+        data = SQL.retrieve(dataSet[0])
+        data = data["returns"]
+        data[hueKeyword] = pd.Series(dataSet[1], index=data.index)
+        dataFrames.append(data)
+
+    concatFrame = pd.concat(dataFrames)
+
+    # plot
+    sns.set(style="whitegrid")
+
+    sns.lineplot(x="episode", y="return", hue=hueKeyword, data=concatFrame)
+
+    # plt.title("random start, random goal")
+    # plt.yticks([])
+    plt.show()
+    plt.close()
+
+
+
 
 if __name__ == "__main__":
     # ### train results ###
-    # fetch data
-    data = torch.load("/dev/shm/agents.tar")
+    # # plot single result
+    # data = SQL.retrieve(row_id=5)
+    #
+    # plotTrainResult(data["returns"])
 
-    plotTrainResults(data["returns"])
+    # plot multiple results
+    hueKeyword = "network"
+    dataSets = [(4, "FC7"), (5, "FC8")]  # assumes tuples of form (row_id, hueIdentifier)
 
-    # # concat two data frames
-    # dataA = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/propReward/6d-norm_9A_RR_Cat3_propReward_2000_agents.tar")
-    # dataB = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/propRewardStepPenalty/6d-norm_9A_RR_Cat3_propRewardStepPenalty_2000_agents.tar")
-    # dataC = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/ConstantRewardPerStep/6d-norm_9A_RR_Cat3_constantRewardPerStep_2000_agents.tar")
-    #
-    # dataA = dataA["returns"]
-    # dataA["reward"] = pd.Series("A", index=dataA.index)
-    # dataB = dataB["returns"]
-    # dataB["reward"] = pd.Series("B", index=dataB.index)
-    # dataC = dataC["returns"]
-    # dataC["reward"] = pd.Series("C", index=dataC.index)
-    #
-    #
-    # concat = pd.concat([dataA, dataB, dataC])
-    # plotTrainResults(concat)
+    multiTrainResults(dataSets, hueKeyword)
+

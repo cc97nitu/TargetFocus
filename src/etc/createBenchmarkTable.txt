@@ -1,0 +1,7 @@
+CREATE TABLE Benchmarks (bench_id SERIAL PRIMARY KEY,
+	agents_id	integer	REFERENCES Agents(id),
+	algorithm	varchar(80),
+	bench_episodes	integer,
+	benchBlob	bytea
+);
+

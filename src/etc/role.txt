@@ -9,3 +9,6 @@ grant select, insert on Agents to dumpresults;
 # additional rights required to use autoincrement id
 grant usage, select on sequence agents_id_seq to dumpresults;
 
+# same for Benchmarks table
+grant select, insert on Benchmarks to dumpresults;
+grant usage, select on sequence benchmarks_bench_id_seq to dumpresults;
