@@ -6,13 +6,12 @@ import torch
 from collections import namedtuple
 
 from time import time
-from itertools import product
 from shutil import copy, rmtree
 from itertools import product
 from sdds import SDDS
 
 terminations = namedtuple("terminations", ["successful", "failed", "aborted"])
-
+path2defns = "-rpnDefns=" + os.path.expanduser("~/.defns.rpn")
 
 class RewardFunctions(object):
     """Storage for reward functions."""
@@ -262,7 +261,7 @@ class Environment(object):
 
         # run elegant simulation
         with open(os.devnull, "w") as f:
-            sp.call(["elegant", "run.ele", "-rpnDefns=/etc/defns.rpn"], stdout=f, cwd=self.dir)
+            sp.call(["elegant", "run.ele", path2defns], stdout=f, cwd=self.dir)
 
         # read elegant output
         os.chdir(self.dir)
