@@ -10,7 +10,7 @@ from SteeringPair.Environment import initEnvironment
 import SQL
 
 # choose algorithm
-Algorithm = DQN
+Algorithm = REINFORCE
 QNetwork = Network.FC7
 PolicyNetwork = Network.Cat3
 
@@ -22,13 +22,13 @@ stepSize = 3e-4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # configure environment
-envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
+envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propRewardStepPenalty",
              "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
              "failurePenalty": -10, "device": device}
 initEnvironment(**envConfig)
 
 # define hyper parameters
-hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.0, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
+hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
                "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
 ### train 20 agents and store the corresponding models in agents

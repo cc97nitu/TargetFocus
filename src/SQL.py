@@ -1,10 +1,9 @@
 import psycopg2
-import datetime
 import torch
 import io
 
 # try to establish connection
-credentials = {"dbname": "RL", "host": "192.168.5.148", "user": "dumpresults", "password": "unsecure"}
+credentials = {"dbname": "RL", "host": "192.168.30.66", "user": "dumpresults", "password": "unsecure"}
 conn = psycopg2.connect(**credentials)
 conn.close()
 
