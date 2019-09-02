@@ -5,3 +5,4 @@ import SteeringPair.Network as Network
 import SteeringPair.DQN as DQN
 import SteeringPair.REINFORCE as REINFORCE
 import SteeringPair.QActorCritic as QActorCritic
+import SteeringPair.RANDOM as RANDOM

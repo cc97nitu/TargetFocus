@@ -1,6 +1,7 @@
 import psycopg2
 import torch
 import io
+import pickle
 
 # try to establish connection
 credentials = {"dbname": "RL", "host": "192.168.30.66", "user": "dumpresults", "password": "unsecure"}
@@ -55,12 +56,12 @@ def retrieveBenchmark(row_id):
     conn = psycopg2.connect(**credentials)
     db = conn.cursor()
 
-    queryStatement = "select * from Benchmarks where id = %s;"
+    queryStatement = "select * from Benchmarks where bench_id = %s;"
     db.execute(queryStatement, (row_id,))
     data = db.fetchone()
 
     buffer = io.BytesIO(data[-1])  # assumes train blob is located in last column
-    return torch.load(buffer)
+    return pickle.load(buffer)
 
 
 if __name__ == "__main__":

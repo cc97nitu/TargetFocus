@@ -26,7 +26,7 @@ hypPara_GreedyBehavior = {"BATCH_SIZE": None, "GAMMA": None, "TARGET_UPDATE": No
                           "EPS_DECAY": 1, "MEMORY_SIZE": None}
 
 # fetch pre-trained agents
-trainResults = torch.load("/home/conrad/RL/TempDiff/TargetFocus/src/dump/REINFORCE/6d-states-normalized/ConstantRewardPerStep/6d-norm_9A_RR_Cat3_constantRewardPerStep_2000_agents.tar")
+trainResults = torch.load("/TargetFocus/src/dump/REINFORCE/6d-states-normalized/propReward/6d-norm_9A_RR_Cat3_propReward_2000_agents.tar")
 agents = trainResults["agents"]
 
 # save mean returns whereas each entry is the average over the last meanSamples returns
@@ -42,7 +42,7 @@ for agent in agents:
     model = Algorithm.Model(QNetwork=QNetwork, PolicyNetwork=PolicyNetwork)
     model.load_state_dict(agents[agent])
     model.eval()
-    trainer = Algorithm.Trainer(model, **hypPara_GreedyBehavior)
+    trainer = Algorithm.Trainer(model, torch.optim.Adam, 3e-4, **hypPara_GreedyBehavior)
     episodeReturns, episodeTerminations = trainer.benchAgent(50)
     episodeReturns = [x[0].item() for x in episodeReturns]
 
@@ -99,5 +99,5 @@ overallResults = {"return": returns, "meanReturn": meanReturns, "greedyTerminati
                   "randomTerminations": randomTerminations}
 
 # dump
-with open("/dev/shm/6d-norm_9A_RR_Cat3_constantRewardPerStep_2000_benchmark", "wb") as file:
+with open("/dev/shm/benchmark", "wb") as file:
     pickle.dump(overallResults, file)

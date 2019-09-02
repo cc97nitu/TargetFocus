@@ -4,13 +4,13 @@ import numpy as np
 import torch
 
 from SteeringPair import Network
-from SteeringPair import DQN, REINFORCE, QActorCritic
+from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM
 from SteeringPair.Environment import initEnvironment
 
 import SQL
 
 # choose algorithm
-Algorithm = REINFORCE
+Algorithm = RANDOM
 QNetwork = Network.FC7
 PolicyNetwork = Network.Cat3
 
@@ -22,7 +22,7 @@ stepSize = 3e-4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # configure environment
-envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propRewardStepPenalty",
+envConfig = {"stateDefinition": "6d-norm", "actionSet": "A25", "rewardFunction": "propRewardStepPenalty",
              "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
              "failurePenalty": -10, "device": device}
 initEnvironment(**envConfig)
@@ -34,7 +34,7 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_STAR
 ### train 20 agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = 2000
+trainEpisodes = 1
 
 meanSamples = 10
 

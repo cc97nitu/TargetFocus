@@ -1,3 +1,8 @@
+"""
+Create a benchmark for an agent who chooses every action with the same probability.
+This is used as a baseline to assess a trained agent's performance.
+"""
+
 import pickle
 import io
 import pandas as pd
@@ -5,13 +10,13 @@ import numpy as np
 import torch
 
 from SteeringPair import Network
-from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM
+from SteeringPair import RANDOM
 from SteeringPair.Environment import initEnvironment
 
 import SQL
 
 # fetch pre-trained agents
-agents_id = 10
+agents_id = 18
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 
@@ -22,7 +27,7 @@ benchEpisodes = 100
 data = {"agents_id": agents_id, "algorithm": trainResults["algorithm"], "bench_episodes": benchEpisodes,}
 
 # choose algorithm
-Algorithm = REINFORCE
+Algorithm = RANDOM
 QNetwork = Network.FC7
 PolicyNetwork = Network.Cat3
 
@@ -33,7 +38,7 @@ envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": 
 initEnvironment(**envConfig)
 
 # define dummy hyper parameters in order to create trainer-objects for benching
-hypPara_GreedyBehavior = {"BATCH_SIZE": None, "GAMMA": None, "TARGET_UPDATE": None, "EPS_START": 0, "EPS_END": 0,
+hypPara_RandomBehavior = {"BATCH_SIZE": None, "GAMMA": None, "TARGET_UPDATE": None, "EPS_START": 1, "EPS_END": 1,
                           "EPS_DECAY": 1, "MEMORY_SIZE": None}
 
 dummyOptimizer = torch.optim.Adam
@@ -45,14 +50,13 @@ meanReturns = list()
 terminations = {"successful": list(), "failed": list(), "aborted": list()}
 meanSamples = 10
 
-# run simulation with greedy behavior
-for agent in agents:
-    print("greedy run {}".format(agent))
-    model = Algorithm.Model(QNetwork=QNetwork, PolicyNetwork=PolicyNetwork)
-    model.load_state_dict(agents[agent])
-    model.eval()
-    trainer = Algorithm.Trainer(model, dummyOptimizer, dummyStepSize, **hypPara_GreedyBehavior)
-    episodeReturns, episodeTerminations = trainer.benchAgent(benchEpisodes)
+# run simulation with random behavior
+for i in range(len(agents)):
+    print("random run {}".format(i))
+    dummyModel = Algorithm.Model(QNetwork=QNetwork, PolicyNetwork=PolicyNetwork)
+    dummyModel.eval()
+    trainer = Algorithm.Trainer(dummyModel, None, None, **hypPara_RandomBehavior)
+    episodeReturns, episodeTerminations = trainer.benchAgent(50)
     episodeReturns = [x[0].item() for x in episodeReturns]
 
     # mean over last meanSamples episodes
@@ -61,11 +65,11 @@ for agent in agents:
         mean.append(np.mean(episodeReturns[j - meanSamples:j + 1]))
 
     meanReturns.append(pd.DataFrame({"episode": [i + 1 for i in range(meanSamples, len(episodeReturns))],
-                                     "behavior": ["greedy" for i in range(meanSamples, len(episodeReturns))],
+                                     "behavior": ["random" for i in range(meanSamples, len(episodeReturns))],
                                      "return": mean}))
 
     returns.append(pd.DataFrame({"episode": [i + 1 for i in range(len(episodeReturns))],
-                                 "behavior": ["greedy" for i in range(len(episodeReturns))],
+                                 "behavior": ["random" for i in range(len(episodeReturns))],
                                  "return": episodeReturns}))
 
     # log how episodes ended
@@ -73,12 +77,11 @@ for agent in agents:
     terminations["failed"].append(episodeTerminations["failed"])
     terminations["aborted"].append(episodeTerminations["aborted"])
 
-
 # concat to pandas data frame
 returns = pd.concat(returns)
 meanReturns = pd.concat(meanReturns)
 
-overallResults = {"return": returns, "meanReturn": meanReturns, "terminations": terminations, }
+overallResults = {"return": returns, "meanReturn": meanReturns, "terminations": terminations}
 
 # dump
 buffer = io.BytesIO()
