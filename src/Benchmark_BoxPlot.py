@@ -55,11 +55,12 @@ def buildPdFrame(*args):
 
 if __name__ == "__main__":
 
-    frameA = SQL.retrieveBenchmark(1)
-    frameB = SQL.retrieveBenchmark(3)
-    frameC = SQL.retrieveBenchmark(4)
+    frameA = SQL.retrieveBenchmark(5)
+    frameB = SQL.retrieveBenchmark(6)
+    frameC = SQL.retrieveBenchmark(7)
+    frameD = SQL.retrieveBenchmark(4)
 
-    args = [(frameA, "A4"), (frameB, "A9"), (frameC, "A25")]
+    args = [(frameA, "A4"), (frameB, "A9"), (frameC, "A25"), (frameD, "random")]
 
     plotStatistics(buildPdFrame(*args))
 

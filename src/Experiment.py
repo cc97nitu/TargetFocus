@@ -11,7 +11,7 @@ from SteeringPair.Environment import initEnvironment
 import SQL
 
 # fetch pre-trained agents
-agents_id = 10
+agents_id = 14
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 

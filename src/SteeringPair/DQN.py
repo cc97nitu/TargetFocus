@@ -197,9 +197,18 @@ class Trainer(AbstractTrainer):
             elif episodeTerminated == Termination.ABORTED:
                 episodeTerminations["aborted"] += 1
 
-            # Update the target network, copying all weights and biases in SteeringPair
-            if i_episode % self.TARGET_UPDATE == 0:
-                self.model.target_net.load_state_dict(self.model.policy_net.state_dict())
+            # Update the target network
+            if self.TARGET_UPDATE < 1:
+                # Update the target network by applying a soft update
+                policyNetDict, targetNetDict = self.model.policy_net.state_dict(), self.model.target_net.state_dict()
+                for param in targetNetDict.keys():
+                    targetNetDict[param] = targetNetDict[param] + self.TARGET_UPDATE * policyNetDict[param]
+
+                self.model.target_net.load_state_dict(targetNetDict)
+            else:
+                # update by copying every parameter
+                if i_episode % self.TARGET_UPDATE == 0:
+                    self.model.target_net.load_state_dict(self.model.policy_net.state_dict())
 
             # status report
             print("episode: {}/{}".format(i_episode+1, num_episodes), end="\r")
@@ -252,21 +261,24 @@ class Trainer(AbstractTrainer):
 
 
 if __name__ == "__main__":
+    import torch.optim
+    from SteeringPair import Network
+
     # environment config
     envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propReward",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
                  "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
     initEnvironment(**envConfig)
 
+    # define hyper parameters
+    hyperParamsDict = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 0.1, "EPS_START": 0.5, "EPS_END": 0,
+                       "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
+
     # create model
     model = Model(QNetwork=Network.FC7)
 
-    # define hyper parameters
-    hyperParamsDict = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
-                       "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
-
     # set up trainer
-    trainer = Trainer(model, **hyperParamsDict)
+    trainer = Trainer(model, torch.optim.Adam, 3e-4, **hyperParamsDict)
 
     # train model under hyper parameters
-    trainer.trainAgent(5)
+    trainer.trainAgent(500)

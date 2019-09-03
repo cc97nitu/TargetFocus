@@ -47,14 +47,15 @@ def multiTrainResults(dataSets: list, hueKeyword: str):
 
 if __name__ == "__main__":
     ### train results ###
-    # plot single result
-    data = SQL.retrieve(row_id=10)
 
-    plotTrainResult(data["returns"])
-
-    # # plot multiple results
-    # hueKeyword = "actionSet"
-    # dataSets = [(9, "A25"), (10, "A4"), (11, "A9")]  # assumes tuples of form (row_id, hueIdentifier)
+    # # plot single result
+    # data = SQL.retrieve(row_id=26)
     #
-    # multiTrainResults(dataSets, hueKeyword)
+    # plotTrainResult(data["returns"])
+
+    # plot multiple results
+    hueKeyword = "actionSet"
+    dataSets = [(12, "A25"), (14, "A4"), (15, "A9")]  # assumes tuples of form (row_id, hueIdentifier)
+
+    multiTrainResults(dataSets, hueKeyword)
 
