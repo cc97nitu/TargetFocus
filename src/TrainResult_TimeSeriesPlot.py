@@ -49,13 +49,13 @@ if __name__ == "__main__":
     ### train results ###
 
     # # plot single result
-    # data = SQL.retrieve(row_id=26)
+    # data = SQL.retrieve(row_id=30)
     #
     # plotTrainResult(data["returns"])
 
     # plot multiple results
-    hueKeyword = "actionSet"
-    dataSets = [(12, "A25"), (14, "A4"), (15, "A9")]  # assumes tuples of form (row_id, hueIdentifier)
+    hueKeyword = "algorithm"
+    dataSets = [(35, "A2C_noBoot"), (38, "A2C"), (36, "REINFORCE")]  # assumes tuples of form (row_id, hueIdentifier)
 
     multiTrainResults(dataSets, hueKeyword)
 

@@ -6,3 +6,5 @@ import SteeringPair.DQN as DQN
 import SteeringPair.REINFORCE as REINFORCE
 import SteeringPair.QActorCritic as QActorCritic
 import SteeringPair.RANDOM as RANDOM
+import SteeringPair.A2C_noBoot as A2C_noBoot
+import SteeringPair.A2C_noBoot_v2 as A2C_noBoot_v2
