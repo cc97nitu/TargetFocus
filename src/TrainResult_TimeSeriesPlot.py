@@ -48,14 +48,14 @@ def multiTrainResults(dataSets: list, hueKeyword: str):
 if __name__ == "__main__":
     ### train results ###
 
-    # # plot single result
-    # data = SQL.retrieve(row_id=30)
+    # plot single result
+    data = SQL.retrieve(row_id=48)
+
+    plotTrainResult(data["returns"])
+
+    # # plot multiple results
+    # hueKeyword = "algorithm"
+    # dataSets = [(35, "A2C_noBoot"), (38, "A2C"), (36, "REINFORCE"),]  # assumes tuples of form (row_id, hueIdentifier)
     #
-    # plotTrainResult(data["returns"])
-
-    # plot multiple results
-    hueKeyword = "algorithm"
-    dataSets = [(35, "A2C_noBoot"), (38, "A2C"), (36, "REINFORCE")]  # assumes tuples of form (row_id, hueIdentifier)
-
-    multiTrainResults(dataSets, hueKeyword)
+    # multiTrainResults(dataSets, hueKeyword)
 
