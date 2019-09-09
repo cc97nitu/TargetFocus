@@ -49,7 +49,7 @@ if __name__ == "__main__":
     ### train results ###
 
     # plot single result
-    data = SQL.retrieve(row_id=48)
+    data = SQL.retrieve(row_id=53)
 
     plotTrainResult(data["returns"])
 

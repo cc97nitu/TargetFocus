@@ -4,15 +4,16 @@ import numpy as np
 import torch
 
 from SteeringPair import Network
-from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
-from SteeringPair.Environment import initEnvironment
-
+# from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
+# from SteeringPair.Environment import initEnvironment
+from SteeringPair_Continuous import REINFORCE
+from SteeringPair_Continuous.Environment import initEnvironment
 import SQL
 
 # choose algorithm
-Algorithm = A2C_noBoot_v2
+Algorithm = REINFORCE
 QNetwork = Network.FC7
-PolicyNetwork = Network.Cat3
+PolicyNetwork = Network.PDF2
 
 # choose optimizer
 optimizer = torch.optim.Adam
@@ -22,7 +23,7 @@ stepSize = 3e-4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # configure environment
-envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
+envConfig = {"stateDefinition": "2d-norm", "actionSet": "A4", "rewardFunction": "constantRewardPerStep",
              "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
              "failurePenalty": -10, "device": device}
 initEnvironment(**envConfig)
@@ -34,7 +35,7 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 0.1, "EPS_START
 ### train 20 agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = 1000
+trainEpisodes = 2000
 numberAgents = 20
 
 meanSamples = 10

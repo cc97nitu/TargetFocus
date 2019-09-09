@@ -5,13 +5,16 @@ import numpy as np
 import torch
 
 from SteeringPair import Network
-from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM
-from SteeringPair.Environment import initEnvironment
-
 import SQL
 
+# from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
+# from SteeringPair.Environment import initEnvironment
+from SteeringPair_Continuous import REINFORCE
+from SteeringPair_Continuous.Environment import initEnvironment
+
+
 # fetch pre-trained agents
-agents_id = 14
+agents_id = 53
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 
@@ -24,10 +27,10 @@ data = {"agents_id": agents_id, "algorithm": trainResults["algorithm"], "bench_e
 # choose algorithm
 Algorithm = REINFORCE
 QNetwork = Network.FC7
-PolicyNetwork = Network.Cat3
+PolicyNetwork = Network.PDF2
 
 # environment config
-envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propReward",
+envConfig = {"stateDefinition": "2d-norm", "actionSet": "A4", "rewardFunction": "propReward",
              "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
              "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
 initEnvironment(**envConfig)

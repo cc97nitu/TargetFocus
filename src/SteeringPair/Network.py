@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as functional
 
@@ -392,8 +393,40 @@ class CNN2(nn.Module):
         return x
 
 
+class PDF1(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(PDF1, self).__init__()
+        self.fc1 = nn.Linear(features, 40)
+        self.output = nn.Linear(40, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = self.output(x)
+        return torch.tanh(x)
+
+
+class PDF2(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(PDF2, self).__init__()
+        self.fc1 = nn.Linear(features, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.output = nn.Linear(128, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.output(x)
+        return torch.tanh(x)
+
 
 if __name__ == "__main__":
     import torch
     inp = torch.randn(2, 6)
-    net = CNN1(6, 25)
+    net = PDF1(6, 4)
+
+    x = torch.randn(2, 6)
+    net(x)
