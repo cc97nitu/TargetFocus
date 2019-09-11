@@ -241,8 +241,46 @@ class Trainer(AbstractTrainer):
         print("Complete")
         return episodeReturns, episodeTerminations
 
-    def benchAgent(self, numEpisodes):
-        pass
+    def benchAgent(self, num_episodes):
+        # keep track of received return
+        episodeReturns = []
+
+        # count how episodes terminate
+        episodeTerminations = {"successful": 0, "failed": 0, "aborted": 0}
+
+        # episodes
+        for i_episode in range(num_episodes):
+            # Initialize the environment and state
+            while True:
+                try:
+                    env = Environment("random")  # no arguments => random initialization of starting point
+                    break
+                except ValueError:
+                    continue
+
+            state = env.initialState
+            episodeReturn = 0
+
+            episodeTerminated = Termination.INCOMPLETE
+            while episodeTerminated == Termination.INCOMPLETE:
+                # Select and perform an action
+                action, _ = self.selectAction(state)
+                nextState, reward, episodeTerminated = env.react(action)
+                episodeReturn += reward
+
+                # Move to the next state
+                state = nextState
+
+            episodeReturns.append(torch.tensor([[episodeReturn,]]))
+            if episodeTerminated == Termination.SUCCESSFUL:
+                episodeTerminations["successful"] += 1
+            elif episodeTerminated == Termination.FAILED:
+                episodeTerminations["failed"] += 1
+            elif episodeTerminated == Termination.ABORTED:
+                episodeTerminations["aborted"] += 1
+
+        print("Complete")
+        return episodeReturns, episodeTerminations
 
 
 if __name__ == "__main__":

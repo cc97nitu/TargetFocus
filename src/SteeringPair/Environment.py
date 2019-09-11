@@ -101,6 +101,10 @@ def initEnvironment(**kwargs):
             posChanges = [-5e-3, 0, 5e-3]
         elif kwargs["actionSet"] == "A25":
             posChanges = [-1e-2, -1e-3, 0, 1e-3, 1e-2]
+        elif kwargs["actionSet"] == "A49":
+            posChanges = [-1e-2, -5e-3, -1e-3, 0, 1e-3, 5e-3, 1e-2]
+        elif kwargs["actionSet"] == "A81":
+            posChanges = [-1e-2, -6e-3, -3e-3, -1e-3, 0, 1e-3, 3e-3, 6e-3, 1e-2]
         else:
             raise ValueError("cannot interpret action set!")
 

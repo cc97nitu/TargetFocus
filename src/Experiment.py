@@ -7,14 +7,14 @@ import torch
 from SteeringPair import Network
 import SQL
 
-# from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
-# from SteeringPair.Environment import initEnvironment
-from SteeringPair_Continuous import REINFORCE
-from SteeringPair_Continuous.Environment import initEnvironment
+from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
+from SteeringPair.Environment import initEnvironment
+# from SteeringPair_Continuous import REINFORCE
+# from SteeringPair_Continuous.Environment import initEnvironment
 
 
 # fetch pre-trained agents
-agents_id = 53
+agents_id = 42
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 
@@ -25,12 +25,12 @@ benchEpisodes = 100
 data = {"agents_id": agents_id, "algorithm": trainResults["algorithm"], "bench_episodes": benchEpisodes,}
 
 # choose algorithm
-Algorithm = REINFORCE
+Algorithm = A2C
 QNetwork = Network.FC7
-PolicyNetwork = Network.PDF2
+PolicyNetwork = Network.Cat3
 
 # environment config
-envConfig = {"stateDefinition": "2d-norm", "actionSet": "A4", "rewardFunction": "propReward",
+envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
              "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
              "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
 initEnvironment(**envConfig)

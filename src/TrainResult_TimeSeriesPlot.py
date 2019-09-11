@@ -1,8 +1,6 @@
 """
 Visualize mean returns achieved during training.
 """
-import torch
-
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -48,14 +46,14 @@ def multiTrainResults(dataSets: list, hueKeyword: str):
 if __name__ == "__main__":
     ### train results ###
 
-    # plot single result
-    data = SQL.retrieve(row_id=53)
-
-    plotTrainResult(data["returns"])
-
-    # # plot multiple results
-    # hueKeyword = "algorithm"
-    # dataSets = [(35, "A2C_noBoot"), (38, "A2C"), (36, "REINFORCE"),]  # assumes tuples of form (row_id, hueIdentifier)
+    # # plot single result
+    # data = SQL.retrieve(row_id=46)
     #
-    # multiTrainResults(dataSets, hueKeyword)
+    # plotTrainResult(data["returns"])
+
+    # plot multiple results
+    hueKeyword = "algorithm"
+    dataSets = [(48, "soft"), (49, "hard"),]  # assumes tuples of form (row_id, hueIdentifier)
+
+    multiTrainResults(dataSets, hueKeyword)
 
