@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from SteeringPair import Environment
+from SteeringPair_Continuous import Environment
 
 class AbstractModel(ABC):
     @abstractmethod

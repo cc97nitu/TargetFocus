@@ -202,7 +202,7 @@ class Trainer(AbstractTrainer):
                 # Update the target network by applying a soft update
                 policyNetDict, targetNetDict = self.model.policy_net.state_dict(), self.model.target_net.state_dict()
                 for param in targetNetDict.keys():
-                    targetNetDict[param] = targetNetDict[param] + self.TARGET_UPDATE * policyNetDict[param]
+                    targetNetDict[param] = (1 - self.TARGET_UPDATE) * targetNetDict[param] + self.TARGET_UPDATE * policyNetDict[param]
 
                 self.model.target_net.load_state_dict(targetNetDict)
             else:
