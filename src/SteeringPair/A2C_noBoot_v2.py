@@ -90,21 +90,39 @@ if __name__ == "__main__":
     # environment config
     envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
-                 "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
+                 "failurePenalty": -10, "device": torch.device("cuda" if torch.cuda.is_available() else "cpu")}
     initEnvironment(**envConfig)
 
     # create model
     model = Model(QNetwork=Network.FC7, PolicyNetwork=Network.Cat3)
 
     # define hyper parameters
-    hyperParamsDict = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 0.1, "EPS_START": 0.5, "EPS_END": 0,
-                       "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
+    hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 0.1, "EPS_START": 0.5, "EPS_END": 0,
+                   "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
     # set up trainer
-    trainer = Trainer(model, torch.optim.Adam, 3e-4, **hyperParamsDict)
+    trainer = Trainer(model, torch.optim.Adam, 3e-4, **hyperParams)
 
     # train model under hyper parameters
-    episodeReturns, _ = trainer.trainAgent(500)
+    episodeReturns, _ = trainer.trainAgent(1000)
     plt.plot(episodeReturns)
     plt.show()
     plt.close()
+
+    # bench model
+    returns, terminations, comparison = trainer.benchAgent(50)
+
+    comparison = tuple([*zip(*comparison)])
+
+    # try to visualize comparison
+    import pandas as pd
+    comparison = pd.DataFrame.from_dict({"observed": comparison[0], "predicted": comparison[1]})
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.jointplot(x="observed", y="predicted", data=comparison)
+    plt.show()
+    plt.close()
+
+    print(terminations)
+

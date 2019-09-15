@@ -245,6 +245,9 @@ class Trainer(AbstractTrainer):
         # keep track of received return
         episodeReturns = []
 
+        # compare predicted state-value with sampled return
+        compareReturnStateValue: list[tuple] = list()
+
         # count how episodes terminate
         episodeTerminations = {"successful": 0, "failed": 0, "aborted": 0}
 
@@ -260,17 +263,37 @@ class Trainer(AbstractTrainer):
 
             state = env.initialState
             episodeReturn = 0
+            episodeRewards, episodeStateValues = list(), list()
 
             episodeTerminated = Termination.INCOMPLETE
             while episodeTerminated == Termination.INCOMPLETE:
+                # monitor state value
+                episodeStateValues.append(self.model.vTargetNet(state))
+
                 # Select and perform an action
                 action, _ = self.selectAction(state)
                 nextState, reward, episodeTerminated = env.react(action)
                 episodeReturn += reward
+                episodeRewards.append(reward)
 
                 # Move to the next state
                 state = nextState
 
+            # calculate observed return after visiting state
+            observedReturns = []
+
+            for t in range(len(episodeRewards)):
+                Gt = 0
+                pw = 0
+                for r in episodeRewards[t:]:
+                    Gt = Gt + self.GAMMA ** pw * r
+                    pw = pw + 1
+                observedReturns.append(Gt)
+
+            for observation, prediction in zip(observedReturns, episodeStateValues):
+                compareReturnStateValue.append((observation[0].item(), prediction[0].item(),))
+
+            # monitor return and termination
             episodeReturns.append(torch.tensor([[episodeReturn,]]))
             if episodeTerminated == Termination.SUCCESSFUL:
                 episodeTerminations["successful"] += 1
@@ -280,7 +303,7 @@ class Trainer(AbstractTrainer):
                 episodeTerminations["aborted"] += 1
 
         print("Complete")
-        return episodeReturns, episodeTerminations
+        return episodeReturns, episodeTerminations, compareReturnStateValue
 
 
 if __name__ == "__main__":
@@ -288,7 +311,7 @@ if __name__ == "__main__":
     from SteeringPair import Network
 
     # environment config
-    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propReward",
+    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
                  "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
     initEnvironment(**envConfig)
@@ -304,4 +327,25 @@ if __name__ == "__main__":
     trainer = Trainer(model, torch.optim.Adam, 3e-4, **hyperParamsDict)
 
     # train model under hyper parameters
-    trainer.trainAgent(500)
+    trainReturn, _ = trainer.trainAgent(500)
+
+    # bench model
+    returns, terminations, comparison = trainer.benchAgent(50)
+
+    comparison = tuple([*zip(*comparison)])
+
+    # try to visualize comparison
+    import pandas as pd
+    comparison = pd.DataFrame.from_dict({"observed": comparison[0], "predicted": comparison[1]})
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    sns.jointplot(x="observed", y="predicted", data=comparison)
+    plt.show()
+    plt.close()
+
+    plt.plot(trainReturn)
+    plt.show()
+    plt.close()
+
+    print(terminations)

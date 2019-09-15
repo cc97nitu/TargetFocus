@@ -36,7 +36,7 @@ envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": 
 initEnvironment(**envConfig)
 
 # define dummy hyper parameters in order to create trainer-objects for benching
-hypPara_GreedyBehavior = {"BATCH_SIZE": None, "GAMMA": None, "TARGET_UPDATE": None, "EPS_START": 0, "EPS_END": 0,
+hypPara_GreedyBehavior = {"BATCH_SIZE": None, "GAMMA": trainResults["hyperParameters"]["GAMMA"], "TARGET_UPDATE": None, "EPS_START": 0, "EPS_END": 0,
                           "EPS_DECAY": 1, "MEMORY_SIZE": None}
 
 dummyOptimizer = torch.optim.Adam
@@ -45,6 +45,7 @@ dummyStepSize = 1e-3
 # save mean returns whereas each entry is the average over the last meanSamples returns
 returns = list()
 meanReturns = list()
+accuracyPredictions = list()
 terminations = {"successful": list(), "failed": list(), "aborted": list()}
 meanSamples = 10
 
@@ -55,7 +56,7 @@ for agent in agents:
     model.load_state_dict(agents[agent])
     model.eval()
     trainer = Algorithm.Trainer(model, dummyOptimizer, dummyStepSize, **hypPara_GreedyBehavior)
-    episodeReturns, episodeTerminations = trainer.benchAgent(benchEpisodes)
+    episodeReturns, episodeTerminations, accuracyValueFunction = trainer.benchAgent(benchEpisodes)
     episodeReturns = [x[0].item() for x in episodeReturns]
 
     # mean over last meanSamples episodes
@@ -71,6 +72,10 @@ for agent in agents:
                                  "behavior": ["greedy" for i in range(len(episodeReturns))],
                                  "return": episodeReturns}))
 
+    # accuracy of value-function's predictions
+    accuracyValueFunction = [*zip(*accuracyValueFunction)]
+    accuracyPredictions.append(pd.DataFrame({"observed": accuracyValueFunction[0], "predicted": accuracyValueFunction[1]}))
+
     # log how episodes ended
     terminations["successful"].append(episodeTerminations["successful"])
     terminations["failed"].append(episodeTerminations["failed"])
@@ -80,8 +85,9 @@ for agent in agents:
 # concat to pandas data frame
 returns = pd.concat(returns)
 meanReturns = pd.concat(meanReturns)
+accuracyPredictions = pd.concat(accuracyPredictions)
 
-overallResults = {"return": returns, "meanReturn": meanReturns, "terminations": terminations, }
+overallResults = {"return": returns, "meanReturn": meanReturns, "terminations": terminations, "accuracyPredictions": accuracyPredictions}
 
 # dump
 buffer = io.BytesIO()

@@ -11,9 +11,9 @@ from SteeringPair.Environment import initEnvironment
 import SQL
 
 # choose algorithm
-Algorithm = DoubleDQN
+Algorithm = A2C_noBoot_v2
 QNetwork = Network.FC7
-PolicyNetwork = Network.PDF2
+PolicyNetwork = Network.Cat3
 
 # choose optimizer
 optimizer = torch.optim.Adam
@@ -29,7 +29,7 @@ envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": 
 initEnvironment(**envConfig)
 
 # define hyper parameters
-hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
+hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 0.1, "EPS_START": 0.5, "EPS_END": 0,
                "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
 ### train 20 agents and store the corresponding models in agents

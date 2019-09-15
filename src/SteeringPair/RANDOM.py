@@ -133,7 +133,7 @@ class Trainer(AbstractTrainer):
                 episodeTerminations["aborted"] += 1
 
         print("Complete")
-        return episodeReturns, episodeTerminations
+        return episodeReturns, episodeTerminations, None  # None stands for accuracy of value function
 
 
 if __name__ == "__main__":
