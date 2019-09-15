@@ -207,6 +207,54 @@ class FC8(nn.Module):
         return x
 
 
+class FC9(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(FC9, self).__init__()
+        self.fc1 = nn.Linear(features, 1024)
+        self.fc2 = nn.Linear(1024, 1024)
+        self.output = nn.Linear(1024, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.output(x)
+        return x
+
+
+class FC10(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(FC10, self).__init__()
+        self.fc1 = nn.Linear(features, 2048)
+        self.fc2 = nn.Linear(2048, 2048)
+        self.output = nn.Linear(2048, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.output(x)
+        return x
+
+
+class FC11(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(FC11, self).__init__()
+        self.fc1 = nn.Linear(features, 256)
+        self.fc2 = nn.Linear(256, 256)
+        self.output = nn.Linear(256, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
+        x = self.output(x)
+        return x
+
+
 class FC7BN(nn.Module):
     def __init__(self, features: int, outputs: int):
         super(FC7BN, self).__init__()

@@ -12,7 +12,7 @@ import SQL
 
 # choose algorithm
 Algorithm = A2C_noBoot_v2
-QNetwork = Network.FC7
+QNetwork = Network.FC8
 PolicyNetwork = Network.Cat3
 
 # choose optimizer
