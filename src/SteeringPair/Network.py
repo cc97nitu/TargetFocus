@@ -242,15 +242,17 @@ class FC10(nn.Module):
 class FC11(nn.Module):
     def __init__(self, features: int, outputs: int):
         super(FC11, self).__init__()
-        self.fc1 = nn.Linear(features, 256)
-        self.fc2 = nn.Linear(256, 256)
-        self.output = nn.Linear(256, outputs)
+        self.fc1 = nn.Linear(features, 1024)
+        self.fc2 = nn.Linear(1024, 1024)
+        self.fc3 = nn.Linear(1024, 1024)
+        self.output = nn.Linear(1024, outputs)
         self.activation = functional.elu
         return
 
     def forward(self, x):
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
+        x = self.activation(self.fc3(x))
         x = self.output(x)
         return x
 
@@ -289,6 +291,24 @@ class FC7BN2(nn.Module):
     def forward(self, x):
         x = self.activation(self.bn1(self.fc1(x)))
         x = self.activation(self.bn2(self.fc2(x)))
+        x = self.output(x)
+        return x
+
+
+class FC7BN3(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(FC7BN3, self).__init__()
+        self.bn1 = nn.BatchNorm1d(features)
+        self.fc1 = nn.Linear(features, 128)
+        self.fc2 = nn.Linear(128, 128)
+        self.output = nn.Linear(128, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.bn1(x)
+        x = self.activation(self.fc1(x))
+        x = self.activation(self.fc2(x))
         x = self.output(x)
         return x
 
@@ -467,6 +487,20 @@ class PDF2(nn.Module):
     def forward(self, x):
         x = self.activation(self.fc1(x))
         x = self.activation(self.fc2(x))
+        x = self.output(x)
+        return torch.tanh(x)
+
+
+class PDF3(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(PDF3, self).__init__()
+        self.fc1 = nn.Linear(features, 1024)
+        self.output = nn.Linear(1024, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
         x = self.output(x)
         return torch.tanh(x)
 

@@ -11,8 +11,8 @@ from SteeringPair.Environment import initEnvironment
 import SQL
 
 # choose algorithm
-Algorithm = A2C_noBoot_v2
-QNetwork = Network.FC8
+Algorithm = DQN
+QNetwork = Network.FC7BN3
 PolicyNetwork = Network.Cat3
 
 # choose optimizer
@@ -35,7 +35,7 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 0.1, "EPS_START
 ### train 20 agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = 1000
+trainEpisodes = 500
 numberAgents = 5
 
 meanSamples = 10

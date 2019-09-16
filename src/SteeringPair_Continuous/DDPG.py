@@ -84,7 +84,7 @@ class Trainer(AbstractTrainer):
         action = self.model.policyTrainNet(state).squeeze(0)
 
         # add noise from Ornstein-Uhlenbeck process
-        action = action + self.noise(action)
+        action = self.noise(action)
 
         # rescale to action interval
         action = 0.066 * action
@@ -112,7 +112,7 @@ class Trainer(AbstractTrainer):
         self.model.train()
 
         # compute next actions and their q-values
-        nextActions = self.model.policyTrainNet(non_final_next_states)
+        nextActions = self.model.policyTargetNet(non_final_next_states)
         nextStateActionValues = torch.zeros(self.BATCH_SIZE, dtype=torch.float, device=Environment.device)
         nextStateActionValues[non_final_mask] = self.model.qTargetNet(
             torch.cat((non_final_next_states, nextActions), dim=1)).squeeze(1)
@@ -208,7 +208,7 @@ class Trainer(AbstractTrainer):
                         self.model.qTargetNet.load_state_dict(self.model.qTrainNet.state_dict())
 
             # optimize
-            # self.optimizeModel()
+            self.optimizeModel()
 
             episodeReturns.append(torch.tensor([[episodeReturn, ]]))
             if episodeTerminated == Termination.SUCCESSFUL:
@@ -278,7 +278,7 @@ if __name__ == "__main__":
     initEnvironment(**envConfig)
 
     # create model
-    model = Model(PolicyNetwork=Network.FC7, QNetwork=Network.FC7)
+    model = Model(PolicyNetwork=Network.PDF3, QNetwork=Network.FC7)
 
     # define hyper parameters
     hyperParamsDict = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 20, "EPS_START": 0.5, "EPS_END": 0,
@@ -289,6 +289,20 @@ if __name__ == "__main__":
 
     # train model under hyper parameters
     episodeReturns, _ = trainer.trainAgent(500)
-    plt.plot(episodeReturns)
+
+    # plot mean return
+    meanSamples = 10
+    episodeReturns = torch.tensor(episodeReturns)
+    meanReturns = torch.empty(len(episodeReturns) - meanSamples, dtype=torch.float)
+    for i in reversed(range(len(meanReturns))):
+        meanReturns[i] = episodeReturns[i:i+meanSamples].sum() / meanSamples
+
+    plt.plot(range(meanSamples, len(episodeReturns)), meanReturns.numpy())
     plt.show()
     plt.close()
+
+    # stuff for interactive testing
+    env = Environment()
+    state = env.initialState
+    action = lambda state: trainer.selectAction(state)
+

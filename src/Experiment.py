@@ -14,7 +14,7 @@ from SteeringPair.Environment import initEnvironment
 
 
 # fetch pre-trained agents
-agents_id = 42
+agents_id = 68
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 
@@ -26,7 +26,7 @@ data = {"agents_id": agents_id, "algorithm": trainResults["algorithm"], "bench_e
 
 # choose algorithm
 Algorithm = A2C
-QNetwork = Network.FC7
+QNetwork = Network.FC9
 PolicyNetwork = Network.Cat3
 
 # environment config
