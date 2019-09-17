@@ -47,7 +47,9 @@ if __name__ == "__main__":
     ### train results ###
 
     # plot single result
-    data = SQL.retrieve(row_id=69)
+    data = SQL.retrieve(row_id=58)
+    print(data["environmentConfig"])
+    print(data["hyperParameters"])
 
     plotTrainResult(data["returns"])
 

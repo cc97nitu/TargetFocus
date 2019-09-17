@@ -279,7 +279,7 @@ class FC7BN(nn.Module):
 
 class FC7BN2(nn.Module):
     def __init__(self, features: int, outputs: int):
-        super(FC7BN, self).__init__()
+        super(FC7BN2, self).__init__()
         self.fc1 = nn.Linear(features, 128)
         self.fc2 = nn.Linear(128, 128)
         self.bn1 = nn.BatchNorm1d(128)
