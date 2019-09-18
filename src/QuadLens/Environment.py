@@ -77,8 +77,9 @@ def initEnvironment(**kwargs):
 
         # state definition
         if kwargs["stateDefinition"] == "NORM_16":
-            Environment.features = 16
-            Environment.stateDefinition = StateDefinition.NORM_16
+            raise NotImplementedError("think about meaningful normalization for deflections")
+            # Environment.features = 16
+            # Environment.stateDefinition = StateDefinition.NORM_16
         elif kwargs["stateDefinition"] == "RAW_16":
             Environment.features = 16
             Environment.stateDefinition = StateDefinition.RAW_16
@@ -87,9 +88,9 @@ def initEnvironment(**kwargs):
 
         # create action set
         if kwargs["actionSet"] == "A4":
-            posChanges = [-1e-3, 1e-3]
+            posChanges = [-1e-2, 1e-2]
         elif kwargs["actionSet"] == "A9":
-            posChanges = [-1e-3, 0, 1e-3]
+            posChanges = [-1e-2, 0, 1e-2]
         else:
             raise ValueError("cannot interpret action set!")
 
@@ -142,18 +143,29 @@ class Environment(object):
 
         # initialize beam
         centroid = torch.zeros(6, dtype=torch.float)
-        meanVal = 0.001 * torch.randn(4)  # rescale to meaningful values
+        meanVal = 0.1 * torch.randn(4)  # rescale to meaningful values
         centroid[0:4] = meanVal
         self.__createCommandFile(centroid)
 
         # observe initial state
         self.deflections = torch.zeros(4)
         self.state = self.__runSimulation(deflections=self.deflections)
-        self.spotSize = self.state[10] + self.state[11]
-        self.distanceToGoal = self.state[8:10].norm()
+        self.spotSize = self.state[0, 10] + self.state[0, 11]
+        self.distanceToGoal = self.state[0, 8:10].norm()
+
+        # is initial state a final state?
+        if self.__validateState(self.state) != Termination.INCOMPLETE:
+            raise ValueError("starting in terminal state")
+
         return
 
-    def react(self, action: torch.tensor):
+    def react(self, action: torch.tensor, dummy=False):
+        """
+        Environment's answer to an agent's action.
+        :param action: action to respond to
+        :param dummy: omit adjustment of steerers, used only by constructor
+        :return: new state, reward, termination type of new state
+        """
         # return terminal state if maximal amount of reactions exceeded
         if not self.reactCount < self.maxStepsPerEpisodes:
             # print("forced abortion of episode, max steps exceeded")
@@ -162,40 +174,36 @@ class Environment(object):
             self.reactCount += 1
 
         # adjust steerers
-        self.deflections += self.actionSet[action[0].item()]
+        if not dummy:
+            self.deflections += self.actionSet[action[0].item()]
 
         # obtain new state
         self.state = self.__runSimulation(self.deflections)
 
-        # is beam still visible on every target?
-        if self.state[0:2].norm() > self.targetRadius or self.state[4:6].norm() > self.targetRadius or self.state[
-                                                                                                       8:10].norm() > self.targetRadius:
-            # beam left target / pipe
-            self.illegalStateCount += 1
+        # is new state a final state?
+        termination = self.__validateState(self.state)
+
+        if termination == Termination.SUCCESSFUL:
+            return None, self.bounty, Termination.SUCCESSFUL
+        elif termination == Termination.FAILED:
+            self.illegalStateCount +=1
             if self.illegalStateCount >= self.maxIllegalStateCount:
                 return None, self.penalty, Termination.FAILED
-            else:
-                return self.state, self.penalty, Termination.INCOMPLETE
         else:
             self.illegalStateCount = 0
 
-        # has beam the desired properties?
-        newSpotSize = self.state[10] * self.state[11]
-        newDistanceToGoal = self.state[8:10].norm()
-
-        if newDistanceToGoal < self.acceptance and newSpotSize < 3 * 1.67e-6:
-            # 1.67e-6 is (rounded) minimal spot size for straight weft according to optimization via elegant
-            return None, self.bounty, Termination.SUCCESSFUL
-
         # return new state
+        newSpotSize = self.state[0, 10] * self.state[0, 11]
+        newDistanceToGoal = self.state[0, 8:10].norm()
+
         spotSizeChange = newSpotSize - self.spotSize
         distanceChange = newDistanceToGoal - self.distanceToGoal
         self.spotSize = newSpotSize
         self.distanceToGoal = newDistanceToGoal
 
         return self.state, torch.tensor([self.reward(spotSizeChange, distanceChange, 10 ** 3)], dtype=torch.float,
-                                       device=Environment.device).unsqueeze_(
-                0), Termination.INCOMPLETE
+                                        device=Environment.device).unsqueeze_(
+            0), Termination.INCOMPLETE
 
     def __createLattice(self, deflections: torch.tensor):
         """
@@ -209,14 +217,14 @@ class Environment(object):
                        "W1: Watch, Mode=Parameter, Filename=W1.SDDS",
                        "Steerer1: QUAD, L=0.15, K1=0, HKICK={}, VKICK={}".format(*deflections[0:2]),
                        "D2: Drift, L=0.2",
-                       "QH: QUAD, L=0.15, K1=90.8",
-                       "D3: Drift, L=0.05",
-                       "QV: QUAD, L=0.15, K1=-45.5",
-                       "D4: Drift, L=0.2",
                        "W2: Watch, Mode=Parameter, Filename=W2.SDDS",
                        "Steerer2: QUAD, L=0.15, K1=0, HKICK={}, VKICK={}".format(*deflections[2:4]),
+                       "D3: Drift, L=0.2",
+                       "QH: QUAD, L=0.15, K1=5.296345936776492e+01",
+                       "D4: Drift, L=0.05",
+                       "QV: QUAD, L=0.15, K1=-5.884268589682184e+01",
                        "D5: Drift, L=0.2",
-                       "beamline: line=(D1,W1,Steerer1,D2,QH,D3,QV,D4,W2,Steerer2,D5)")
+                       "beamline: line=(D1,W1,Steerer1,D2,W2,Steerer2,QH,D4,QV,D5)")
 
             content = "\n".join(content)  # create one string from content with newline symbols in between
             lattice.write(content)
@@ -303,7 +311,26 @@ class Environment(object):
         # create state tensor
         state = torch.tensor([w1Cx, w1Cy, w1Sx, w1Sy, w2Cx, w2Cy, w2Sx, w2Sy, targetCx, targetCy, targetSx, targetSy],
                              dtype=torch.float)
-        return torch.cat([state, deflections])
+        return torch.cat([state, deflections]).unsqueeze(0)
+
+    def __validateState(self, state: torch.tensor) -> Termination:
+        # is beam still visible on every target?
+        if state[0, 0:2].norm() > self.targetRadius or state[0, 4:6].norm() > self.targetRadius or state[
+                                                                                                             0,
+                                                                                                             8:10].norm() > self.targetRadius:
+            # beam left target / pipe
+            return Termination.FAILED
+
+        # has beam the desired properties?
+        newSpotSize = state[0, 10] * state[0, 11]
+        newDistanceToGoal = state[0, 8:10].norm()
+
+        if newDistanceToGoal < self.acceptance and newSpotSize < 2 * 1.61e-7:
+            # 1.61e-7 is (rounded) minimal spot size for straight weft according to optimization via elegant
+            return Termination.SUCCESSFUL
+
+        return Termination.INCOMPLETE
+
 
     def __del__(self):
         """clean up before destruction"""
@@ -320,9 +347,10 @@ if __name__ == "__main__":
                  "failurePenalty": -10, "device": torch.device("cpu")}
     initEnvironment(**envConfig)
 
-    Environment.configured = True
-    env = Environment()
+    # for i in range(100):
+    #     try:
+    #         env = Environment()
+    #     except ValueError:
+    #         print("final state")
 
-    for i in range(len(Environment.actionSet)):
-        env = Environment()
-        print(env.react(torch.tensor([[i]])))
+    env = Environment()

@@ -1,11 +1,8 @@
-"""
-Agent acting by randomly choosing an action. All actions are obtained from an uniform distribution. This algorithm is resistant to learning.
-"""
-
 import numpy as np
 import torch
+import torch.optim as optim
+from torch.autograd import Variable
 
-import SteeringPair.Network as Network
 from QuadLens import Environment, Termination, initEnvironment
 from QuadLens.AbstractAlgorithm import AbstractModel, AbstractTrainer
 
@@ -35,19 +32,57 @@ class Model(AbstractModel):
 
 
 class Trainer(AbstractTrainer):
-    def __init__(self, model, optimizer, stepSize, **kwargs):
+    def __init__(self, model: Model, optimizer, stepSize, **kwargs):
         super().__init__()
 
         self.model = model
+        self.optimizer = optimizer(self.model.policy_net.parameters(), lr=stepSize)
+
+        # extract hyper parameters from kwargs
+        try:
+            self.GAMMA = kwargs["GAMMA"]
+        except KeyError as e:
+            raise ValueError("Cannot read hyper parameters: {}".format(e))
 
     def selectAction(self, state):
-        actionIndex = np.random.choice(len(Environment.actionSet))
-        return torch.tensor([actionIndex])
+        log_probs = self.model.policy_net.forward(Variable(state))
+        probs = torch.exp(log_probs)
+        highest_prob_action = np.random.choice(len(Environment.actionSet), p=np.squeeze(probs.detach().numpy()))
+        # log_prob = torch.log(log_probs.squeeze(0)[highest_prob_action])
+        log_prob = log_probs.squeeze(0)[highest_prob_action]
+        highest_prob_action = torch.tensor([highest_prob_action], dtype=torch.long, device=Environment.device)
+        return highest_prob_action, log_prob
+
+    def optimizeModel(self, rewards, log_probs):
+        # calculate observed returns from observed rewards
+        observedReturns = []
+
+        for t in range(len(rewards)):
+            Gt = 0
+            pw = 0
+            for r in rewards[t:]:
+                Gt = Gt + self.GAMMA ** pw * r
+                pw = pw + 1
+            observedReturns.append(Gt)
+
+        observedReturns = torch.tensor(observedReturns, device=Environment.device)
+        # observedReturns = (observedReturns - observedReturns.mean()) / (
+        #         observedReturns.std() + 1e-9)  # normalize discounted rewards
+
+        # calculate policy gradient
+        policy_gradient = []
+        for log_prob, Gt in zip(log_probs, observedReturns):
+            policy_gradient.append(-log_prob * Gt)
+
+        self.optimizer.zero_grad()
+        policy_gradient = torch.stack(policy_gradient).sum()
+        policy_gradient.backward()
+        self.optimizer.step()
 
     def trainAgent(self, num_episodes):
 
         # keep track of received return
-        episodeReturns, episodeLengths = list(), list()
+        episodeReturns = []
 
         # count how episodes terminate
         episodeTerminations = {"successful": 0, "failed": 0, "aborted": 0}
@@ -55,32 +90,34 @@ class Trainer(AbstractTrainer):
         # let the agent learn
         for i_episode in range(num_episodes):
             # keep track of rewards and logarithmic probabilities
-            rewards = list()
+            rewards, log_probs = list(), list()
 
             # Initialize the environment and state
             while True:
                 try:
-                    env = Environment("random")  # no arguments => random initialization of starting point
+                    env = Environment()
                     break
                 except ValueError:
                     continue
 
             state = env.state
             episodeReturn = 0
-            episodeLen = 0
 
             episodeTerminated = Termination.INCOMPLETE
             while episodeTerminated == Termination.INCOMPLETE:
                 # Select and perform an action
-                action = self.selectAction(state)
+                action, log_prob = self.selectAction(state)
                 nextState, reward, episodeTerminated = env.react(action)
 
+                log_probs.append(log_prob)
                 rewards.append(reward)
                 episodeReturn += reward
 
                 # Move to the next state
                 state = nextState
-                episodeLen += 1
+
+            # optimize
+            self.optimizeModel(rewards, log_probs)
 
             episodeReturns.append(episodeReturn)
             if episodeTerminated == Termination.SUCCESSFUL:
@@ -94,8 +131,6 @@ class Trainer(AbstractTrainer):
             print("episode: {}/{}".format(i_episode + 1, num_episodes), end="\r")
 
         print("Complete")
-        episodeLen = np.array(episodeLen)
-        print("episode length: min: {}, max: {}, median: {}, std-dev: {}".format(np.min(episodeLen), np.max(episodeLen), np.median(episodeLen), np.std(episodeLen)))
         return episodeReturns, episodeTerminations
 
     def benchAgent(self, num_episodes):
@@ -108,13 +143,9 @@ class Trainer(AbstractTrainer):
         # episodes
         for i_episode in range(num_episodes):
             # Initialize the environment and state
-            tries = 0
             while True:
-                tries += 1
-                if tries > 100:
-                    print("trouble initializing environment")
                 try:
-                    env = Environment()
+                    env = Environment("random")  # no arguments => random initialization of starting point
                     break
                 except ValueError:
                     continue
@@ -125,7 +156,7 @@ class Trainer(AbstractTrainer):
             episodeTerminated = Termination.INCOMPLETE
             while episodeTerminated == Termination.INCOMPLETE:
                 # Select and perform an action
-                action = self.selectAction(state)
+                action, _ = self.selectAction(state)
                 nextState, reward, episodeTerminated = env.react(action)
                 episodeReturn += reward
 
@@ -146,16 +177,38 @@ class Trainer(AbstractTrainer):
 
 if __name__ == "__main__":
     import torch.optim
+    from SteeringPair import Network
+    import matplotlib.pyplot as plt
 
     # environment config
     envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
-                 "acceptance": 2e-2, "targetDiameter": 3e-1, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
-                 "successBounty": 10,
-                 "failurePenalty": -10, "device": torch.device("cpu")}
+                 "acceptance": 5e-3, "targetDiameter": 3e-1, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50, "successBounty": 10,
+                 "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
     initEnvironment(**envConfig)
 
-    model = Model(PolicyNetwork=Network.Cat1)
-    train = Trainer(model, torch.optim.Adam, 3e-4, **{"GAMMA": 0.999})
-    train.benchAgent(1)
-    _, terminations = train.trainAgent(100)
+    # create model
+    model = Model(QNetwork=Network.FC7, PolicyNetwork=Network.Cat3)
+
+    # define hyper parameters
+    hyperParamsDict = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
+                       "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
+
+    # set up trainer
+    trainer = Trainer(model, torch.optim.Adam, 3e-4, **hyperParamsDict)
+
+    # train model under hyper parameters
+    episodeReturns, terminations = trainer.trainAgent(100)
     print(terminations)
+
+    # plot mean return
+    meanSamples = 20
+    episodeReturns = torch.tensor(episodeReturns)
+    meanReturns = torch.empty(len(episodeReturns) - meanSamples, dtype=torch.float)
+    for i in reversed(range(len(meanReturns))):
+        meanReturns[i] = episodeReturns[i:i+meanSamples].sum() / meanSamples
+
+    plt.plot(range(meanSamples, len(episodeReturns)), meanReturns.numpy())
+    plt.show()
+    plt.close()
+
+    trainer.benchAgent(50)
