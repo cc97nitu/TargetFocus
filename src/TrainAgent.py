@@ -3,16 +3,20 @@ import pandas as pd
 import numpy as np
 import torch
 
-from SteeringPair import Network
-from SteeringPair import DQN, DoubleDQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
-from SteeringPair.Environment import initEnvironment
+# from SteeringPair import Network
+# from SteeringPair import DQN, DoubleDQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
+# from SteeringPair.Environment import initEnvironment
+
 # from SteeringPair_Continuous import REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
+
+from QuadLens import REINFORCE, Network, initEnvironment
+
 import SQL
 
 # choose algorithm
-Algorithm = DQN
-QNetwork = Network.FC7BN3
+Algorithm = REINFORCE
+QNetwork = Network.FC7
 PolicyNetwork = Network.Cat3
 
 # choose optimizer
@@ -23,8 +27,8 @@ stepSize = 3e-4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # configure environment
-envConfig = {"stateDefinition": "6d-raw", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
-             "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
+envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
+             "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 3, "maxStepsPerEpisode": 50, "successBounty": 10,
              "failurePenalty": -10, "device": device}
 initEnvironment(**envConfig)
 
@@ -32,13 +36,12 @@ initEnvironment(**envConfig)
 hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
                "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
-### train 20 agents and store the corresponding models in agents
+### train agents and store the corresponding models in agents
 agents = dict()
 returns = list()
 trainEpisodes = 3000
-numberAgents = 20
-
-meanSamples = 10
+numberAgents = 5
+meanSamples = 20
 
 for i in range(numberAgents):
     print("training agent {}/{}".format(i+1, numberAgents))
