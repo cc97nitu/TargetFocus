@@ -10,7 +10,7 @@ import torch
 # from SteeringPair_Continuous import REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
 
-from QuadLens import REINFORCE, Network, initEnvironment
+from QuadLens import REINFORCE, A2C, Network, initEnvironment
 
 import SQL
 
@@ -28,7 +28,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # configure environment
 envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
-             "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 3, "maxStepsPerEpisode": 50, "successBounty": 10,
+             "acceptance": 1e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 3, "maxStepsPerEpisode": 50, "successBounty": 10,
              "failurePenalty": -10, "device": device}
 initEnvironment(**envConfig)
 
@@ -40,7 +40,7 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 10, "EPS_START"
 agents = dict()
 returns = list()
 trainEpisodes = 3000
-numberAgents = 5
+numberAgents = 1
 meanSamples = 20
 
 for i in range(numberAgents):

@@ -5,8 +5,7 @@ Agent acting by randomly choosing an action. All actions are obtained from an un
 import numpy as np
 import torch
 
-import SteeringPair.Network as Network
-from QuadLens import Environment, Termination, initEnvironment
+from QuadLens import Network, Environment, Termination, initEnvironment
 from QuadLens.AbstractAlgorithm import AbstractModel, AbstractTrainer
 
 
@@ -35,7 +34,7 @@ class Model(AbstractModel):
 
 
 class Trainer(AbstractTrainer):
-    def __init__(self, model, optimizer, stepSize, **kwargs):
+    def __init__(self, model: Model, optimizer, stepSize, **kwargs):
         super().__init__()
 
         self.model = model
@@ -47,72 +46,21 @@ class Trainer(AbstractTrainer):
     def trainAgent(self, num_episodes):
 
         # keep track of received return
-        episodeReturns, episodeLengths = list(), list()
+        episodeReturns = []
 
         # count how episodes terminate
         episodeTerminations = {"successful": 0, "failed": 0, "aborted": 0}
 
         # let the agent learn
         for i_episode in range(num_episodes):
+            # status report
+            print("episode: {}/{}".format(i_episode + 1, num_episodes), end="\r")
+
             # keep track of rewards and logarithmic probabilities
             rewards = list()
 
             # Initialize the environment and state
             while True:
-                try:
-                    env = Environment("random")  # no arguments => random initialization of starting point
-                    break
-                except ValueError:
-                    continue
-
-            state = env.state
-            episodeReturn = 0
-            episodeLen = 0
-
-            episodeTerminated = Termination.INCOMPLETE
-            while episodeTerminated == Termination.INCOMPLETE:
-                # Select and perform an action
-                action = self.selectAction(state)
-                nextState, reward, episodeTerminated = env.react(action)
-
-                rewards.append(reward)
-                episodeReturn += reward
-
-                # Move to the next state
-                state = nextState
-                episodeLen += 1
-
-            episodeReturns.append(episodeReturn)
-            if episodeTerminated == Termination.SUCCESSFUL:
-                episodeTerminations["successful"] += 1
-            elif episodeTerminated == Termination.FAILED:
-                episodeTerminations["failed"] += 1
-            elif episodeTerminated == Termination.ABORTED:
-                episodeTerminations["aborted"] += 1
-
-            # status report
-            print("episode: {}/{}".format(i_episode + 1, num_episodes), end="\r")
-
-        print("Complete")
-        episodeLen = np.array(episodeLen)
-        print("episode length: min: {}, max: {}, median: {}, std-dev: {}".format(np.min(episodeLen), np.max(episodeLen), np.median(episodeLen), np.std(episodeLen)))
-        return episodeReturns, episodeTerminations
-
-    def benchAgent(self, num_episodes):
-        # keep track of received return
-        episodeReturns = []
-
-        # count how episodes terminate
-        episodeTerminations = {"successful": 0, "failed": 0, "aborted": 0}
-
-        # episodes
-        for i_episode in range(num_episodes):
-            # Initialize the environment and state
-            tries = 0
-            while True:
-                tries += 1
-                if tries > 100:
-                    print("trouble initializing environment")
                 try:
                     env = Environment()
                     break
@@ -127,6 +75,8 @@ class Trainer(AbstractTrainer):
                 # Select and perform an action
                 action = self.selectAction(state)
                 nextState, reward, episodeTerminated = env.react(action)
+
+                rewards.append(reward)
                 episodeReturn += reward
 
                 # Move to the next state
@@ -141,6 +91,55 @@ class Trainer(AbstractTrainer):
                 episodeTerminations["aborted"] += 1
 
         print("Complete")
+        return episodeReturns, episodeTerminations
+
+    def benchAgent(self, num_episodes):
+        # keep track of received return
+        episodeReturns = []
+
+        # count how episodes terminate
+        episodeTerminations = {"successful": 0, "failed": 0, "aborted": 0}
+
+        # episodes
+        for i_episode in range(num_episodes):
+            # status report
+            print("episode: {}/{}".format(i_episode + 1, num_episodes), end="\r")
+
+            # Initialize the environment and state
+            while True:
+                try:
+                    env = Environment()
+                    break
+                except ValueError:
+                    continue
+
+            state = env.state
+            episodeReturn = 0
+            steps = 0
+
+            episodeTerminated = Termination.INCOMPLETE
+            while episodeTerminated == Termination.INCOMPLETE:
+                # Select and perform an action
+                steps += 1
+
+                action = self.selectAction(state)
+                nextState, reward, episodeTerminated = env.react(action)
+                episodeReturn += reward
+
+                # Move to the next state
+                state = nextState
+
+            episodeReturns.append(episodeReturn)
+            if episodeTerminated == Termination.SUCCESSFUL:
+                episodeTerminations["successful"] += 1
+            elif episodeTerminated == Termination.FAILED:
+                episodeTerminations["failed"] += 1
+            elif episodeTerminated == Termination.ABORTED:
+                episodeTerminations["aborted"] += 1
+
+            print(steps)
+
+        print("Complete")
         return episodeReturns, episodeTerminations, None  # None stands for accuracy of value function
 
 
@@ -149,13 +148,14 @@ if __name__ == "__main__":
 
     # environment config
     envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
-                 "acceptance": 2e-2, "targetDiameter": 3e-1, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
+                 "acceptance": 1e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
                  "successBounty": 10,
                  "failurePenalty": -10, "device": torch.device("cpu")}
     initEnvironment(**envConfig)
 
     model = Model(PolicyNetwork=Network.Cat1)
     train = Trainer(model, torch.optim.Adam, 3e-4, **{"GAMMA": 0.999})
-    train.benchAgent(1)
-    _, terminations = train.trainAgent(100)
+    _, terminations, _ = train.benchAgent(100)
+
     print(terminations)
+

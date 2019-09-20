@@ -1,4 +1,5 @@
 import os
+import math
 import subprocess as sp
 import threading
 import enum
@@ -142,9 +143,25 @@ class Environment(object):
         self.directory = workDir + directory
 
         # initialize beam
+        cylCoordinates = torch.empty(3, dtype=torch.float)
+
+        # offset and angle
+        cylCoordinates[0].uniform_(0, self.targetRadius)
+        cylCoordinates[2].uniform_(0, 2 * math.pi)
+
+        # slope
+        latticeLength = 0.775
+        low = (self.acceptance - cylCoordinates[0].item()) / latticeLength
+        high = (self.targetRadius - cylCoordinates[0].item()) / latticeLength
+        cylCoordinates[1].uniform_(low, high)
+
+        # transform to cartesian coordinates
         centroid = torch.zeros(6, dtype=torch.float)
-        meanVal = 0.1 * torch.randn(4)  # rescale to meaningful values
-        centroid[0:4] = meanVal
+        centroid[0] = cylCoordinates[0] * torch.cos(cylCoordinates[2])
+        centroid[1] = cylCoordinates[1] * torch.cos(cylCoordinates[2])
+        centroid[2] = cylCoordinates[0] * torch.sin(cylCoordinates[2])
+        centroid[3] = cylCoordinates[1] * torch.sin(cylCoordinates[2])
+
         self.__createCommandFile(centroid)
 
         # observe initial state
@@ -154,7 +171,8 @@ class Environment(object):
         self.distanceToGoal = self.state[0, 8:10].norm()
 
         # is initial state a final state?
-        if self.__validateState(self.state) != Termination.INCOMPLETE:
+        termination = self.__validateState(self.state)
+        if termination != Termination.INCOMPLETE:
             raise ValueError("starting in terminal state")
 
         return
@@ -314,14 +332,12 @@ class Environment(object):
         return torch.cat([state, deflections]).unsqueeze(0)
 
     def __validateState(self, state: torch.tensor) -> Termination:
-        # is beam still visible on every target?
-        if state[0, 0:2].norm() > self.targetRadius or state[0, 4:6].norm() > self.targetRadius or state[
-                                                                                                             0,
-                                                                                                             8:10].norm() > self.targetRadius:
+        # is beam still visible on each target located in front of a steerer?
+        if state[0, 0:2].norm() > self.targetRadius or state[0, 4:6].norm() > self.targetRadius:
             # beam left target / pipe
             return Termination.FAILED
 
-        # has beam the desired properties?
+        # has beam the desired properties on final target?
         newSpotSize = state[0, 10] * state[0, 11]
         newDistanceToGoal = state[0, 8:10].norm()
 
@@ -342,15 +358,18 @@ class Environment(object):
 if __name__ == "__main__":
     # environment config
     envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
-                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
+                 "acceptance": 1e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
                  "successBounty": 10,
                  "failurePenalty": -10, "device": torch.device("cpu")}
     initEnvironment(**envConfig)
 
-    # for i in range(100):
-    #     try:
-    #         env = Environment()
-    #     except ValueError:
-    #         print("final state")
+    finalStates = 0
+    for i in range(1000):
+        try:
+            env = Environment()
+        except ValueError:
+            finalStates += 1
 
-    env = Environment()
+    print("final states: {}".format(finalStates))
+
+    # env = Environment()

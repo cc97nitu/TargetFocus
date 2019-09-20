@@ -182,7 +182,7 @@ if __name__ == "__main__":
 
     # environment config
     envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
-                 "acceptance": 5e-3, "targetDiameter": 3e-1, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50, "successBounty": 10,
+                 "acceptance": 1e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50, "successBounty": 10,
                  "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
     initEnvironment(**envConfig)
 
@@ -197,7 +197,7 @@ if __name__ == "__main__":
     trainer = Trainer(model, torch.optim.Adam, 3e-4, **hyperParamsDict)
 
     # train model under hyper parameters
-    episodeReturns, terminations = trainer.trainAgent(100)
+    episodeReturns, terminations = trainer.trainAgent(1000)
     print(terminations)
 
     # plot mean return
@@ -211,4 +211,3 @@ if __name__ == "__main__":
     plt.show()
     plt.close()
 
-    trainer.benchAgent(50)
