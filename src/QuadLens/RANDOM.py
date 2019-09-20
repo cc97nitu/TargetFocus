@@ -115,13 +115,10 @@ class Trainer(AbstractTrainer):
 
             state = env.state
             episodeReturn = 0
-            steps = 0
 
             episodeTerminated = Termination.INCOMPLETE
             while episodeTerminated == Termination.INCOMPLETE:
                 # Select and perform an action
-                steps += 1
-
                 action = self.selectAction(state)
                 nextState, reward, episodeTerminated = env.react(action)
                 episodeReturn += reward
@@ -137,14 +134,14 @@ class Trainer(AbstractTrainer):
             elif episodeTerminated == Termination.ABORTED:
                 episodeTerminations["aborted"] += 1
 
-            print(steps)
-
         print("Complete")
         return episodeReturns, episodeTerminations, None  # None stands for accuracy of value function
 
 
 if __name__ == "__main__":
     import torch.optim
+    from SteeringPair import Network
+    import matplotlib.pyplot as plt
 
     # environment config
     envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
@@ -153,9 +150,29 @@ if __name__ == "__main__":
                  "failurePenalty": -10, "device": torch.device("cpu")}
     initEnvironment(**envConfig)
 
-    model = Model(PolicyNetwork=Network.Cat1)
-    train = Trainer(model, torch.optim.Adam, 3e-4, **{"GAMMA": 0.999})
-    _, terminations, _ = train.benchAgent(100)
+    # define hyper parameters
+    hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
+                   "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
-    print(terminations)
+
+
+    # set up trainer
+    model = Model(PolicyNetwork=Network.Cat1)
+    trainer = Trainer(model, torch.optim.Adam, 3e-4, **hyperParams)
+
+    # train model under hyper parameters
+    episodeReturns, _ = trainer.trainAgent(1000)
+
+    # plot mean return
+    meanSamples = 20
+    episodeReturns = torch.tensor(episodeReturns)
+    meanReturns = torch.empty(len(episodeReturns) - meanSamples, dtype=torch.float)
+    for i in reversed(range(len(meanReturns))):
+        meanReturns[i] = episodeReturns[i:i+meanSamples].sum() / meanSamples
+
+    plt.plot(range(meanSamples, len(episodeReturns)), meanReturns.numpy())
+    plt.show()
+    plt.close()
+
+    trainer.benchAgent(50)
 

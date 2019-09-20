@@ -10,7 +10,7 @@ import torch
 # from SteeringPair_Continuous import REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
 
-from QuadLens import REINFORCE, A2C, Network, initEnvironment
+from QuadLens import REINFORCE, A2C, A2C_noBoot, A2C_noBoot_v2, Network, initEnvironment
 
 import SQL
 
@@ -39,7 +39,7 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 10, "EPS_START"
 ### train agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = 3000
+trainEpisodes = 6000
 numberAgents = 1
 meanSamples = 20
 
