@@ -403,6 +403,20 @@ class Cat6(nn.Module):
         return x
 
 
+class Cat7(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(Cat7, self).__init__()
+        self.fc1 = nn.Linear(features, 2048)
+        self.output = nn.Linear(2048, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.activation(self.fc1(x))
+        x = functional.log_softmax(self.output(x), dim=1)
+        return x
+
+
 class CNN1(nn.Module):
     def __init__(self, features: int, outputs: int):
         super(CNN1, self).__init__()

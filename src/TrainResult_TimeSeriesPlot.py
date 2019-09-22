@@ -37,6 +37,7 @@ def multiTrainResults(dataSets: list, hueKeyword: str):
 
     # plt.title("random start, random goal")
     # plt.yticks([])
+    plt.ylim(bottom=-40)
     plt.show()
     plt.close()
 
@@ -47,15 +48,15 @@ if __name__ == "__main__":
     ### train results ###
 
     # plot single result
-    data = SQL.retrieve(row_id=78)
+    data = SQL.retrieve(row_id=85)
     print(data["environmentConfig"])
     print(data["hyperParameters"])
 
     plotTrainResult(data["returns"])
 
     # # plot multiple results
-    # hueKeyword = "network"
-    # dataSets = [(73, "FC7"), (74, "FC11"),]  # assumes tuples of form (row_id, hueIdentifier)
+    # hueKeyword = "algorithm"
+    # dataSets = [(84, "REINFORCE"), (80, "A2C"), (81, "A2C_noBoot"), (82, "DQN"), (83, "A2C_noBoot_v2"),]  # assumes tuples of form (row_id, hueIdentifier)
     #
     # multiTrainResults(dataSets, hueKeyword)
 

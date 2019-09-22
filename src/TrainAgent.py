@@ -17,7 +17,7 @@ import SQL
 # choose algorithm
 Algorithm = REINFORCE
 QNetwork = Network.FC7
-PolicyNetwork = Network.Cat3
+PolicyNetwork = Network.Cat7
 
 # choose optimizer
 optimizer = torch.optim.Adam
