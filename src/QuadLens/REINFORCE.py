@@ -47,7 +47,7 @@ class Trainer(AbstractTrainer):
     def selectAction(self, state):
         log_probs = self.model.policy_net.forward(Variable(state))
         probs = torch.exp(log_probs)
-        highest_prob_action = np.random.choice(len(Environment.actionSet), p=np.squeeze(probs.detach().numpy()))
+        highest_prob_action = np.random.choice(len(Environment.actionSet), p=np.squeeze(probs.detach().cpu().numpy()))
         # log_prob = torch.log(log_probs.squeeze(0)[highest_prob_action])
         log_prob = log_probs.squeeze(0)[highest_prob_action]
         highest_prob_action = torch.tensor([highest_prob_action], dtype=torch.long, device=Environment.device)

@@ -7,14 +7,17 @@ import torch
 from SteeringPair import Network
 import SQL
 
-from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
-from SteeringPair.Environment import initEnvironment
+from QuadLens import REINFORCE
+from QuadLens.Environment import Environment, initEnvironment
+
+# from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
+# from SteeringPair.Environment import initEnvironment
 # from SteeringPair_Continuous import REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
 
 
 # fetch pre-trained agents
-agents_id = 68
+agents_id = 94
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 
@@ -25,14 +28,14 @@ benchEpisodes = 100
 data = {"agents_id": agents_id, "algorithm": trainResults["algorithm"], "bench_episodes": benchEpisodes,}
 
 # choose algorithm
-Algorithm = A2C
-QNetwork = Network.FC9
-PolicyNetwork = Network.Cat3
+Algorithm = REINFORCE
+QNetwork = Network.FC7
+PolicyNetwork = Network.Cat7
 
 # environment config
-envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
-             "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
-             "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
+envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
+             "acceptance": 1e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 3, "maxStepsPerEpisode": 50, "successBounty": 10,
+             "failurePenalty": -10, "device": torch.device("cpu")}
 initEnvironment(**envConfig)
 
 # define dummy hyper parameters in order to create trainer-objects for benching
@@ -72,9 +75,9 @@ for agent in agents:
                                  "behavior": ["greedy" for i in range(len(episodeReturns))],
                                  "return": episodeReturns}))
 
-    # accuracy of value-function's predictions
-    accuracyValueFunction = [*zip(*accuracyValueFunction)]
-    accuracyPredictions.append(pd.DataFrame({"observed": accuracyValueFunction[0], "predicted": accuracyValueFunction[1]}))
+    # # accuracy of value-function's predictions
+    # accuracyValueFunction = [*zip(*accuracyValueFunction)]
+    # accuracyPredictions.append(pd.DataFrame({"observed": accuracyValueFunction[0], "predicted": accuracyValueFunction[1]}))
 
     # log how episodes ended
     terminations["successful"].append(episodeTerminations["successful"])
@@ -85,9 +88,9 @@ for agent in agents:
 # concat to pandas data frame
 returns = pd.concat(returns)
 meanReturns = pd.concat(meanReturns)
-accuracyPredictions = pd.concat(accuracyPredictions)
+# accuracyPredictions = pd.concat(accuracyPredictions)
 
-overallResults = {"return": returns, "meanReturn": meanReturns, "terminations": terminations, "accuracyPredictions": accuracyPredictions}
+overallResults = {"return": returns, "meanReturn": meanReturns, "terminations": terminations, "accuracyPredictions": None}
 
 # dump
 buffer = io.BytesIO()

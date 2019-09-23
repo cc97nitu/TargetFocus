@@ -165,7 +165,7 @@ class Environment(object):
         self.__createCommandFile(centroid)
 
         # observe initial state
-        self.deflections = torch.zeros(4)
+        self.deflections = torch.zeros(4, device=Environment.device)
         self.state = self.__runSimulation(deflections=self.deflections)
         self.spotSize = self.state[0, 10] + self.state[0, 11]
         self.distanceToGoal = self.state[0, 8:10].norm()
@@ -328,7 +328,7 @@ class Environment(object):
 
         # create state tensor
         state = torch.tensor([w1Cx, w1Cy, w1Sx, w1Sy, w2Cx, w2Cy, w2Sx, w2Sy, targetCx, targetCy, targetSx, targetSy],
-                             dtype=torch.float)
+                             dtype=torch.float, device=Environment.device)
         return torch.cat([state, deflections]).unsqueeze(0)
 
     def __validateState(self, state: torch.tensor) -> Termination:

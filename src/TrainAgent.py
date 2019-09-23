@@ -15,9 +15,9 @@ from QuadLens import REINFORCE, A2C, A2C_noBoot, A2C_noBoot_v2, Network, initEnv
 import SQL
 
 # choose algorithm
-Algorithm = REINFORCE
+Algorithm = A2C_noBoot_v2
 QNetwork = Network.FC7
-PolicyNetwork = Network.Cat7
+PolicyNetwork = Network.Cat3
 
 # choose optimizer
 optimizer = torch.optim.Adam
@@ -33,14 +33,14 @@ envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "
 initEnvironment(**envConfig)
 
 # define hyper parameters
-hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
+hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 0.1, "EPS_START": 0.5, "EPS_END": 0,
                "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
 ### train agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = 6000
-numberAgents = 1
+trainEpisodes = int(7e4)
+numberAgents = 20
 meanSamples = 20
 
 for i in range(numberAgents):
