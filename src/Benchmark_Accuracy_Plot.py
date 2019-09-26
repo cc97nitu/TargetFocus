@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import SQL
 
 if __name__ == "__main__":
-    benchResults = SQL.retrieveBenchmark(22)
+    benchResults = SQL.retrieveBenchmark(20)
 
     accuracyPredictions = benchResults["accuracyPredictions"]
 

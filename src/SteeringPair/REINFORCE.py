@@ -186,7 +186,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # environment config
-    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propReward",
+    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "stochasticPropRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
                  "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
     initEnvironment(**envConfig)
@@ -195,14 +195,22 @@ if __name__ == "__main__":
     model = Model(QNetwork=Network.FC7, PolicyNetwork=Network.Cat3)
 
     # define hyper parameters
-    hyperParamsDict = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
+    hyperParamsDict = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
                        "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
     # set up trainer
     trainer = Trainer(model, torch.optim.Adam, 3e-4, **hyperParamsDict)
 
     # train model under hyper parameters
-    episodeReturns, _ = trainer.trainAgent(500)
-    plt.plot(episodeReturns)
+    episodeReturns, terminations = trainer.trainAgent(500)
+
+    # plot mean return
+    meanSamples = 10
+    episodeReturns = torch.tensor(episodeReturns)
+    meanReturns = torch.empty(len(episodeReturns) - meanSamples, dtype=torch.float)
+    for i in reversed(range(len(meanReturns))):
+        meanReturns[i] = episodeReturns[i:i+meanSamples].sum() / meanSamples
+
+    plt.plot(range(meanSamples, len(episodeReturns)), meanReturns.numpy())
     plt.show()
     plt.close()

@@ -34,6 +34,18 @@ class RewardFunctions(object):
         """
         return -scale * distanceChange - 0.5
 
+    def stochasticPropRewardStepPenalty(self, distanceChange, scale):
+        """
+        Gives reward according to the change in distance to goal in the latest step.
+        :param distanceChange: change in distance to goal
+        :param scale: scalar value to adjust reward size
+        :return: reward
+        """
+        mean = scale * distanceChange
+        deviation = 0.5 * abs(mean)
+        rewardDist = torch.distributions.normal.Normal(mean, deviation)
+        return -1 * rewardDist.sample().item() - 0.5
+
     def constantRewardPerStep(self, distanceChange, scale):
         """
         Gives reward according to the change in distance to goal in the latest step.
@@ -69,6 +81,8 @@ def initEnvironment(**kwargs):
             Environment.reward = RewardFunctions.propReward
         elif kwargs["rewardFunction"] == "propRewardStepPenalty":
             Environment.reward = RewardFunctions.propRewardStepPenalty
+        elif kwargs["rewardFunction"] == "stochasticPropRewardStepPenalty":
+            Environment.reward = RewardFunctions.stochasticPropRewardStepPenalty
         elif kwargs["rewardFunction"] == "constantRewardPerStep":
             Environment.reward = RewardFunctions.constantRewardPerStep
 
@@ -375,7 +389,7 @@ class EligibleEnvironmentParameters(list):
 
 if __name__ == '__main__':
     # environment config
-    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "propReward",
+    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "stochasticPropRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
                  "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
     initEnvironment(**envConfig)
