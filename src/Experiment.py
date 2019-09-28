@@ -7,17 +7,21 @@ import torch
 from SteeringPair import Network
 import SQL
 
-from QuadLens import REINFORCE
-from QuadLens.Environment import Environment, initEnvironment
+# from QuadLens import REINFORCE
+# from QuadLens.Environment import Environment, initEnvironment
 
 # from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
 # from SteeringPair.Environment import initEnvironment
+
 # from SteeringPair_Continuous import REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
 
+from SteeringPair_Stochastic import Network, REINFORCE
+from SteeringPair_Stochastic.Environment import initEnvironment
+
 
 # fetch pre-trained agents
-agents_id = 94
+agents_id = 102
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 
@@ -30,11 +34,12 @@ data = {"agents_id": agents_id, "algorithm": trainResults["algorithm"], "bench_e
 # choose algorithm
 Algorithm = REINFORCE
 QNetwork = Network.FC7
-PolicyNetwork = Network.Cat7
+PolicyNetwork = Network.Cat3
 
 # environment config
-envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
-             "acceptance": 1e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 3, "maxStepsPerEpisode": 50, "successBounty": 10,
+envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
+             "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 3, "maxStepsPerEpisode": 50,
+             "stateNoiseAmplitude": 0.1, "rewardNoiseAmplitude": 0.0, "successBounty": 10,
              "failurePenalty": -10, "device": torch.device("cpu")}
 initEnvironment(**envConfig)
 

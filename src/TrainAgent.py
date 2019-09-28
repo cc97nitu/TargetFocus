@@ -3,19 +3,21 @@ import pandas as pd
 import numpy as np
 import torch
 
-# from SteeringPair import Network
-# from SteeringPair import DQN, DoubleDQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
+# from SteeringPair import Network, DQN, DoubleDQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
 # from SteeringPair.Environment import initEnvironment
 
-# from SteeringPair_Continuous import REINFORCE
+# from SteeringPair_Continuous import Network, REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
 
-from QuadLens import REINFORCE, A2C, A2C_noBoot, A2C_noBoot_v2, Network, initEnvironment
+from SteeringPair_Stochastic import Network, REINFORCE
+from SteeringPair_Stochastic.Environment import initEnvironment
+
+# from QuadLens import REINFORCE, A2C, A2C_noBoot, A2C_noBoot_v2, Network, initEnvironment
 
 import SQL
 
 # choose algorithm
-Algorithm = A2C_noBoot_v2
+Algorithm = REINFORCE
 QNetwork = Network.FC7
 PolicyNetwork = Network.Cat3
 
@@ -27,24 +29,25 @@ stepSize = 3e-4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # configure environment
-envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
-             "acceptance": 1e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 3, "maxStepsPerEpisode": 50, "successBounty": 10,
+envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
+             "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 3, "maxStepsPerEpisode": 50,
+             "stateNoiseAmplitude": 0.1, "rewardNoiseAmplitude": 0.0, "successBounty": 10,
              "failurePenalty": -10, "device": device}
 initEnvironment(**envConfig)
 
 # define hyper parameters
-hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 0.1, "EPS_START": 0.5, "EPS_END": 0,
+hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
                "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
 ### train agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = int(7e4)
-numberAgents = 20
-meanSamples = 20
+trainEpisodes = int(1e3)
+numberAgents = 1
+meanSamples = 10
 
 for i in range(numberAgents):
-    print("training agent {}/{}".format(i+1, numberAgents))
+    print("training agent {}/{}".format(i + 1, numberAgents))
     model = Algorithm.Model(QNetwork=QNetwork, PolicyNetwork=PolicyNetwork)
 
     trainer = Algorithm.Trainer(model, optimizer, stepSize, **hyperParams)
@@ -69,18 +72,21 @@ returns = pd.concat(returns)
 envConfig["device"] = str(envConfig["device"].type)
 
 # dump into file
-torch.save({"environmentConfig": envConfig, "hyperParameters": hyperParams, "algorithm": Algorithm.__name__, "network": trainer.model,
+torch.save({"environmentConfig": envConfig, "hyperParameters": hyperParams, "algorithm": Algorithm.__name__,
+            "network": trainer.model,
             "optimizer": optimizer.__name__, "stepSize": stepSize,
             "trainEpisodes": trainEpisodes, "agents": agents, "returns": returns},
            "/dev/shm/agents.tar")
 
 # dump into SQL
 buffer = io.BytesIO()
-torch.save({"environmentConfig": envConfig, "hyperParameters": hyperParams, "algorithm": Algorithm.__name__, "network": trainer.model,
+torch.save({"environmentConfig": envConfig, "hyperParameters": hyperParams, "algorithm": Algorithm.__name__,
+            "network": trainer.model,
             "optimizer": optimizer.__name__, "stepSize": stepSize,
             "trainEpisodes": trainEpisodes, "agents": agents, "returns": returns}, buffer)
 
-columnData = {**envConfig, **hyperParams, "algorithm": Algorithm.__name__, "network": str(trainer.model), "optimizer": optimizer.__name__,
+columnData = {**envConfig, **hyperParams, "algorithm": Algorithm.__name__, "network": str(trainer.model),
+              "optimizer": optimizer.__name__,
               "stepSize": stepSize, "trainEpisodes": trainEpisodes}
 
 SQL.insert(columnData, buffer.getvalue())
