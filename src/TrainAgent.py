@@ -9,7 +9,7 @@ import torch
 # from SteeringPair_Continuous import Network, REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
 
-from SteeringPair_Stochastic import Network, REINFORCE
+from SteeringPair_Stochastic import Network, REINFORCE, A2C_noBoot_v2
 from SteeringPair_Stochastic.Environment import initEnvironment
 
 # from QuadLens import REINFORCE, A2C, A2C_noBoot, A2C_noBoot_v2, Network, initEnvironment
@@ -30,8 +30,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # configure environment
 envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
-             "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 3, "maxStepsPerEpisode": 50,
-             "stateNoiseAmplitude": 0.1, "rewardNoiseAmplitude": 0.0, "successBounty": 10,
+             "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
+             "stateNoiseAmplitude": 1e-14, "rewardNoiseAmplitude": 1e-14, "successBounty": 10,
              "failurePenalty": -10, "device": device}
 initEnvironment(**envConfig)
 
@@ -43,7 +43,7 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 10, "EPS_START"
 agents = dict()
 returns = list()
 trainEpisodes = int(1e3)
-numberAgents = 1
+numberAgents = 20
 meanSamples = 10
 
 for i in range(numberAgents):

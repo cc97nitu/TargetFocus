@@ -95,6 +95,7 @@ def initEnvironment(**kwargs):
         Environment.targetRadius = Environment.targetDiameter / 2
         Environment.acceptance = kwargs["acceptance"]
         Environment.maxStepsPerEpisodes = kwargs["maxStepsPerEpisode"]
+        Environment.maxIllegalStateCount = kwargs["maxIllegalStateCount"]
         Environment.rewardNoiseAmplitude = kwargs["rewardNoiseAmplitude"]
         Environment.stateNoiseAmplitude = kwargs["stateNoiseAmplitude"]
 
@@ -179,6 +180,7 @@ class Environment(object):
 
         # count how often the environment reacted
         self.reactCount = 0
+        self.illegalStateCount = 0
 
         # working directory
         workDir = "/dev/shm/"
@@ -320,16 +322,24 @@ class Environment(object):
         else:
             self.reactCount += 1
 
-        # # add noise to coordinates
-        # deviation = Environment.stateNoiseAmplitude * state[0, 2:]
-        # variance = torch.diag(deviation ** 2)
-        # noiseDistribution = torch.distributions.multivariate_normal.MultivariateNormal(state[0, 2:], variance)
-        # state = torch.cat((state[0, :2], noiseDistribution.sample())).unsqueeze(0)
-
         # return state and reward
         newDistanceToGoal = relCoords.norm().item()
         distanceChange = newDistanceToGoal - self.distanceToGoal
         self.distanceToGoal = newDistanceToGoal
+
+        if newDistanceToGoal < self.acceptance:
+            return None, self.bounty, Termination.SUCCESSFUL
+        elif absCoords.norm().item() >= self.targetRadius:
+            self.illegalStateCount +=1
+            if self.illegalStateCount >= self.maxIllegalStateCount:
+                return None, self.penalty, Termination.FAILED
+        else:
+            self.illegalStateCount = 0
+
+        # reward according to distanceChange
+        return state, torch.tensor([self.reward(distanceChange, 10 ** 3)], dtype=torch.float,
+                                   device=Environment.device).unsqueeze_(
+            0), Termination.INCOMPLETE
 
         if newDistanceToGoal < self.acceptance:
             # goal reached
@@ -405,7 +415,7 @@ class EligibleEnvironmentParameters(list):
 if __name__ == '__main__':
     # environment config
     envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
-                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "stateNoiseAmplitude": 1e-3, "rewardNoiseAmplitude": 0.2, "successBounty": 10,
+                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "maxIllegalStateCount": 3, "stateNoiseAmplitude": 1e-3, "rewardNoiseAmplitude": 0.2, "successBounty": 10,
                  "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
     initEnvironment(**envConfig)
 
