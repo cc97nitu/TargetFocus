@@ -16,12 +16,12 @@ import SQL
 # from SteeringPair_Continuous import REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
 
-from SteeringPair_Stochastic import Network, REINFORCE
+from SteeringPair_Stochastic import Network, REINFORCE, A2C_noBoot_v2
 from SteeringPair_Stochastic.Environment import initEnvironment
 
 
 # fetch pre-trained agents
-agents_id = 119
+agents_id = 126
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 
@@ -34,7 +34,7 @@ data = {"agents_id": agents_id, "algorithm": trainResults["algorithm"], "bench_e
 # choose algorithm
 Algorithm = REINFORCE
 QNetwork = Network.FC7
-PolicyNetwork = Network.Cat3
+PolicyNetwork = Network.Cat7
 
 # environment config
 envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",

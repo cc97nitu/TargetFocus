@@ -273,7 +273,7 @@ class Environment(object):
                         print("init successful")
                     break
 
-                if attempts > 5:
+                if attempts > 10:
                     print("Environment stuck at initialization")
                     # raise ValueError("unable to find random starting points")
 

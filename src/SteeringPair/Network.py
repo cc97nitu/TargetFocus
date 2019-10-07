@@ -417,6 +417,22 @@ class Cat7(nn.Module):
         return x
 
 
+class Cat3BN(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(Cat3BN, self).__init__()
+        self.bn1 = nn.BatchNorm1d(features)
+        self.fc1 = nn.Linear(features, 1024)
+        self.output = nn.Linear(1024, outputs)
+        self.activation = functional.elu
+        return
+
+    def forward(self, x):
+        x = self.bn1(x)
+        x = self.activation(self.fc1(x))
+        x = functional.log_softmax(self.output(x), dim=1)
+        return x
+
+
 class CNN1(nn.Module):
     def __init__(self, features: int, outputs: int):
         super(CNN1, self).__init__()

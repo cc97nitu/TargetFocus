@@ -18,6 +18,10 @@ class Trainer(SteeringPair_Stochastic.A2C_noBoot.Trainer):
         """
         super().__init__(model, optimizer, stepSize, **kwargs)
 
+        if self.TARGET_UPDATE is not None:
+            if self.TARGET_UPDATE > 1:
+                raise ValueError("check TARGET_UPDATE")
+
         # set up replay memory
         self.memory = Struct.CyclicBuffer(self.MEMORY_SIZE)
 

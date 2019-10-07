@@ -3,6 +3,8 @@ import torch
 import torch.optim as optim
 from torch.autograd import Variable
 
+from SteeringPair.Struct import RunningStat
+
 from SteeringPair_Stochastic import Environment, Termination, initEnvironment
 from SteeringPair_Stochastic.AbstractAlgorithm import AbstractModel, AbstractTrainer
 
@@ -44,6 +46,8 @@ class Trainer(AbstractTrainer):
             self.GAMMA = kwargs["GAMMA"]
         except KeyError as e:
             raise ValueError("Cannot read hyper parameters: {}".format(e))
+
+        self.stat = RunningStat(Environment.features)
 
     def selectAction(self, state):
         log_probs = self.model.policy_net.forward(Variable(state))
@@ -101,7 +105,7 @@ class Trainer(AbstractTrainer):
                 except ValueError:
                     continue
 
-            state = env.initialState
+            state = self.stat.runningNorm(env.initialState.squeeze(0)).unsqueeze(0)
             episodeReturn = 0
 
             episodeTerminated = Termination.INCOMPLETE
@@ -115,7 +119,7 @@ class Trainer(AbstractTrainer):
                 episodeReturn += reward
 
                 # Move to the next state
-                state = nextState
+                state = self.stat.runningNorm(nextState.squeeze(0)).unsqueeze(0) if not nextState is None else None
 
             # optimize
             self.optimizeModel(rewards, log_probs)
@@ -185,7 +189,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # environment config
-    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
+    envConfig = {"stateDefinition": "6d-raw", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
                  "stateNoiseAmplitude": 2e-1, "rewardNoiseAmplitude": 2e-1, "successBounty": 10,
                  "failurePenalty": -10, "device": torch.device("cpu")}
@@ -202,7 +206,7 @@ if __name__ == "__main__":
     trainer = Trainer(model, torch.optim.Adam, 3e-4, **hyperParamsDict)
 
     # train model under hyper parameters
-    episodeReturns, terminations = trainer.trainAgent(500)
+    episodeReturns, terminations = trainer.trainAgent(1000)
 
     # plot mean return
     meanSamples = 10
