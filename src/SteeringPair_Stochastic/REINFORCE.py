@@ -185,9 +185,10 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # environment config
-    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "stochasticPropRewardStepPenalty",
-                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
-                 "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
+    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
+                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
+                 "stateNoiseAmplitude": 2e-1, "rewardNoiseAmplitude": 2e-1, "successBounty": 10,
+                 "failurePenalty": -10, "device": torch.device("cpu")}
     initEnvironment(**envConfig)
 
     # create model
@@ -203,13 +204,13 @@ if __name__ == "__main__":
     # train model under hyper parameters
     episodeReturns, terminations = trainer.trainAgent(500)
 
-    # plot mean return
-    meanSamples = 10
-    episodeReturns = torch.tensor(episodeReturns)
-    meanReturns = torch.empty(len(episodeReturns) - meanSamples, dtype=torch.float)
-    for i in reversed(range(len(meanReturns))):
-        meanReturns[i] = episodeReturns[i:i+meanSamples].sum() / meanSamples
-
-    plt.plot(range(meanSamples, len(episodeReturns)), meanReturns.numpy())
-    plt.show()
-    plt.close()
+    # # plot mean return
+    # meanSamples = 10
+    # episodeReturns = torch.tensor(episodeReturns)
+    # meanReturns = torch.empty(len(episodeReturns) - meanSamples, dtype=torch.float)
+    # for i in reversed(range(len(meanReturns))):
+    #     meanReturns[i] = episodeReturns[i:i+meanSamples].sum() / meanSamples
+    #
+    # plt.plot(range(meanSamples, len(episodeReturns)), meanReturns.numpy())
+    # plt.show()
+    # plt.close()

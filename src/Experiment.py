@@ -21,7 +21,7 @@ from SteeringPair_Stochastic.Environment import initEnvironment
 
 
 # fetch pre-trained agents
-agents_id = 114
+agents_id = 119
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 

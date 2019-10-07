@@ -2,6 +2,7 @@ import os
 import subprocess as sp
 import threading
 import enum
+import math
 import torch
 import torch.distributions
 from collections import namedtuple
@@ -248,8 +249,18 @@ class Environment(object):
             attempts = 0
             while True:
                 attempts += 1
-                self.deflections = torch.randn(2, dtype=torch.float,
-                                               device=Environment.device) * 0.1  # rescale to fit onto target
+
+                # sample slope and angle
+                slopeAndAngle = torch.empty(2, dtype=torch.float, device=Environment.device)
+
+                maxSlope = self.targetRadius / 0.225  # distance deflection point of steerer to target = 0.225
+
+                slopeAndAngle[0].uniform_(0, maxSlope)
+                slopeAndAngle[1].uniform_(0, 2 * math.pi)
+
+                # calculate deflections
+                self.deflections = torch.tensor(
+                    (slopeAndAngle[0] * torch.cos(slopeAndAngle[1]), slopeAndAngle[0] * torch.sin(slopeAndAngle[1])))
 
                 # get initial focus / initial state from them
                 initialState, _, episodeTerminated = self.react(torch.zeros(1, device=Environment.device).unsqueeze(0),
@@ -262,9 +273,9 @@ class Environment(object):
                         print("init successful")
                     break
 
-                if attempts > 100:
+                if attempts > 5:
                     print("Environment stuck at initialization")
-                    raise ValueError("unable to find random starting points")
+                    # raise ValueError("unable to find random starting points")
 
         else:
             # illegal number of arguments
@@ -307,7 +318,6 @@ class Environment(object):
         noiseDistribution = torch.distributions.multivariate_normal.MultivariateNormal(absCoords, variance)
         absCoords = noiseDistribution.sample()
 
-
         # calculate relative distance between beam focus and focus goal
         relCoords = absCoords - self.focusGoal
 
@@ -344,80 +354,6 @@ class Environment(object):
             return state, torch.tensor([self.reward(distanceChange, 10 ** 3)], dtype=torch.float,
                                        device=Environment.device).unsqueeze_(
                 0), Termination.INCOMPLETE
-
-    def _react(self, action: torch.tensor, initialize=False):
-        """
-        Simulate response to an action performed by the agent.
-        :param action: index of action to respond to
-        :return: next_state, reward, termination: bool, type_termination: Termination
-        """
-
-        # update magnet strengths according to chosen action
-        if not initialize:
-            self.deflections = self.deflections + Environment.actionSet[action[0].item()]
-
-        # create lattice
-        self.__createLattice(self.deflections)
-
-        # run elegant simulation
-        with open(os.devnull, "w") as f:
-            sp.call(["elegant", "run.ele", path2defns], stdout=f, cwd=self.dir)
-
-        # read elegant output
-        os.chdir(self.dir)
-        dataSet = SDDS(0)
-        dataSet.load(self.dir + "/run.out")
-
-        # get absolute coordinates of beam center
-        absCoords = torch.tensor((dataSet.columnData[0], dataSet.columnData[2]), dtype=torch.float,
-                                 device=Environment.device).mean(
-            1)
-        absCoords = absCoords.mean(1)
-
-        # add noise to coordinates
-        deviation = Environment.stateNoiseAmplitude * absCoords
-        variance = torch.diag(deviation ** 2)
-        noiseDistribution = torch.distributions.multivariate_normal.MultivariateNormal(absCoords, variance)
-        absCoords = noiseDistribution.sample()
-
-        # calculate relative distance between beam focus and focus goal
-        relCoords = absCoords - self.focusGoal
-
-        #### create state tensor
-        if Environment.stateDefinition == StateDefinition.SIXDRAW:
-            state = torch.cat((self.deflections, absCoords, relCoords)).unsqueeze(0)
-        elif Environment.stateDefinition == StateDefinition.SIXDNORM:
-            # substract mean (which is zero) and divide through standard deviation
-            state = torch.cat((self.deflections / 3.33e-2, absCoords / 7.5e-3, relCoords / 1e-2)).unsqueeze(0)
-        elif Environment.stateDefinition == StateDefinition.TWODNORM:
-            state = relCoords / 1.225e-2  # shall normalize to mean=0 and std=1
-            state.unsqueeze_(0)
-
-        # return terminal state if maximal amount of reactions exceeded
-        if not self.reactCount < self.maxStepsPerEpisodes:
-            # print("forced abortion of episode, max steps exceeded")
-            return None, self.penalty, Termination.ABORTED
-        else:
-            self.reactCount += 1
-
-        # return state and reward
-        newDistanceToGoal = relCoords.norm().item()
-        distanceChange = newDistanceToGoal - self.distanceToGoal
-        self.distanceToGoal = newDistanceToGoal
-
-        if newDistanceToGoal < self.acceptance:
-            return None, self.bounty, Termination.SUCCESSFUL
-        elif absCoords.norm().item() >= self.targetRadius:
-            self.illegalStateCount += 1
-            if self.illegalStateCount >= self.maxIllegalStateCount:
-                return None, self.penalty, Termination.FAILED
-        else:
-            self.illegalStateCount = 0
-
-        # reward according to distanceChange
-        return state, torch.tensor([self.reward(distanceChange, 10 ** 3)], dtype=torch.float,
-                                   device=Environment.device).unsqueeze_(
-            0), Termination.INCOMPLETE
 
     def __createLattice(self, strengths):
         """
@@ -491,21 +427,5 @@ if __name__ == '__main__':
     env = Environment(0, 0)
     state = env.initialState
 
-    # sample deflections and absolute coordinates
-    Environment.acceptance = 0
-
-    # deflection range
-    defRange = torch.arange(-0.1, 0.1, 5e-3)
-
-    states = list()
-    # find eligible starting points
-    for x, y in product(defRange, defRange):
-        try:
-            env = Environment(x, y)
-            states.append(env.initialState)
-        except ValueError:
-            continue
-
-    states = torch.cat(states)
-    statesMean = states.transpose(1, 0).mean(1)
-    statesStd = states.transpose(1, 0).std(1)
+    for i in range(int(1e3)):
+        env = Environment("random")
