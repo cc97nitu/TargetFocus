@@ -42,7 +42,7 @@ class RewardFunctions(object):
         :return: reward
         """
         mean = scale * distanceChange
-        deviation = 0.5 * abs(mean)
+        deviation = Environment.rewardNoiseAmplitude * abs(mean)
         rewardDist = torch.distributions.normal.Normal(mean, deviation)
         return -1 * rewardDist.sample().item() - 0.5
 
@@ -94,6 +94,8 @@ def initEnvironment(**kwargs):
         Environment.targetRadius = Environment.targetDiameter / 2
         Environment.acceptance = kwargs["acceptance"]
         Environment.maxStepsPerEpisodes = kwargs["maxStepsPerEpisode"]
+        Environment.rewardNoiseAmplitude = kwargs["rewardNoiseAmplitude"]
+
 
         # state definition
         if kwargs["stateDefinition"] == "2d-norm":

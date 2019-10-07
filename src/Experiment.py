@@ -21,7 +21,7 @@ from SteeringPair_Stochastic.Environment import initEnvironment
 
 
 # fetch pre-trained agents
-agents_id = 106
+agents_id = 114
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 
@@ -39,7 +39,7 @@ PolicyNetwork = Network.Cat3
 # environment config
 envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
              "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 3, "maxStepsPerEpisode": 50,
-             "stateNoiseAmplitude": 0.1, "rewardNoiseAmplitude": 0.0, "successBounty": 10,
+             "stateNoiseAmplitude": 1e-14, "rewardNoiseAmplitude": 0.0, "successBounty": 10,
              "failurePenalty": -10, "device": torch.device("cpu")}
 initEnvironment(**envConfig)
 

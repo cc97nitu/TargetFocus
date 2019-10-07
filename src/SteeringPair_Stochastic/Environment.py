@@ -14,6 +14,7 @@ from sdds import SDDS
 terminations = namedtuple("terminations", ["successful", "failed", "aborted"])
 path2defns = "-rpnDefns=" + os.path.expanduser("~/.defns.rpn")
 
+
 class RewardFunctions(object):
     """Storage for reward functions."""
 
@@ -218,7 +219,8 @@ class Environment(object):
             # find random starting point
             while True:
 
-                self.deflections = torch.randn(2, dtype=torch.float, device=Environment.device) * 0.1  # rescale to fit onto target
+                self.deflections = torch.randn(2, dtype=torch.float,
+                                               device=Environment.device) * 0.1  # rescale to fit onto target
 
                 # get initial focus / initial state from them
                 initialState, _, episodeTerminated = self.react(torch.zeros(1, device=Environment.device).unsqueeze(0),
@@ -233,7 +235,8 @@ class Environment(object):
             # find center of goal which lies on the target
             def findGoal():
                 while True:
-                    focusGoal = torch.randn(2, dtype=torch.float, device=Environment.device) * 0.1  # rescale to match target size
+                    focusGoal = torch.randn(2, dtype=torch.float,
+                                            device=Environment.device) * 0.1  # rescale to match target size
 
                     if focusGoal.norm() < Environment.targetRadius:
                         return focusGoal
@@ -245,7 +248,8 @@ class Environment(object):
             attempts = 0
             while True:
                 attempts += 1
-                self.deflections = torch.randn(2, dtype=torch.float, device=Environment.device) * 0.1  # rescale to fit onto target
+                self.deflections = torch.randn(2, dtype=torch.float,
+                                               device=Environment.device) * 0.1  # rescale to fit onto target
 
                 # get initial focus / initial state from them
                 initialState, _, episodeTerminated = self.react(torch.zeros(1, device=Environment.device).unsqueeze(0),
@@ -292,7 +296,81 @@ class Environment(object):
         dataSet.load(self.dir + "/run.out")
 
         # get absolute coordinates of beam center
-        absCoords = torch.tensor((dataSet.columnData[0], dataSet.columnData[2]), dtype=torch.float, device=Environment.device).mean(
+        absCoords = torch.tensor((dataSet.columnData[0], dataSet.columnData[2]), dtype=torch.float,
+                                 device=Environment.device).mean(
+            1)
+        absCoords = absCoords.mean(1)
+
+        # add noise to coordinates
+        deviation = Environment.stateNoiseAmplitude * absCoords
+        variance = torch.diag(deviation ** 2)
+        noiseDistribution = torch.distributions.multivariate_normal.MultivariateNormal(absCoords, variance)
+        absCoords = noiseDistribution.sample()
+
+
+        # calculate relative distance between beam focus and focus goal
+        relCoords = absCoords - self.focusGoal
+
+        #### create state tensor
+        if Environment.stateDefinition == StateDefinition.SIXDRAW:
+            state = torch.cat((self.deflections, absCoords, relCoords)).unsqueeze(0)
+        elif Environment.stateDefinition == StateDefinition.SIXDNORM:
+            # substract mean (which is zero) and divide through standard deviation
+            state = torch.cat((self.deflections / 3.33e-2, absCoords / 7.5e-3, relCoords / 1e-2)).unsqueeze(0)
+        elif Environment.stateDefinition == StateDefinition.TWODNORM:
+            state = relCoords / 1.225e-2  # shall normalize to mean=0 and std=1
+            state.unsqueeze_(0)
+
+        # return terminal state if maximal amount of reactions exceeded
+        if not self.reactCount < self.maxStepsPerEpisodes:
+            # print("forced abortion of episode, max steps exceeded")
+            return None, self.penalty, Termination.ABORTED
+        else:
+            self.reactCount += 1
+
+        # return state and reward
+        newDistanceToGoal = relCoords.norm().item()
+        distanceChange = newDistanceToGoal - self.distanceToGoal
+        self.distanceToGoal = newDistanceToGoal
+
+        if newDistanceToGoal < self.acceptance:
+            # goal reached
+            return None, self.bounty, Termination.SUCCESSFUL
+        elif absCoords.norm().item() >= self.targetRadius:
+            # beam spot left target
+            return None, self.penalty, Termination.FAILED
+        else:
+            # reward according to distanceChange
+            return state, torch.tensor([self.reward(distanceChange, 10 ** 3)], dtype=torch.float,
+                                       device=Environment.device).unsqueeze_(
+                0), Termination.INCOMPLETE
+
+    def _react(self, action: torch.tensor, initialize=False):
+        """
+        Simulate response to an action performed by the agent.
+        :param action: index of action to respond to
+        :return: next_state, reward, termination: bool, type_termination: Termination
+        """
+
+        # update magnet strengths according to chosen action
+        if not initialize:
+            self.deflections = self.deflections + Environment.actionSet[action[0].item()]
+
+        # create lattice
+        self.__createLattice(self.deflections)
+
+        # run elegant simulation
+        with open(os.devnull, "w") as f:
+            sp.call(["elegant", "run.ele", path2defns], stdout=f, cwd=self.dir)
+
+        # read elegant output
+        os.chdir(self.dir)
+        dataSet = SDDS(0)
+        dataSet.load(self.dir + "/run.out")
+
+        # get absolute coordinates of beam center
+        absCoords = torch.tensor((dataSet.columnData[0], dataSet.columnData[2]), dtype=torch.float,
+                                 device=Environment.device).mean(
             1)
         absCoords = absCoords.mean(1)
 
@@ -330,7 +408,7 @@ class Environment(object):
         if newDistanceToGoal < self.acceptance:
             return None, self.bounty, Termination.SUCCESSFUL
         elif absCoords.norm().item() >= self.targetRadius:
-            self.illegalStateCount +=1
+            self.illegalStateCount += 1
             if self.illegalStateCount >= self.maxIllegalStateCount:
                 return None, self.penalty, Termination.FAILED
         else:
@@ -340,18 +418,6 @@ class Environment(object):
         return state, torch.tensor([self.reward(distanceChange, 10 ** 3)], dtype=torch.float,
                                    device=Environment.device).unsqueeze_(
             0), Termination.INCOMPLETE
-
-        if newDistanceToGoal < self.acceptance:
-            # goal reached
-            return None, self.bounty, Termination.SUCCESSFUL
-        elif absCoords.norm().item() >= self.targetRadius:
-            # beam spot left target
-            return None, self.penalty, Termination.FAILED
-        else:
-            # reward according to distanceChange
-            return state, torch.tensor([self.reward(distanceChange, 10 ** 3)], dtype=torch.float,
-                                       device=Environment.device).unsqueeze_(
-                0), Termination.INCOMPLETE
 
     def __createLattice(self, strengths):
         """
@@ -415,7 +481,8 @@ class EligibleEnvironmentParameters(list):
 if __name__ == '__main__':
     # environment config
     envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
-                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "maxIllegalStateCount": 3, "stateNoiseAmplitude": 1e-3, "rewardNoiseAmplitude": 0.2, "successBounty": 10,
+                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "maxIllegalStateCount": 3,
+                 "stateNoiseAmplitude": 1e-3, "rewardNoiseAmplitude": 0.2, "successBounty": 10,
                  "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
     initEnvironment(**envConfig)
 
