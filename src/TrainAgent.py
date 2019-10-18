@@ -9,7 +9,7 @@ import torch
 # from SteeringPair_Continuous import Network, REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
 
-from SteeringPair_Stochastic import Network, REINFORCE, REINFORCE_runningNorm, A2C_noBoot_v2
+from SteeringPair_Stochastic import Network, REINFORCE, REINFORCE_runningNorm, DQN, A2C_noBoot_v2
 from SteeringPair_Stochastic.Environment import initEnvironment
 
 # from QuadLens import REINFORCE, A2C, A2C_noBoot, A2C_noBoot_v2, Network, initEnvironment
@@ -17,7 +17,7 @@ from SteeringPair_Stochastic.Environment import initEnvironment
 import SQL
 
 # choose algorithm
-Algorithm = REINFORCE_runningNorm
+Algorithm = REINFORCE
 QNetwork = Network.FC7
 PolicyNetwork = Network.Cat3
 
@@ -29,9 +29,9 @@ stepSize = 3e-4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # configure environment
-envConfig = {"stateDefinition": "6d-raw", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
+envConfig = {"stateDefinition": "6d-norm_6noise", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
              "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
-             "stateNoiseAmplitude": 1, "rewardNoiseAmplitude": 1, "successBounty": 10,
+             "stateNoiseAmplitude": 1e-1, "rewardNoiseAmplitude": 1, "successBounty": 10,
              "failurePenalty": -10, "device": device}
 initEnvironment(**envConfig)
 

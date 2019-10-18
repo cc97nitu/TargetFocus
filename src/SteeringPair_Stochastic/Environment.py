@@ -69,6 +69,8 @@ class Termination(enum.Enum):
 class StateDefinition(enum.Enum):
     SIXDRAW = enum.auto()
     SIXDNORM = enum.auto()
+    SIXDNORM_6NOISE = enum.auto()
+    SIXDNORM_60NOISE = enum.auto()
     TWODNORM = enum.auto()
 
 
@@ -111,6 +113,12 @@ def initEnvironment(**kwargs):
         elif kwargs["stateDefinition"] == "6d-norm":
             Environment.features = 6
             Environment.stateDefinition = StateDefinition.SIXDNORM
+        elif kwargs["stateDefinition"] == "6d-norm_6noise":
+            Environment.features = 12
+            Environment.stateDefinition = StateDefinition.SIXDNORM_6NOISE
+        elif kwargs["stateDefinition"] == "6d-norm_60noise":
+            Environment.features = 66
+            Environment.stateDefinition = StateDefinition.SIXDNORM_60NOISE
         else:
             raise ValueError("cannot interpret state definition")
 
@@ -283,7 +291,7 @@ class Environment(object):
 
         return
 
-    def react(self, action: torch.tensor, initialize=False):
+    def react(self, action: torch.tensor, initialize=False, continuousAction=False):
         """
         Simulate response to an action performed by the agent.
         :param action: index of action to respond to
@@ -292,7 +300,10 @@ class Environment(object):
 
         # update magnet strengths according to chosen action
         if not initialize:
-            self.deflections = self.deflections + Environment.actionSet[action[0].item()]
+            if not continuousAction:
+                self.deflections = self.deflections + Environment.actionSet[action[0].item()]
+            else:
+                self.deflections = action
 
         # create lattice
         self.__createLattice(self.deflections)
@@ -315,7 +326,7 @@ class Environment(object):
         # add noise to coordinates
         deviation = Environment.stateNoiseAmplitude * absCoords
         variance = torch.diag(deviation ** 2)
-        noiseDistribution = torch.distributions.multivariate_normal.MultivariateNormal(absCoords, variance)
+        noiseDistribution = torch.distributions.multivariate_normal.MultivariateNormal(absCoords, torch.abs(variance))
         absCoords = noiseDistribution.sample()
 
         # calculate relative distance between beam focus and focus goal
@@ -330,6 +341,12 @@ class Environment(object):
         elif Environment.stateDefinition == StateDefinition.TWODNORM:
             state = relCoords / 1.225e-2  # shall normalize to mean=0 and std=1
             state.unsqueeze_(0)
+        elif Environment.stateDefinition == StateDefinition.SIXDNORM_6NOISE:
+            # substract mean (which is zero) and divide through standard deviation
+            state = torch.cat((torch.randn(6), self.deflections / 3.33e-2, absCoords / 7.5e-3, relCoords / 1e-2)).unsqueeze(0)
+        elif Environment.stateDefinition == StateDefinition.SIXDNORM_60NOISE:
+            # substract mean (which is zero) and divide through standard deviation
+            state = torch.cat((torch.randn(60), self.deflections / 3.33e-2, absCoords / 7.5e-3, relCoords / 1e-2)).unsqueeze(0)
 
         # return terminal state if maximal amount of reactions exceeded
         if not self.reactCount < self.maxStepsPerEpisodes:
@@ -416,7 +433,7 @@ class EligibleEnvironmentParameters(list):
 
 if __name__ == '__main__':
     # environment config
-    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
+    envConfig = {"stateDefinition": "6d-norm_6noise", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "maxIllegalStateCount": 3,
                  "stateNoiseAmplitude": 1e-3, "rewardNoiseAmplitude": 0.2, "successBounty": 10,
                  "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}

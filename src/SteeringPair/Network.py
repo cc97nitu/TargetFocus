@@ -535,10 +535,25 @@ class PDF3(nn.Module):
         return torch.tanh(x)
 
 
+class Linear1(nn.Module):
+    def __init__(self, features: int, outputs: int):
+        super(Linear1, self).__init__()
+
+        self.linear = nn.Linear(2 * features + 1, outputs)
+        return
+
+    def forward(self, x):
+        one = torch.ones(x.shape[0], 1)
+        y = torch.cat((one, x, x**2), dim=1)
+        y = self.linear(y)
+        return functional.log_softmax(y, dim=1)
+
+
+
 if __name__ == "__main__":
     import torch
     inp = torch.randn(2, 6)
-    net = PDF1(6, 4)
+    net = Linear1(6, 4)
 
     x = torch.randn(2, 6)
     net(x)

@@ -186,13 +186,13 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # environment config
-    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A4", "rewardFunction": "stochasticPropRewardStepPenalty",
-                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
+    envConfig = {"stateDefinition": "2d-norm", "actionSet": "A4", "rewardFunction": "stochasticPropRewardStepPenalty",
+                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "rewardNoiseAmplitude": 1e-14, "successBounty": 10,
                  "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
     initEnvironment(**envConfig)
 
     # create model
-    model = Model(QNetwork=Network.FC7, PolicyNetwork=Network.Cat3)
+    model = Model(QNetwork=Network.FC7, PolicyNetwork=Network.Linear1)
 
     # define hyper parameters
     hyperParamsDict = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,

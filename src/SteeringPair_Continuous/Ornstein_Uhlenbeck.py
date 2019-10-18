@@ -36,11 +36,15 @@ class OUNoise(object):
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
+    import seaborn as sns
 
-    noise = OUNoise(-1, 1, 1, theta=0.5, min_sigma=0.15, max_sigma=0.15)
+    sns.set_style("whitegrid")
+
+    noise = OUNoise(-1, 1, 1, theta=0.15, min_sigma=0.05, max_sigma=0.1)
 
     paths = list()
-    for i in range(10):
+    for i in range(3):
+        noise.reset()
         path = list()
 
         for j in range(100):
@@ -51,6 +55,7 @@ if __name__ == "__main__":
     for path in paths:
         plt.plot(path)
 
+    plt.xlabel("time step")
     plt.show()
     plt.close()
 

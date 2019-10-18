@@ -185,7 +185,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # environment config
-    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
+    envConfig = {"stateDefinition": "6d-norm_60noise", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
                  "stateNoiseAmplitude": 2e-1, "rewardNoiseAmplitude": 2e-1, "successBounty": 10,
                  "failurePenalty": -10, "device": torch.device("cpu")}
@@ -202,7 +202,7 @@ if __name__ == "__main__":
     trainer = Trainer(model, torch.optim.Adam, 3e-4, **hyperParamsDict)
 
     # train model under hyper parameters
-    episodeReturns, terminations = trainer.trainAgent(500)
+    episodeReturns, terminations = trainer.trainAgent(int(1e3))
 
     # plot mean return
     meanSamples = 10
