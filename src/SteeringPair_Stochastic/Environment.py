@@ -68,6 +68,8 @@ class Termination(enum.Enum):
 
 class StateDefinition(enum.Enum):
     SIXDRAW = enum.auto()
+    SIXDRAW_6NOISE = enum.auto()
+    SIXDRAW_60NOISE = enum.auto()
     SIXDNORM = enum.auto()
     SIXDNORM_6NOISE = enum.auto()
     SIXDNORM_60NOISE = enum.auto()
@@ -110,6 +112,12 @@ def initEnvironment(**kwargs):
         elif kwargs["stateDefinition"] == "6d-raw":
             Environment.features = 6
             Environment.stateDefinition = StateDefinition.SIXDRAW
+        elif kwargs["stateDefinition"] == "6d-raw_6noise":
+            Environment.features = 12
+            Environment.stateDefinition = StateDefinition.SIXDRAW_6NOISE
+        elif kwargs["stateDefinition"] == "6d-raw_60noise":
+            Environment.features = 66
+            Environment.stateDefinition = StateDefinition.SIXDRAW_60NOISE
         elif kwargs["stateDefinition"] == "6d-norm":
             Environment.features = 6
             Environment.stateDefinition = StateDefinition.SIXDNORM
@@ -341,6 +349,12 @@ class Environment(object):
         elif Environment.stateDefinition == StateDefinition.TWODNORM:
             state = relCoords / 1.225e-2  # shall normalize to mean=0 and std=1
             state.unsqueeze_(0)
+        elif Environment.stateDefinition == StateDefinition.SIXDRAW_6NOISE:
+            # substract mean (which is zero) and divide through standard deviation
+            state = torch.cat((torch.randn(6), self.deflections, absCoords, relCoords)).unsqueeze(0)
+        elif Environment.stateDefinition == StateDefinition.SIXDRAW_60NOISE:
+            # substract mean (which is zero) and divide through standard deviation
+            state = torch.cat((torch.randn(60), self.deflections, absCoords, relCoords)).unsqueeze(0)
         elif Environment.stateDefinition == StateDefinition.SIXDNORM_6NOISE:
             # substract mean (which is zero) and divide through standard deviation
             state = torch.cat((torch.randn(6), self.deflections / 3.33e-2, absCoords / 7.5e-3, relCoords / 1e-2)).unsqueeze(0)

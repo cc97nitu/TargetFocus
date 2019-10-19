@@ -78,6 +78,10 @@ class Trainer(AbstractTrainer):
         # define optimizer
         self.optimizer = optimizer(self.model.policy_net.parameters(), lr=stepSize)
         # self.optimizer = torch.optim.Adam(self.model.policy_net.parameters(), lr=2e-5)
+
+        # tool to normalize states
+        self.stat = Struct.RunningStat(Environment.features)
+
         return
 
     def selectAction(self, state):
@@ -169,7 +173,7 @@ class Trainer(AbstractTrainer):
                 except ValueError:
                     continue
 
-            state = env.initialState
+            state = self.stat.runningNorm(env.initialState.squeeze(0)).unsqueeze(0)
             episodeReturn = 0
 
             episodeTerminated = Termination.INCOMPLETE
@@ -183,7 +187,7 @@ class Trainer(AbstractTrainer):
                 self.memory.push(state, action, nextState, reward)
 
                 # Move to the next state
-                state = nextState
+                state = self.stat.runningNorm(nextState.squeeze(0)).unsqueeze(0) if not nextState is None else None
 
                 # # Perform one step of the optimization (on the target network)
                 self.optimizeModel()
@@ -272,11 +276,11 @@ if __name__ == "__main__":
     initEnvironment(**envConfig)
 
     # define hyper parameters
-    hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.25, "TARGET_UPDATE": 0.1, "EPS_START": 0.5, "EPS_END": 0,
+    hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
                    "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
     # create model
-    model = Model(QNetwork=Network.FC7BN3)
+    model = Model(QNetwork=Network.FC7)
 
     # set up trainer
     trainer = Trainer(model, torch.optim.Adam, 3e-4, **hyperParams)

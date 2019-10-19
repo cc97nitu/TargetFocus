@@ -189,7 +189,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # environment config
-    envConfig = {"stateDefinition": "6d-raw", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
+    envConfig = {"stateDefinition": "6d-raw_6noise", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
                  "stateNoiseAmplitude": 2e-1, "rewardNoiseAmplitude": 2e-1, "successBounty": 10,
                  "failurePenalty": -10, "device": torch.device("cpu")}

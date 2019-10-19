@@ -17,7 +17,7 @@ from SteeringPair_Stochastic.Environment import initEnvironment
 import SQL
 
 # choose algorithm
-Algorithm = REINFORCE
+Algorithm = DQN
 QNetwork = Network.FC7
 PolicyNetwork = Network.Cat3
 
