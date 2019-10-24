@@ -7,21 +7,21 @@ import torch
 from SteeringPair import Network
 import SQL
 
-# from QuadLens import REINFORCE
+# from QuadLens import REINFORCE, A2C_noBoot_v2
 # from QuadLens.Environment import Environment, initEnvironment
 
-# from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
-# from SteeringPair.Environment import initEnvironment
+from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
+from SteeringPair.Environment import initEnvironment
 
 # from SteeringPair_Continuous import REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
 
-from SteeringPair_Stochastic import Network, REINFORCE, REINFORCE_runningNorm, A2C_noBoot_v2
-from SteeringPair_Stochastic.Environment import initEnvironment
+# from SteeringPair_Stochastic import Network, REINFORCE, REINFORCE_runningNorm, A2C_noBoot_v2
+# from SteeringPair_Stochastic.Environment import initEnvironment
 
 
 # fetch pre-trained agents
-agents_id = 135
+agents_id = 57
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 
@@ -32,15 +32,19 @@ benchEpisodes = 100
 data = {"agents_id": agents_id, "algorithm": trainResults["algorithm"], "bench_episodes": benchEpisodes,}
 
 # choose algorithm
-Algorithm = REINFORCE
+Algorithm = DQN
 QNetwork = Network.FC7
 PolicyNetwork = Network.Cat3
 
 # environment config
-envConfig = {"stateDefinition": "6d-norm_60noise", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
-             "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
-             "stateNoiseAmplitude": 1e-1, "rewardNoiseAmplitude": 1, "successBounty": 10,
-             "failurePenalty": -10, "device": torch.device("cpu")}
+# envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
+#              "acceptance": 1e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 3, "maxStepsPerEpisode": 50,
+#              "stateNoiseAmplitude": 1e-1, "rewardNoiseAmplitude": 1, "successBounty": 10,
+#              "failurePenalty": -10, "device": torch.device("cpu")}
+
+envConfigAdditions = {"rewardNoiseAmplitude": 0}
+envConfig = {**envConfigAdditions, **trainResults["environmentConfig"]}
+
 initEnvironment(**envConfig)
 
 # define dummy hyper parameters in order to create trainer-objects for benching

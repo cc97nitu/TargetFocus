@@ -1,3 +1,4 @@
+"""Check performance of optimization algorithms from SciPy."""
 import torch
 
 from SteeringPair_Stochastic.Environment import Environment as Env
@@ -35,9 +36,12 @@ if __name__ == "__main__":
     # environment config
     envConfig = {"stateDefinition": "6d-raw", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 5e2,
-                 "stateNoiseAmplitude": 5e-9, "rewardNoiseAmplitude": 2e-1, "successBounty": 10,
+                 "stateNoiseAmplitude": 1e-1, "rewardNoiseAmplitude": 1, "successBounty": 10,
                  "failurePenalty": -10, "device": torch.device("cpu")}
     initEnvironment(**envConfig)
+
+    # store results
+    terminations = {"successful": list(), "failed": list(), "aborted": list()}
 
     # set up interface to run optimizer
     interface = EnvInterface()

@@ -3,6 +3,8 @@ import torch
 import torch.optim as optim
 from torch.autograd import Variable
 
+from SteeringPair import Struct
+
 from QuadLens import Environment, Termination, initEnvironment
 from QuadLens.AbstractAlgorithm import AbstractModel, AbstractTrainer
 
@@ -44,13 +46,23 @@ class Trainer(AbstractTrainer):
         except KeyError as e:
             raise ValueError("Cannot read hyper parameters: {}".format(e))
 
+        # tool to normalize states
+        self.stat = Struct.RunningStat(Environment.features)
+
     def selectAction(self, state):
-        log_probs = self.model.policy_net.forward(state)
-        probs = torch.exp(log_probs)
-        highest_prob_action = np.random.choice(len(Environment.actionSet), p=np.squeeze(probs.detach().cpu().numpy()))
-        # log_prob = torch.log(log_probs.squeeze(0)[highest_prob_action])
-        log_prob = log_probs.squeeze(0)[highest_prob_action]
-        highest_prob_action = torch.tensor([highest_prob_action], dtype=torch.long, device=Environment.device)
+        try:
+            with torch.autograd.detect_anomaly():
+                log_probs = self.model.policy_net.forward(state)
+                probs = torch.exp(log_probs)
+                highest_prob_action = np.random.choice(len(Environment.actionSet),
+                                                       p=np.squeeze(probs.detach().cpu().numpy()))
+                # log_prob = torch.log(log_probs.squeeze(0)[highest_prob_action])
+                log_prob = log_probs.squeeze(0)[highest_prob_action]
+                highest_prob_action = torch.tensor([highest_prob_action], dtype=torch.long, device=Environment.device)
+        except ValueError:
+            print(log_probs)
+            raise ValueError()
+
         return highest_prob_action, log_prob
 
     def optimizeModel(self, rewards, log_probs):
@@ -74,10 +86,11 @@ class Trainer(AbstractTrainer):
         for log_prob, Gt in zip(log_probs, observedReturns):
             policy_gradient.append(-log_prob * Gt)
 
-        self.optimizer.zero_grad()
-        policy_gradient = torch.stack(policy_gradient).sum()
-        policy_gradient.backward()
-        self.optimizer.step()
+        with torch.autograd.detect_anomaly():
+            self.optimizer.zero_grad()
+            policy_gradient = torch.stack(policy_gradient).sum()
+            policy_gradient.backward()
+            self.optimizer.step()
 
     def trainAgent(self, num_episodes):
 
@@ -100,7 +113,7 @@ class Trainer(AbstractTrainer):
                 except ValueError:
                     continue
 
-            state = env.state
+            state = self.stat.runningNorm(env.state.squeeze(0)).unsqueeze(0)
             episodeReturn = 0
 
             episodeTerminated = Termination.INCOMPLETE
@@ -114,7 +127,7 @@ class Trainer(AbstractTrainer):
                 episodeReturn += reward
 
                 # Move to the next state
-                state = nextState
+                state = self.stat.runningNorm(nextState.squeeze(0)).unsqueeze(0) if not nextState is None else None
 
             # optimize
             self.optimizeModel(rewards, log_probs)

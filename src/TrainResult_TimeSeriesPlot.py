@@ -31,6 +31,7 @@ def multiTrainResults(dataSets: list, hueKeyword: str):
     concatFrame = pd.concat(dataFrames)
 
     # plot
+    print("beginning to plot")
     sns.set(style="whitegrid")
 
     sns.lineplot(x="episode", y="return", hue=hueKeyword, data=concatFrame)
@@ -47,16 +48,16 @@ def multiTrainResults(dataSets: list, hueKeyword: str):
 if __name__ == "__main__":
     ### train results ###
 
-    # plot single result
-    data = SQL.retrieve(row_id=132)
-    print(data["environmentConfig"])
-    print(data["hyperParameters"])
-
-    plotTrainResult(data["returns"])
-
-    # # plot multiple results
-    # hueKeyword = "algorithm"
-    # dataSets = [(84, "REINFORCE"), (80, "A2C"), (81, "A2C_noBoot"), (82, "DQN"), (83, "A2C_noBoot_v2"),]  # assumes tuples of form (row_id, hueIdentifier)
+    # # plot single result
+    # data = SQL.retrieve(row_id=57)
+    # print(data["environmentConfig"])
+    # print(data["hyperParameters"])
     #
-    # multiTrainResults(dataSets, hueKeyword)
+    # plotTrainResult(data["returns"])
+
+    # plot multiple results
+    hueKeyword = "epsilon"
+    dataSets = [(57, "O.7"), (58, "O.9"), (60, "O.0"), (61, "O.2"), (62, "O.5"),]  # assumes tuples of form (row_id, hueIdentifier)
+
+    multiTrainResults(dataSets, hueKeyword)
 

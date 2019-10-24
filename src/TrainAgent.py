@@ -29,9 +29,9 @@ stepSize = 3e-4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # configure environment
-envConfig = {"stateDefinition": "6d-norm_6noise", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
+envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
              "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
-             "stateNoiseAmplitude": 1e-1, "rewardNoiseAmplitude": 1, "successBounty": 10,
+             "stateNoiseAmplitude": 1e-1, "rewardNoiseAmplitude": 0, "successBounty": 10,
              "failurePenalty": -10, "device": device}
 initEnvironment(**envConfig)
 
@@ -42,7 +42,7 @@ hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 0.1, "EPS_START
 ### train agents and store the corresponding models in agents
 agents = dict()
 returns = list()
-trainEpisodes = int(2e3)
+trainEpisodes = int(2.5e3)
 numberAgents = 20
 meanSamples = 10
 

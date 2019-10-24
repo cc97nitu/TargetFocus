@@ -266,8 +266,8 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     # environment config
-    envConfig = {"stateDefinition": "6d-raw", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
-                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "successBounty": 10,
+    envConfig = {"stateDefinition": "2d-norm", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
+                 "acceptance": 5e-3, "targetDiameter": 3e-2, "maxStepsPerEpisode": 50, "rewardNoiseAmplitude": 0, "successBounty": 10,
                  "failurePenalty": -10, "device": torch.device("cpu")}
     initEnvironment(**envConfig)
 
