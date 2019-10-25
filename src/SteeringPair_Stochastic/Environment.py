@@ -74,6 +74,7 @@ class StateDefinition(enum.Enum):
     SIXDNORM_6NOISE = enum.auto()
     SIXDNORM_60NOISE = enum.auto()
     TWODNORM = enum.auto()
+    TWODRAW = enum.auto()
 
 
 def initEnvironment(**kwargs):
@@ -109,6 +110,9 @@ def initEnvironment(**kwargs):
         if kwargs["stateDefinition"] == "2d-norm":
             Environment.features = 2
             Environment.stateDefinition = StateDefinition.TWODNORM
+        elif kwargs["stateDefinition"] == "2d-raw":
+            Environment.features = 2
+            Environment.stateDefinition = StateDefinition.TWODRAW
         elif kwargs["stateDefinition"] == "6d-raw":
             Environment.features = 6
             Environment.stateDefinition = StateDefinition.SIXDRAW
@@ -348,6 +352,9 @@ class Environment(object):
             state = torch.cat((self.deflections / 3.33e-2, absCoords / 7.5e-3, relCoords / 1e-2)).unsqueeze(0)
         elif Environment.stateDefinition == StateDefinition.TWODNORM:
             state = relCoords / 1.225e-2  # shall normalize to mean=0 and std=1
+            state.unsqueeze_(0)
+        elif Environment.stateDefinition == StateDefinition.TWODRAW:
+            state = relCoords  # shall normalize to mean=0 and std=1
             state.unsqueeze_(0)
         elif Environment.stateDefinition == StateDefinition.SIXDRAW_6NOISE:
             # substract mean (which is zero) and divide through standard deviation

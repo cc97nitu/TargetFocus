@@ -10,18 +10,18 @@ import SQL
 # from QuadLens import REINFORCE, A2C_noBoot_v2
 # from QuadLens.Environment import Environment, initEnvironment
 
-from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
-from SteeringPair.Environment import initEnvironment
+# from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
+# from SteeringPair.Environment import initEnvironment
 
 # from SteeringPair_Continuous import REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
 
-# from SteeringPair_Stochastic import Network, REINFORCE, REINFORCE_runningNorm, A2C_noBoot_v2
-# from SteeringPair_Stochastic.Environment import initEnvironment
+from SteeringPair_Stochastic import Network, DQN, REINFORCE, REINFORCE_runningNorm, A2C_noBoot_v2
+from SteeringPair_Stochastic.Environment import initEnvironment
 
 
 # fetch pre-trained agents
-agents_id = 57
+agents_id = 143
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 

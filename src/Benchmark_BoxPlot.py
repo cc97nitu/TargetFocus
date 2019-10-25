@@ -63,7 +63,7 @@ if __name__ == "__main__":
     #
     # plotStatistics(buildPdFrame(*args))
 
-    frameA = SQL.retrieveBenchmark(52)
+    frameA = SQL.retrieveBenchmark(56)
     plotStatistics(buildPdFrame((frameA, "test")))
 
 

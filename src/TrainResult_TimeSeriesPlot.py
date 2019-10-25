@@ -19,6 +19,7 @@ def plotTrainResult(data: pd.DataFrame):
     plt.show()
     plt.close()
 
+
 def multiTrainResults(dataSets: list, hueKeyword: str):
     # build annotated data frame
     dataFrames = []
@@ -38,26 +39,23 @@ def multiTrainResults(dataSets: list, hueKeyword: str):
 
     # plt.title("random start, random goal")
     # plt.yticks([])
-    plt.ylim(bottom=-40)
+    # plt.ylim(bottom=-40)
     plt.show()
     plt.close()
-
-
 
 
 if __name__ == "__main__":
     ### train results ###
 
     # # plot single result
-    # data = SQL.retrieve(row_id=57)
+    # data = SQL.retrieve(row_id=137)
     # print(data["environmentConfig"])
     # print(data["hyperParameters"])
     #
     # plotTrainResult(data["returns"])
 
     # plot multiple results
-    hueKeyword = "epsilon"
-    dataSets = [(57, "O.7"), (58, "O.9"), (60, "O.0"), (61, "O.2"), (62, "O.5"),]  # assumes tuples of form (row_id, hueIdentifier)
+    hueKeyword = "state definition"
+    dataSets = [(137, "2d-norm"), (140, "6d-norm"), (134, "6d-norm_6noise"), (135, "6d-norm_60noise")]  # assumes tuples of form (row_id, hueIdentifier)
 
     multiTrainResults(dataSets, hueKeyword)
-
