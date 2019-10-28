@@ -223,9 +223,17 @@ class Trainer(AbstractTrainer):
             # update policy
             self.optimizePolicy(states, nextStates, rewards, log_probs)
 
-            # Update the target network, copying all weights and biases in SteeringPair
-            if i_episode % self.TARGET_UPDATE == 0:
-                self.model.vTargetNet.load_state_dict(self.model.vTrainNet.state_dict())
+            if self.TARGET_UPDATE < 1:
+                # Update the target network by applying a soft update
+                policyNetDict, targetNetDict = self.model.vTrainNet.state_dict(), self.model.vTargetNet.state_dict()
+                for param in targetNetDict.keys():
+                    targetNetDict[param] = (1 - self.TARGET_UPDATE) * targetNetDict[param] + self.TARGET_UPDATE * policyNetDict[param]
+
+                self.model.vTargetNet.load_state_dict(targetNetDict)
+            else:
+                # update by copying every parameter
+                if i_episode % self.TARGET_UPDATE == 0:
+                    self.model.vTargetNet.load_state_dict(self.model.vTrainNet.state_dict())
 
             episodeReturns.append(episodeReturn)
             if episodeTerminated == Termination.SUCCESSFUL:

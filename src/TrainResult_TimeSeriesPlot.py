@@ -59,6 +59,7 @@ if __name__ == "__main__":
 
     # plot multiple results
     hueKeyword = "state definition"
+
     dataSets = [(155, "6d-raw"), (167, "6d-raw_6noise"), (169, "6d-raw_60noise")]  # assumes tuples of form (row_id, hueIdentifier)
 
     multiTrainResults(dataSets, hueKeyword)

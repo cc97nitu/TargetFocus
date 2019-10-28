@@ -17,7 +17,7 @@ from SteeringPair_Stochastic.Environment import initEnvironment
 import SQL
 
 # choose algorithm
-Algorithm = DQN
+Algorithm = A2C
 QNetwork = Network.FC7
 PolicyNetwork = Network.Cat3
 
@@ -29,7 +29,7 @@ stepSize = 3e-4
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # configure environment
-envConfig = {"stateDefinition": "6d-raw", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
+envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
              "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
              "stateNoiseAmplitude": 1e-13, "rewardNoiseAmplitude": 0, "successBounty": 10,
              "failurePenalty": -10, "device": device}
