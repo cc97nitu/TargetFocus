@@ -72,18 +72,11 @@ def compareRowConfig(row_ids: list):
     return nonCommonKeys, nonCommonValues
 
 if __name__ == "__main__":
-    # # show config for rows
-    # rows = [137, 140, 130, 134, 136, 135]
-    # showConfig(rows)
-
-    # # compare two rows
-    # rowA = SQL.retrieve(137)
-    # rowB = SQL.retrieve(137)
-    #
-    # added, removed, modified, same = dictCompare(rowA["hyperParameters"], rowB["hyperParameters"])
-    # print(added, removed, modified, same)
+    # show config for rows
+    rows = [130, 155]
+    showConfig(rows)
 
     # compare multiple rows
-    rows = [137, 140, 134]
+    rows = [130, 155]
 
     print(compareRowConfig(rows))

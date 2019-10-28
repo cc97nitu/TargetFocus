@@ -244,6 +244,7 @@ class Trainer(AbstractTrainer):
     def benchAgent(self, num_episodes):
         # keep track of received return
         episodeReturns = []
+        episodeSteps = []
 
         # compare predicted state-value with sampled return
         compareReturnStateValue: list[tuple] = list()
@@ -262,11 +263,13 @@ class Trainer(AbstractTrainer):
                     continue
 
             state = env.initialState
-            episodeReturn = 0
+            episodeReturn, steps = 0, 0
             episodeRewards, episodeStateValues = list(), list()
 
             episodeTerminated = Termination.INCOMPLETE
             while episodeTerminated == Termination.INCOMPLETE:
+                steps += 1
+
                 # monitor state value
                 episodeStateValues.append(self.model.vTargetNet(state))
 
@@ -295,6 +298,8 @@ class Trainer(AbstractTrainer):
 
             # monitor return and termination
             episodeReturns.append(torch.tensor([[episodeReturn,]]))
+            episodeSteps.append(steps)
+
             if episodeTerminated == Termination.SUCCESSFUL:
                 episodeTerminations["successful"] += 1
             elif episodeTerminated == Termination.FAILED:
@@ -303,7 +308,7 @@ class Trainer(AbstractTrainer):
                 episodeTerminations["aborted"] += 1
 
         print("Complete")
-        return episodeReturns, episodeTerminations, compareReturnStateValue
+        return episodeReturns, episodeTerminations, compareReturnStateValue, episodeSteps
 
 
 if __name__ == "__main__":

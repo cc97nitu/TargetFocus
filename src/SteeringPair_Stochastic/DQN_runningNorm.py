@@ -222,6 +222,7 @@ class Trainer(AbstractTrainer):
     def benchAgent(self, num_episodes):
         # keep track of epsilon and received return
         episodeReturns = []
+        episodeSteps = []
 
         # count how episodes terminate
         episodeTerminations = {"successful": 0, "failed": 0, "aborted": 0}
@@ -237,10 +238,12 @@ class Trainer(AbstractTrainer):
                     continue
 
             state = env.initialState
-            episodeReturn = 0
+            episodeReturn, steps = 0, 0
 
             episodeTerminated = Termination.INCOMPLETE
             while episodeTerminated == Termination.INCOMPLETE:
+                steps += 1
+
                 # Select and perform an action
                 action = self.selectAction(state)
                 nextState, reward, episodeTerminated = env.react(action)
@@ -250,6 +253,8 @@ class Trainer(AbstractTrainer):
                 state = nextState
 
             episodeReturns.append(episodeReturn)
+            episodeSteps.append(steps)
+
             if episodeTerminated == Termination.SUCCESSFUL:
                 episodeTerminations["successful"] += 1
             elif episodeTerminated == Termination.FAILED:
@@ -259,7 +264,7 @@ class Trainer(AbstractTrainer):
 
 
         print("Complete")
-        return episodeReturns, episodeTerminations, None  # None stands for accuracy of value function
+        return episodeReturns, episodeTerminations, None, episodeSteps  # None stands for accuracy of value function
 
 
 

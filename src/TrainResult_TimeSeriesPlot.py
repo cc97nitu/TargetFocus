@@ -39,7 +39,10 @@ def multiTrainResults(dataSets: list, hueKeyword: str):
 
     # plt.title("random start, random goal")
     # plt.yticks([])
-    # plt.ylim(bottom=-40)
+
+    # plt.ylim(top=15)
+    # plt.ylim(bottom=-25)
+
     plt.show()
     plt.close()
 
@@ -56,6 +59,6 @@ if __name__ == "__main__":
 
     # plot multiple results
     hueKeyword = "state definition"
-    dataSets = [(137, "2d-norm"), (140, "6d-norm"), (134, "6d-norm_6noise"), (135, "6d-norm_60noise")]  # assumes tuples of form (row_id, hueIdentifier)
+    dataSets = [(155, "6d-raw"), (167, "6d-raw_6noise"), (169, "6d-raw_60noise")]  # assumes tuples of form (row_id, hueIdentifier)
 
     multiTrainResults(dataSets, hueKeyword)

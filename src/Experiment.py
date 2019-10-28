@@ -21,7 +21,7 @@ from SteeringPair_Stochastic.Environment import initEnvironment
 
 
 # fetch pre-trained agents
-agents_id = 143
+agents_id = 144
 trainResults = SQL.retrieve(row_id=agents_id)
 agents = trainResults["agents"]
 
@@ -68,7 +68,7 @@ for agent in agents:
     model.load_state_dict(agents[agent])
     model.eval()
     trainer = Algorithm.Trainer(model, dummyOptimizer, dummyStepSize, **hypPara_GreedyBehavior)
-    episodeReturns, episodeTerminations, accuracyValueFunction = trainer.benchAgent(benchEpisodes)
+    episodeReturns, episodeTerminations, accuracyValueFunction, episodeSteps = trainer.benchAgent(benchEpisodes)
     episodeReturns = [x[0].item() for x in episodeReturns]
 
     # mean over last meanSamples episodes
@@ -82,7 +82,8 @@ for agent in agents:
 
     returns.append(pd.DataFrame({"episode": [i + 1 for i in range(len(episodeReturns))],
                                  "behavior": ["greedy" for i in range(len(episodeReturns))],
-                                 "return": episodeReturns}))
+                                 "return": episodeReturns,
+                                 "steps": episodeSteps}))
 
     # # accuracy of value-function's predictions
     # accuracyValueFunction = [*zip(*accuracyValueFunction)]
