@@ -93,17 +93,21 @@ if __name__ == '__main__':
     hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
                    "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
-    # train agents
-    trainKWargs = {"trainEpisodes": int(2.5e3), "numberAgents": 20, "meanSamples": 10}
-    trainAgent(**{"envConfig": envConfig, "hyperParams": hyperParams, **trainKWargs})
+    # # train agents
+    # trainKWargs = {"trainEpisodes": int(2.5e3), "numberAgents": 20, "meanSamples": 10}
+    # trainAgent(**{"envConfig": envConfig, "hyperParams": hyperParams, **trainKWargs})
 
     # loop over training configurations
+    trainKWargs = {"trainEpisodes": int(2.5e3), "numberAgents": 20, "meanSamples": 10}
+
     noisyStateDefinitions = ["6d-raw_6noise", "6d-raw_60noise", "6d-norm_6noise", "6d-norm_60noise"]
 
     for stateDef in noisyStateDefinitions:
         envConfig["stateNoiseAmplitude"] = 0.1
         envConfig["rewardNoiseAmplitude"] = 1
         envConfig["stateDefinition"] = stateDef
+
+        trainAgent(**{"envConfig": envConfig, "hyperParams": hyperParams, **trainKWargs})
 
 
 
