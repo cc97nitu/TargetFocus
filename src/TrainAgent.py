@@ -87,7 +87,7 @@ if __name__ == '__main__':
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
                  "stateNoiseAmplitude": None, "rewardNoiseAmplitude": None, "successBounty": 10,
                  "failurePenalty": -10, "device": device}
-    initEnvironment(**envConfig)
+    # initEnvironment(**envConfig)
 
     # define hyper parameters
     hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
@@ -107,6 +107,7 @@ if __name__ == '__main__':
         envConfig["rewardNoiseAmplitude"] = 1
         envConfig["stateDefinition"] = stateDef
 
+        initEnvironment(**envConfig)
         trainAgent(**{"envConfig": envConfig, "hyperParams": hyperParams, **trainKWargs})
 
 
