@@ -1,6 +1,7 @@
 from __future__ import annotations
 import random
 from collections import namedtuple
+import math
 
 import torch
 
@@ -40,7 +41,7 @@ class ReplayMemory(CyclicBuffer):
 class RunningStat(object):
     """Track mean and standard deviation of the incoming samples."""
     def __init__(self, sampleShape):
-        self.numberSamples = 0
+        self.numberSamples = 1
         self.first = torch.zeros(sampleShape)
         self.second = torch.zeros(sampleShape)
         self.epsilon = 1e-9  # added to the denominator of std for numerical stability
@@ -53,12 +54,29 @@ class RunningStat(object):
     def stats(self):
         mean = self.first / self.numberSamples
         std = torch.sqrt(self.numberSamples * self.second - self.first**2) / self.numberSamples
+
+        # check for nan
+        if torch.isnan(mean).any() or torch.isnan(std).any():
+            if torch.isnan(mean).any():
+                print("numberSamples: {}, first: {}, second: {}".format(self.numberSamples, self.first, self.second))
+                raise ValueError("mean is nan")
+            elif torch.isnan(std).any():
+                print("numberSamples: {}, first: {}, second: {}".format(self.numberSamples, self.first, self.second))
+                raise ValueError("std is nan")
+
         return mean, std
 
     def runningNorm(self, sample):
         self.append(sample)
         mean, std = self.stats()
-        return (sample - mean) / (std + self.epsilon)
+
+        normalizedSample = (sample - mean) / (std + self.epsilon)
+
+        # check for nan
+        if torch.isnan(normalizedSample).any():
+            raise ValueError("normalization resulted in nan")
+
+        return normalizedSample
 
     def __repr__(self):
         return "mean: {}, std: {}".format(*self.stats())

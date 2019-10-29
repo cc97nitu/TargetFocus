@@ -32,8 +32,6 @@ def buildPdFrame(*args):
     for arg in args:
         data, agent_ident = arg[0], arg[1]
 
-        print(type(data), data.keys())
-
         for key in data["terminations"].keys():
             frame["termination_count"] += data["terminations"][key]
             frame["termination_type"] += [str(key) for i in range(len(data["terminations"][key]))]
@@ -52,18 +50,13 @@ def buildPdFrame(*args):
 
 
 if __name__ == "__main__":
+    frame = lambda x: SQL.retrieveBenchmark(x)
 
-    # frameA = SQL.retrieveBenchmark(13)
-    # frameB = SQL.retrieveBenchmark(14)
-    # frameC = SQL.retrieveBenchmark(15)
-    # frameD = SQL.retrieveBenchmark(16)
-    # frameZ = SQL.retrieveBenchmark(4)
-    #
-    # args = [(frameA, "REINFORCE"), (frameB, "A2C_noBoot"), (frameC, "A2C_noBoot_v2"), (frameD, "A2C"), (frameZ, "random")]
-    #
-    # plotStatistics(buildPdFrame(*args))
+    args = [(frame(164), "A4"), (frame(153), "A9"), (frame(163), "A25"), (frame(165), "A49"), (frame(166), "A81")]
 
-    frameA = SQL.retrieveBenchmark(58)
-    plotStatistics(buildPdFrame((frameA, "test")))
+    plotStatistics(buildPdFrame(*args))
+
+    # frameA = SQL.retrieveBenchmark(58)
+    # plotStatistics(buildPdFrame((frameA, "test")))
 
 
