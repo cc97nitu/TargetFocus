@@ -53,7 +53,7 @@ def trainAgent(envConfig, hyperParams, trainEpisodes, numberAgents, meanSamples)
     returns = pd.concat(returns)
 
     ### save the trained agents to disk
-    envConfig["device"] = str(envConfig["device"].type)
+    envConfig["device"] = str(device.type)
 
     # dump into file
     torch.save({"environmentConfig": envConfig, "hyperParameters": hyperParams, "algorithm": Algorithm.__name__,
@@ -78,12 +78,12 @@ def trainAgent(envConfig, hyperParams, trainEpisodes, numberAgents, meanSamples)
 
 if __name__ == '__main__':
     # choose algorithm
-    Algorithm = REINFORCE_runningNorm
+    Algorithm = REINFORCE
     QNetwork = Network.FC7
     PolicyNetwork = Network.Cat3
 
     # configure environment
-    envConfig = {"stateDefinition": None, "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
+    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": None,
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
                  "stateNoiseAmplitude": None, "rewardNoiseAmplitude": None, "successBounty": 10,
                  "failurePenalty": -10, "device": device}
@@ -100,15 +100,17 @@ if __name__ == '__main__':
     # loop over training configurations
     trainKWargs = {"trainEpisodes": int(2.5e3), "numberAgents": 20, "meanSamples": 10}
 
-    noisyStateDefinitions = ["6d-raw_6noise", "6d-raw_60noise", "6d-norm_6noise", "6d-norm_60noise"]
+    detRewardFunctions = ["propRewardStepPenalty", "constantRewardPerStep", "propRewardStepPenalty"]
 
-    for stateDef in noisyStateDefinitions:
-        envConfig["stateNoiseAmplitude"] = 0.1
-        envConfig["rewardNoiseAmplitude"] = 1
-        envConfig["stateDefinition"] = stateDef
+    for reward in detRewardFunctions:
+        envConfig["stateNoiseAmplitude"] = 1e-13
+        envConfig["rewardNoiseAmplitude"] = 0
+        envConfig["rewardFunction"] = reward
 
         initEnvironment(**envConfig)
         trainAgent(**{"envConfig": envConfig, "hyperParams": hyperParams, **trainKWargs})
+
+
 
 
 
