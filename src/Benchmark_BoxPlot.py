@@ -52,7 +52,7 @@ def buildPdFrame(*args):
 if __name__ == "__main__":
     frame = lambda x: SQL.retrieveBenchmark(x)
 
-    args = [(frame(164), "A4"), (frame(153), "A9"), (frame(163), "A25"), (frame(165), "A49"), (frame(166), "A81")]
+    args = [(frame(101), "6d-raw"), (frame(99), "6d-raw_6noise"), (frame(100), "6d-raw_60noise"),]
 
     plotStatistics(buildPdFrame(*args))
 

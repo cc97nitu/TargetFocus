@@ -50,16 +50,16 @@ def multiTrainResults(dataSets: list, hueKeyword: str):
 if __name__ == "__main__":
     ### train results ###
 
-    # plot single result
-    data = SQL.retrieve(row_id=176)
-    print(data["environmentConfig"])
-    print(data["hyperParameters"])
-
-    plotTrainResult(data["returns"])
-
-    # # plot multiple results
-    # hueKeyword = "action set"
+    # # plot single result
+    # data = SQL.retrieve(row_id=214)
+    # print(data["environmentConfig"])
+    # print(data["hyperParameters"])
     #
-    # dataSets = [(164, "A4"), (153, "A9"), (163, "A25"), (165, "A49"), (166, "A81")]  # assumes tuples of form (row_id, hueIdentifier)
-    #
-    # multiTrainResults(dataSets, hueKeyword)
+    # plotTrainResult(data["returns"])
+
+    # plot multiple results
+    hueKeyword = "state definition"
+
+    dataSets = [(210, "6d-raw"), (149, "6d-raw_6noise"), (159, "6d-raw_60noise")]  # assumes tuples of form (row_id, hueIdentifier)
+
+    multiTrainResults(dataSets, hueKeyword)

@@ -72,11 +72,9 @@ def compareRowConfig(row_ids: list):
     return nonCommonKeys, nonCommonValues
 
 if __name__ == "__main__":
-    # # show config for rows
-    # rows = [131, 170, 171, 172, 174]
+    # show config for rows
+    rows = [149, 159, 210]
     # showConfig(rows)
 
     # compare multiple rows
-    rows = [173, 153, 156, 151, 154, 152, 175]
-
     print(compareRowConfig(rows))

@@ -78,19 +78,19 @@ def trainAgent(envConfig, hyperParams, trainEpisodes, numberAgents, meanSamples)
 
 if __name__ == '__main__':
     # choose algorithm
-    Algorithm = REINFORCE
+    Algorithm = None
     QNetwork = Network.FC7
     PolicyNetwork = Network.Cat3
 
     # configure environment
-    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": None,
+    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
-                 "stateNoiseAmplitude": None, "rewardNoiseAmplitude": None, "successBounty": 10,
+                 "stateNoiseAmplitude": 1e-13, "rewardNoiseAmplitude": 1, "successBounty": 10,
                  "failurePenalty": -10, "device": device}
     # initEnvironment(**envConfig)
 
     # define hyper parameters
-    hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
+    hyperParams = {"BATCH_SIZE": 128, "GAMMA": None, "TARGET_UPDATE": None, "EPS_START": 0.5, "EPS_END": 0,
                    "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
     # # train agents
@@ -100,15 +100,17 @@ if __name__ == '__main__':
     # loop over training configurations
     trainKWargs = {"trainEpisodes": int(2.5e3), "numberAgents": 20, "meanSamples": 10}
 
-    detRewardFunctions = ["propRewardStepPenalty", "constantRewardPerStep", "propRewardStepPenalty"]
+    algorithms = [(0.999, REINFORCE, 10), (0.999, A2C_noBoot_v2, 0.1), (0.9, DQN, 10), ]
 
-    for reward in detRewardFunctions:
-        envConfig["stateNoiseAmplitude"] = 1e-13
-        envConfig["rewardNoiseAmplitude"] = 0
-        envConfig["rewardFunction"] = reward
+    for alg in algorithms:
+        Algorithm = alg[1]
+        hyperParams["GAMMA"] = alg[0]
+        hyperParams["TARGET_UPDATE"] = alg[2]
 
         initEnvironment(**envConfig)
         trainAgent(**{"envConfig": envConfig, "hyperParams": hyperParams, **trainKWargs})
+
+
 
 
 
