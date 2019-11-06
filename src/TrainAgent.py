@@ -9,7 +9,7 @@ import torch
 # from SteeringPair_Continuous import Network, REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
 
-from SteeringPair_Stochastic import Network, REINFORCE, REINFORCE_runningNorm, DQN, A2C_noBoot_v2
+from SteeringPair_Stochastic import Network, REINFORCE, REINFORCE_runningNorm, DQN, DQN_runningNorm, A2C_noBoot_v2
 from SteeringPair_Stochastic.Environment import initEnvironment
 
 # from QuadLens import REINFORCE, A2C, A2C_noBoot, A2C_noBoot_v2, Network, initEnvironment
@@ -78,19 +78,19 @@ def trainAgent(envConfig, hyperParams, trainEpisodes, numberAgents, meanSamples)
 
 if __name__ == '__main__':
     # choose algorithm
-    Algorithm = REINFORCE
+    Algorithm = DQN
     QNetwork = Network.FC7
     PolicyNetwork = Network.Cat3
 
     # configure environment
-    envConfig = {"stateDefinition": "6d-norm", "actionSet": "A9", "rewardFunction": None,
+    envConfig = {"stateDefinition": None, "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50,
-                 "stateNoiseAmplitude": None, "rewardNoiseAmplitude": None, "successBounty": 10,
+                 "stateNoiseAmplitude": 1e-13, "rewardNoiseAmplitude": 0, "successBounty": 10,
                  "failurePenalty": -10, "device": device}
     # initEnvironment(**envConfig)
 
     # define hyper parameters
-    hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.999, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
+    hyperParams = {"BATCH_SIZE": 128, "GAMMA": 0.9, "TARGET_UPDATE": 10, "EPS_START": 0.5, "EPS_END": 0,
                    "EPS_DECAY": 500, "MEMORY_SIZE": int(1e4)}
 
     # # train agents
@@ -100,17 +100,9 @@ if __name__ == '__main__':
     # loop over training configurations
     trainKWargs = {"trainEpisodes": int(2.5e3), "numberAgents": 20, "meanSamples": 10}
 
-    detRewardFunctions = ["propRewardStepPenalty", "constantRewardPerStep", "propRewardStepPenalty"]
+    # 6d-raw
+    envConfig["stateDefinition"] = "6d-raw"
 
-    for reward in detRewardFunctions:
-        envConfig["stateNoiseAmplitude"] = 1e-13
-        envConfig["rewardNoiseAmplitude"] = 0
-        envConfig["rewardFunction"] = reward
-
-        initEnvironment(**envConfig)
-        trainAgent(**{"envConfig": envConfig, "hyperParams": hyperParams, **trainKWargs})
-
-
-
-
+    initEnvironment(**envConfig)
+    trainAgent(**{"envConfig": envConfig, "hyperParams": hyperParams, **trainKWargs})
 

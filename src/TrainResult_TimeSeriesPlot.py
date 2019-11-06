@@ -41,7 +41,7 @@ def multiTrainResults(dataSets: list, hueKeyword: str):
     # plt.yticks([])
 
     # plt.ylim(top=15)
-    # plt.ylim(bottom=-25)
+    plt.ylim(bottom=-45)
 
     plt.show()
     plt.close()
@@ -50,16 +50,16 @@ def multiTrainResults(dataSets: list, hueKeyword: str):
 if __name__ == "__main__":
     ### train results ###
 
-    # plot single result
-    data = SQL.retrieve(row_id=176)
-    print(data["environmentConfig"])
-    print(data["hyperParameters"])
-
-    plotTrainResult(data["returns"])
-
-    # # plot multiple results
-    # hueKeyword = "action set"
+    # # plot single result
+    # data = SQL.retrieve(row_id=93)
+    # print(data["environmentConfig"])
+    # print(data["hyperParameters"])
     #
-    # dataSets = [(164, "A4"), (153, "A9"), (163, "A25"), (165, "A49"), (166, "A81")]  # assumes tuples of form (row_id, hueIdentifier)
-    #
-    # multiTrainResults(dataSets, hueKeyword)
+    # plotTrainResult(data["returns"])
+
+    # plot multiple results
+    hueKeyword = "algorithm"
+
+    dataSets = [(133, "A2C_mont"), (132, "REINFORCE")]  # assumes tuples of form (row_id, hueIdentifier)
+
+    multiTrainResults(dataSets, hueKeyword)
