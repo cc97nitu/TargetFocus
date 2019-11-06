@@ -97,17 +97,18 @@ if __name__ == "__main__":
     # environment config
     envConfig = {"stateDefinition": "6d-raw", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 5e2,
-                 "stateNoiseAmplitude": 1e-9, "rewardNoiseAmplitude": 1, "successBounty": 10,
+                 "stateNoiseAmplitude": 1e-11, "rewardNoiseAmplitude": 1, "successBounty": 10,
                  "failurePenalty": -10, "device": torch.device("cpu")}
 
 
     # run benchmark
-    method = "Nelder-Mead"
+    # method = "Nelder-Mead"
+    method = "trust-krylov"
     agents, episodes = 20, 100
     result = benchmark(method, agents, episodes, envConfig)
 
     # dump results
-    with open("/home/dylan/RL/TempDiff/TargetFocus/src/dump/Optimize/Nelder-Mead_stochastic.dump", "wb") as file:
+    with open("/TargetFocus/src/dump/Optimize/trust-constr_deterministic.dump", "wb") as file:
         pickle.dump(result, file)
 
 

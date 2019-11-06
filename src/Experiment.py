@@ -7,8 +7,8 @@ import torch
 from SteeringPair import Network
 import SQL
 
-# from QuadLens import REINFORCE, A2C_noBoot_v2
-# from QuadLens.Environment import Environment, initEnvironment
+from QuadLens import RANDOM, REINFORCE, DQN, A2C, A2C_noBoot, A2C_noBoot_v2
+from QuadLens.Environment import Environment, initEnvironment
 
 # from SteeringPair import DQN, REINFORCE, QActorCritic, RANDOM, A2C, A2C_noBoot, A2C_noBoot_v2
 # from SteeringPair.Environment import initEnvironment
@@ -16,8 +16,8 @@ import SQL
 # from SteeringPair_Continuous import REINFORCE
 # from SteeringPair_Continuous.Environment import initEnvironment
 
-from SteeringPair_Stochastic import Network, DQN, REINFORCE, REINFORCE_runningNorm, A2C_noBoot_v2
-from SteeringPair_Stochastic.Environment import initEnvironment
+# from SteeringPair_Stochastic import Network, DQN, REINFORCE, REINFORCE_runningNorm, A2C_noBoot_v2
+# from SteeringPair_Stochastic.Environment import initEnvironment
 
 
 def bench(agents_id: int, benchEpisodes: int):
@@ -29,15 +29,14 @@ def bench(agents_id: int, benchEpisodes: int):
     data = {"agents_id": agents_id, "algorithm": trainResults["algorithm"], "bench_episodes": benchEpisodes, }
 
     # choose algorithm
-    Algorithm = DQN
+    Algorithm = REINFORCE
     QNetwork = Network.FC7
     PolicyNetwork = Network.Cat3
 
     # environment config
-    # envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
-    #              "acceptance": 1e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 3, "maxStepsPerEpisode": 50,
-    #              "stateNoiseAmplitude": 1e-1, "rewardNoiseAmplitude": 1, "successBounty": 10,
-    #              "failurePenalty": -10, "device": torch.device("cpu")}
+    envConfig = {"stateDefinition": "RAW_16", "actionSet": "A9", "rewardFunction": "propRewardStepPenalty",
+                 "acceptance": 1e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 50, "successBounty": 10,
+                 "failurePenalty": -10, "device": "cuda" if torch.cuda.is_available() else "cpu"}
 
     envConfigAdditions = {"rewardNoiseAmplitude": 0}
     envConfig = {**envConfigAdditions, **trainResults["environmentConfig"]}
@@ -113,7 +112,7 @@ if __name__ == "__main__":
     benchEpisodes = 100
 
     # what to bench
-    agent_ids = [149, 159, 210]
+    agent_ids = [84,]
 
     for ident in agent_ids:
         print("benching id: {}".format(ident))

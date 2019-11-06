@@ -48,7 +48,7 @@ if __name__ == "__main__":
     benchB = SQL.retrieveBenchmark(106)
 
     # fetch results from scipy.Optimize
-    with open("/home/dylan/RL/TempDiff/TargetFocus/src/dump/Optimize/Nelder-Mead_deterministic.dump", "rb") as file:
+    with open("/TargetFocus/src/dump/Optimize/Nelder-Mead_deterministic-v2.dump", "rb") as file:
         optA = pickle.load(file)
 
 

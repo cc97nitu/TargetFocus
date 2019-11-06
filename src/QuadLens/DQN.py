@@ -255,7 +255,7 @@ class Trainer(AbstractTrainer):
 
 
         print("Complete")
-        return episodeReturns, episodeTerminations, None  # None stands for accuracy of value function
+        return episodeReturns, episodeTerminations, None, None # None stands for accuracy of value function
 
 
 

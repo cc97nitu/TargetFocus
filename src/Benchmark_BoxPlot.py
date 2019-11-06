@@ -54,32 +54,34 @@ if __name__ == "__main__":
     frame = lambda x: SQL.retrieveBenchmark(x)
 
     # fetch results from scipy.Optimize
-    with open("/home/dylan/RL/TempDiff/TargetFocus/src/dump/Optimize/Nelder-Mead_deterministic.dump", "rb") as file:
+    with open("/TargetFocus/src/dump/Optimize/Nelder-Mead_stochastic.dump", "rb") as file:
         optA = pickle.load(file)
+
+    with open("/TargetFocus/src/dump/Optimize/deterministic-CG.dump", "rb") as file:
+        optB = pickle.load(file)
+
+    with open("/TargetFocus/src/dump/Optimize/Powell-deterministic.dump", "rb") as file:
+        optC = pickle.load(file)
+
+    with open("/TargetFocus/src/dump/Optimize/BFGS_deterministic.dump", "rb") as file:
+        optD = pickle.load(file)
+
+    with open("/TargetFocus/src/dump/Optimize/L-BFGS-B_deterministic.dump", "rb") as file:
+        optE = pickle.load(file)
+
+    with open("/TargetFocus/src/dump/Optimize/trust-constr_deterministic.dump", "rb") as file:
+        optF = pickle.load(file)
+
+    with open("/TargetFocus/src/dump/Optimize/SLSQP_deterministic.dump", "rb") as file:
+        optG = pickle.load(file)
+
 
 
     # plot multiple benchmarks
-    args = [(frame(105), "A4"), (frame(106), "A9"), (optA, "Nelder-Mead")]
-
+    args = [(frame(119), "A2C_temp"), (frame(120), "DQN"), (frame(121), "A2C_mont"), (frame(122), "REINFORCE"), (frame(118), "random")]
     plotStatistics(buildPdFrame(*args))
 
     # # plot a single benchmark
     # frameA = SQL.retrieveBenchmark(58)
     # data = buildPdFrame((frameA, "test"))
     # plotStatistics(data)
-
-    # # try optimize
-    # import Optimize
-    # import torch
-    #
-    # # environment config
-    # envConfig = {"stateDefinition": "6d-raw", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
-    #              "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 5e1,
-    #              "stateNoiseAmplitude": 1e-1, "rewardNoiseAmplitude": 1, "successBounty": 10,
-    #              "failurePenalty": -10, "device": torch.device("cpu")}
-    #
-    # result = Optimize.benchmark("Nelder-Mead", 4, 10, envConfig)
-    # opt = buildPdFrame((result, "Nelder-Mead",))
-    # plotStatistics(opt)
-
-

@@ -303,7 +303,7 @@ class Trainer(AbstractTrainer):
                 episodeTerminations["aborted"] += 1
 
         print("Complete")
-        return episodeReturns, episodeTerminations, compareReturnStateValue
+        return episodeReturns, episodeTerminations, compareReturnStateValue, None
 
 
 if __name__ == "__main__":
