@@ -29,7 +29,7 @@ def bench(agents_id: int, benchEpisodes: int):
     data = {"agents_id": agents_id, "algorithm": trainResults["algorithm"], "bench_episodes": benchEpisodes, }
 
     # choose algorithm
-    Algorithm = A2C_noBoot_v2
+    Algorithm = DQN
     QNetwork = Network.FC7
     PolicyNetwork = Network.Cat3
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     benchEpisodes = 100
 
     # what to bench
-    agent_ids = [173, 153, 156, 151, 154, 152, 175]
+    agent_ids = [149, 159, 210]
 
     for ident in agent_ids:
         print("benching id: {}".format(ident))
