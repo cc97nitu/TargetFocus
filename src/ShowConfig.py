@@ -73,12 +73,6 @@ def compareRowConfig(row_ids: list):
 
 if __name__ == "__main__":
     # show config for rows
-    rows = [132, 133]
+    rows = [138, 225, 197]
     showConfig(rows)
-
-    # # compare multiple rows
-    # rows = [173, 153, 156, 151, 154, 152, 175]
-    #
-    # print(compareRowConfig(rows))
-
-    row = SQL.retrieve(133)
+    print(compareRowConfig(rows))

@@ -52,36 +52,21 @@ def buildPdFrame(*args):
 
 if __name__ == "__main__":
     frame = lambda x: SQL.retrieveBenchmark(x)
+    optim = lambda x: SQL.retrieveOptimizeResult(x)["result"]
 
-    # fetch results from scipy.Optimize
-    with open("/TargetFocus/src/dump/Optimize/Nelder-Mead_stochastic.dump", "rb") as file:
-        optA = pickle.load(file)
+    # # fetch results from scipy.Optimize
+    # with open("/home/dylan/RL/TempDiff/TargetFocus/src/dump/Optimize/Nelder-Mead_stochastic.dump", "rb") as file:
+    #     optA = pickle.load(file)
 
-    with open("/TargetFocus/src/dump/Optimize/deterministic-CG.dump", "rb") as file:
-        optB = pickle.load(file)
-
-    with open("/TargetFocus/src/dump/Optimize/Powell-deterministic.dump", "rb") as file:
-        optC = pickle.load(file)
-
-    with open("/TargetFocus/src/dump/Optimize/BFGS_deterministic.dump", "rb") as file:
-        optD = pickle.load(file)
-
-    with open("/TargetFocus/src/dump/Optimize/L-BFGS-B_deterministic.dump", "rb") as file:
-        optE = pickle.load(file)
-
-    with open("/TargetFocus/src/dump/Optimize/trust-constr_deterministic.dump", "rb") as file:
-        optF = pickle.load(file)
-
-    with open("/TargetFocus/src/dump/Optimize/SLSQP_deterministic.dump", "rb") as file:
-        optG = pickle.load(file)
-
-
-
-    # plot multiple benchmarks
-    args = [(frame(119), "A2C_temp"), (frame(120), "DQN"), (frame(121), "A2C_mont"), (frame(122), "REINFORCE"), (frame(118), "random")]
-    plotStatistics(buildPdFrame(*args))
+    # # plot multiple benchmarks
+    # args = [(frame(61), "DQN"), (frame(66), "REINFORCE"), (frame(88), "A2C"), (optim(2), "method"), (frame(118), "random")]
+    # plotStatistics(buildPdFrame(*args))
 
     # # plot a single benchmark
     # frameA = SQL.retrieveBenchmark(58)
     # data = buildPdFrame((frameA, "test"))
     # plotStatistics(data)
+
+    # plot multiple optimizers
+    args = [ (optim(10), "foo"), (optim(4), "bar"), (frame(118), "random")]
+    plotStatistics(buildPdFrame(*args))

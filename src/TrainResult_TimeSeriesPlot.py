@@ -41,7 +41,7 @@ def multiTrainResults(dataSets: list, hueKeyword: str):
     # plt.yticks([])
 
     # plt.ylim(top=15)
-    plt.ylim(bottom=-45)
+    # plt.ylim(bottom=-45)
 
     plt.show()
     plt.close()
@@ -60,6 +60,6 @@ if __name__ == "__main__":
     # plot multiple results
     hueKeyword = "algorithm"
 
-    dataSets = [(133, "A2C_mont"), (132, "REINFORCE")]  # assumes tuples of form (row_id, hueIdentifier)
+    dataSets = [(138, "A2C_temp"), (197, "A2C_mont"), (225, "QActorCritic")]  # assumes tuples of form (row_id, hueIdentifier)
 
     multiTrainResults(dataSets, hueKeyword)

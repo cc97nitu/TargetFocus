@@ -337,7 +337,7 @@ class Environment(object):
 
         # add noise to coordinates
         deviation = Environment.stateNoiseAmplitude * absCoords
-        variance = torch.diag(deviation ** 2)
+        variance = torch.diag(deviation ** 2 + 1e-44)  # add a small term for numerical stability
         noiseDistribution = torch.distributions.multivariate_normal.MultivariateNormal(absCoords, torch.abs(variance))
         absCoords = noiseDistribution.sample()
 

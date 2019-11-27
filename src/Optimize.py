@@ -1,8 +1,11 @@
 """Check performance of optimization algorithms from SciPy."""
+import io
 import torch
 import pandas as pd
 import pickle
 from scipy.optimize import minimize
+
+import SQL
 
 from SteeringPair_Stochastic.Environment import Environment as Env
 from SteeringPair_Stochastic.Environment import initEnvironment, Termination
@@ -51,8 +54,15 @@ def experiment(method: str, agents: int, episodes: int):
             interface = EnvInterface()
 
             try:
-                minimize(lambda x: interface.react(x), interface.relCoords, method=method, tol=1e-350,
+                out = minimize(lambda x: interface.react(x), interface.relCoords, method=method, tol=1e-350,
                                options={"maxiter": 1e4})
+
+                # some algorithms refuse to work if they got stuck
+                if not out.success:
+                    raise TerminationException(Termination.FAILED)
+
+                print("Warning: no exception encountered!")
+                print(out)
             except TerminationException as t:
                 # log number of steps
                 episodeLengths.append(interface.episodeLength)
@@ -97,19 +107,40 @@ if __name__ == "__main__":
     # environment config
     envConfig = {"stateDefinition": "6d-raw", "actionSet": "A9", "rewardFunction": "stochasticPropRewardStepPenalty",
                  "acceptance": 5e-3, "targetDiameter": 3e-2, "maxIllegalStateCount": 0, "maxStepsPerEpisode": 5e2,
-                 "stateNoiseAmplitude": 1e-11, "rewardNoiseAmplitude": 1, "successBounty": 10,
+                 "stateNoiseAmplitude": 1e-1, "rewardNoiseAmplitude": 1, "successBounty": 10,
                  "failurePenalty": -10, "device": torch.device("cpu")}
 
 
-    # run benchmark
-    # method = "Nelder-Mead"
-    method = "trust-krylov"
-    agents, episodes = 20, 100
-    result = benchmark(method, agents, episodes, envConfig)
+    ### run benchmark
 
-    # dump results
-    with open("/TargetFocus/src/dump/Optimize/trust-constr_deterministic.dump", "wb") as file:
-        pickle.dump(result, file)
+    # methods = ["Nelder-Mead",]
+    # methods = ["CG", "Powell", "BFGS", "L-BGFS-B"]
+    methods = ["SLSQP",]
+
+    agents, episodes = 20, 100
+
+    for method in methods:
+        print("benching method {}".format(method))
+        result = benchmark(method, agents, episodes, envConfig)
+
+        ### insert into database
+        envConfig["device"] = str(envConfig["device"])
+
+        # dump into file like buffer
+        buffer = io.BytesIO()
+        dumpDict = {"environmentConfig": envConfig, "method": method,
+                    "bench_episodes": episodes, "agents": agents, "result": result}
+        pickle.dump(dumpDict, buffer)
+
+        # dump into SQL
+        columnData = {**envConfig, "method": method,
+                      "bench_episodes": episodes, "number_agents": agents, }
+
+        SQL.insertOptimizeResult(columnData, buffer.getvalue())
+
+    # # dump results
+    # with open("/TargetFocus/src/dump/Optimize/trust-constr_deterministic.dump", "wb") as file:
+    #     pickle.dump(result, file)
 
 
 

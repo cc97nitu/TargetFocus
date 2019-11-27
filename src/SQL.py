@@ -60,10 +60,38 @@ def retrieveBenchmark(row_id):
     db.execute(queryStatement, (row_id,))
     data = db.fetchone()
 
-    buffer = io.BytesIO(data[-1])  # assumes train blob is located in last column
+    buffer = io.BytesIO(data[-1])  # assumes bench blob is located in last column
+    return pickle.load(buffer)
+
+
+def insertOptimizeResult(columnData, resultBlob):
+    # merge into single dictionary
+    data = {**columnData, "result": resultBlob}
+
+    # establish connection
+    conn = psycopg2.connect(**credentials)
+    db = conn.cursor()
+    insertStatement = "insert into Optimizers (method, number_agents, bench_episodes, stateDefinition, actionSet, rewardFunction, acceptance, targetDiameter, maxStepsPerEpisode, stateNoiseAmplitude, rewardNoiseAmplitude, successBounty, failurePenalty, device, result)" \
+                      " values (%(method)s, %(number_agents)s, %(bench_episodes)s, %(stateDefinition)s, %(actionSet)s, %(rewardFunction)s, %(acceptance)s, %(targetDiameter)s, %(maxStepsPerEpisode)s, %(stateNoiseAmplitude)s, %(rewardNoiseAmplitude)s, %(successBounty)s, %(failurePenalty)s, %(device)s, %(result)s)" \
+                      "returning id;"
+    db.execute(insertStatement, data)
+    conn.commit()
+    print("inserted into Optimize with id {}".format(db.fetchone()[0]))
+
+
+def retrieveOptimizeResult(row_id):
+    # establish connection
+    conn = psycopg2.connect(**credentials)
+    db = conn.cursor()
+
+    queryStatement = "select * from Optimizers where id = %s;"
+    db.execute(queryStatement, (row_id,))
+    data = db.fetchone()
+
+    buffer = io.BytesIO(data[-1])  # assumes result blob is located in last column
     return pickle.load(buffer)
 
 
 if __name__ == "__main__":
     # retrieve a result and unpickle it
-    data = retrieve(1)
+    data = retrieveOptimizeResult(10)["result"]

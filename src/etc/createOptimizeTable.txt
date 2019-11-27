@@ -1,0 +1,17 @@
+CREATE TABLE Optimizers (id SERIAL PRIMARY KEY,
+	method	varchar(80),
+	number_agents   integer,
+	bench_episodes  integer,
+	stateDefinition varchar(80),
+	actionSet varchar(80),
+	rewardFunction varchar(80),
+	acceptance real,
+	targetDiameter real,
+	maxStepsPerEpisode integer,
+	stateNoiseAmplitude float,
+	rewardNoiseAmplitude float,
+	successBounty real,
+	failurePenalty real,
+	device varchar(80),
+	result   bytea
+);

@@ -12,3 +12,7 @@ grant usage, select on sequence agents_id_seq to dumpresults;
 # same for Benchmarks table
 grant select, insert on Benchmarks to dumpresults;
 grant usage, select on sequence benchmarks_bench_id_seq to dumpresults;
+
+# same for Optimizers table
+grant select, insert on Optimizers to dumpresults;
+grant usage, select on sequence optimizers_id_seq to dumpresults;
