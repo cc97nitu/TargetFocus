@@ -114,8 +114,7 @@ if __name__ == "__main__":
     ### run benchmark
 
     # methods = ["Nelder-Mead",]
-    # methods = ["CG", "Powell", "BFGS", "L-BGFS-B"]
-    methods = ["SLSQP",]
+    methods = ["Nelder-Mead", "SLSQP", "CG", "Powell", "BFGS", "L-BGFS-B", "trust-krylov"]
 
     agents, episodes = 20, 100
 

@@ -58,15 +58,15 @@ if __name__ == "__main__":
     # with open("/home/dylan/RL/TempDiff/TargetFocus/src/dump/Optimize/Nelder-Mead_stochastic.dump", "rb") as file:
     #     optA = pickle.load(file)
 
-    # # plot multiple benchmarks
-    # args = [(frame(61), "DQN"), (frame(66), "REINFORCE"), (frame(88), "A2C"), (optim(2), "method"), (frame(118), "random")]
-    # plotStatistics(buildPdFrame(*args))
+    # plot multiple benchmarks
+    args = [(frame(61), "DQN"), (frame(66), "REINFORCE"), (frame(88), "A2C"), (frame(118), "random")]
+    plotStatistics(buildPdFrame(*args))
 
     # # plot a single benchmark
     # frameA = SQL.retrieveBenchmark(58)
     # data = buildPdFrame((frameA, "test"))
     # plotStatistics(data)
 
-    # plot multiple optimizers
-    args = [ (optim(10), "foo"), (optim(4), "bar"), (frame(118), "random")]
-    plotStatistics(buildPdFrame(*args))
+    # # plot multiple optimizers
+    # args = [ (optim(10), "foo"), (optim(4), "bar"), (frame(118), "random")]
+    # plotStatistics(buildPdFrame(*args))
